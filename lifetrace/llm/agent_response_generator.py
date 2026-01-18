@@ -28,6 +28,16 @@ def generate_final_response(
             f"[Agent] 生成最终回答，工具结果长度: {len(context_text)} 字符",
         )
 
+        # 如果使用了 web_search，尝试从工具结果中提取 Sources 信息
+        sources_section = ""
+        if used_web_search:
+            sources_section = _extract_sources_from_context(context_text)
+            if sources_section:
+                # 如果工具结果中已有 Sources，明确告诉 LLM 必须使用它们
+                logger.info(
+                    f"[Agent] 从工具结果中提取到 Sources 段落，长度: {len(sources_section)} 字符"
+                )
+
         base_instruction = (
             f"用户问题：{user_query}\n\n"
             f"工具执行结果：\n{context_text}\n\n"
@@ -39,7 +49,18 @@ def generate_final_response(
 
         # 如果使用了 web_search，添加 Sources 格式要求
         if used_web_search:
-            base_instruction += get_web_search_format_instructions()
+            if sources_section:
+                # 如果工具结果中已有 Sources，明确告诉 LLM 必须使用这些 Sources
+                base_instruction += (
+                    f"\n\n**重要：工具执行结果中已经包含 Sources 列表：**\n"
+                    f"{sources_section}\n\n"
+                    "你必须在回答末尾完整保留这个 Sources 段落，格式必须完全一致。"
+                    "不要修改 Sources 的格式，不要添加或删除任何来源。"
+                    "在回答中使用 [[1]]、[[2]] 等引用标记来引用这些来源。"
+                )
+            else:
+                # 如果工具结果中没有 Sources，提示 LLM 生成 Sources
+                base_instruction += get_web_search_format_instructions()
 
         final_messages.append({"role": "user", "content": base_instruction})
     else:
@@ -67,6 +88,31 @@ def generate_final_response(
     except Exception as e:
         logger.error(f"[Agent] 生成最终回答失败: {e}")
         yield f"生成回答时出现错误: {str(e)}"
+
+
+def _extract_sources_from_context(context_text: str) -> str:
+    """从工具执行结果中提取 Sources 段落"""
+    # 查找 "Sources:" 标记（支持不同的前缀）
+    sources_markers = ["\n\nSources:", "\nSources:", "Sources:"]
+    sources_index = -1
+    marker = ""
+
+    for marker_candidate in sources_markers:
+        index = context_text.find(marker_candidate)
+        if index != -1:
+            sources_index = index
+            marker = marker_candidate
+            break
+
+    if sources_index == -1:
+        return ""
+
+    # 提取 Sources 段落（从 "Sources:" 到文本末尾）
+    sources_section = context_text[sources_index + len(marker) :].strip()
+    if sources_section:
+        # 返回完整的 Sources 段落（包括标记）
+        return f"{marker}\n{sources_section}"
+    return ""
 
 
 def get_web_search_format_instructions() -> str:
