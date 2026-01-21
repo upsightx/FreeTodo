@@ -30,6 +30,11 @@ declare global {
 		cookieStore?: CookieStoreApi;
 		electronAPI?: {
 			/**
+			 * 平台信息
+			 */
+			platform: NodeJS.Platform;
+
+			/**
 			 * 显示系统通知
 			 * @param data 通知数据
 			 */

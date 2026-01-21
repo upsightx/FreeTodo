@@ -40,7 +40,23 @@ html:has(.island-container) body {
   background: oklch(var(--background));
 }
 
+/* 防止默认拖拽行为（防止与自定义 IPC 拖拽冲突） */
+.island-container,
+.island-container * {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* 允许文本输入框和文本区域的选择 */
+.island-container input,
+.island-container textarea,
+.island-container [contenteditable="true"] {
+  user-select: text;
+}
+
 /* app-region 用于窗口拖拽 */
+/* 注意：仅在 macOS 上通过组件逻辑应用这些类，因为在 Windows 上会与自定义 IPC 拖拽冲突 */
+/* 在 Windows/Linux 上，完全依赖自定义 IPC 拖拽实现 + preventDefault() */
 .app-region-drag {
   -webkit-app-region: drag;
 }

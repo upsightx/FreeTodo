@@ -65,10 +65,14 @@ export function IslandHeader({ mode, onModeChange, isExpanded = false, onDragSta
   // 在 SIDEBAR 模式下，Header 作为垂直拖拽的 Handle
   const canDrag = isSidebar && onDragStart;
 
+  // 检测平台：只在 macOS 上使用 app-region，在 Windows/Linux 上使用自定义 IPC 拖拽
+  const isMacOS = isElectron && window.electronAPI?.platform === 'darwin';
+  const shouldUseAppRegion = isMacOS && !canDrag;
+
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Header conditionally acts as a drag handle in SIDEBAR mode
     <header
-      className={`relative flex h-15 shrink-0 items-center bg-primary-foreground dark:bg-accent px-4 text-foreground overflow-visible ${!canDrag ? 'app-region-drag' : ''}`}
+      className={`relative flex h-15 shrink-0 items-center bg-primary-foreground dark:bg-accent px-4 text-foreground overflow-visible ${shouldUseAppRegion ? 'app-region-drag' : ''}`}
       onMouseDown={canDrag ? onDragStart : undefined}
       role={canDrag ? "button" : undefined}
       tabIndex={canDrag ? -1 : undefined}
@@ -77,7 +81,7 @@ export function IslandHeader({ mode, onModeChange, isExpanded = false, onDragSta
       }}
     >
       {/* 左侧：Logo + 应用名称 */}
-      <div className={`flex items-center gap-2 shrink-0 ${!canDrag ? 'app-region-no-drag' : ''}`}>
+      <div className={`flex items-center gap-2 shrink-0 ${shouldUseAppRegion ? 'app-region-no-drag' : ''}`}>
         <div className="relative h-8 w-8 shrink-0">
           {/* 浅色模式图标 */}
           <Image
@@ -86,6 +90,7 @@ export function IslandHeader({ mode, onModeChange, isExpanded = false, onDragSta
             width={32}
             height={32}
             className="object-contain block dark:hidden"
+            draggable={false}
           />
           {/* 深色模式图标 */}
           <Image
@@ -94,6 +99,7 @@ export function IslandHeader({ mode, onModeChange, isExpanded = false, onDragSta
             width={32}
             height={32}
             className="object-contain hidden dark:block"
+            draggable={false}
           />
         </div>
         <h1 className="text-lg font-semibold tracking-tight text-foreground">
@@ -103,7 +109,7 @@ export function IslandHeader({ mode, onModeChange, isExpanded = false, onDragSta
 
       {/* 中间：HeaderIsland 通知区域（与原 FreeTodo 共享，仅在有通知时显示） */}
       {showNotification ? (
-        <div className={`flex-1 flex items-center justify-center relative min-w-0 overflow-visible ${!canDrag ? 'app-region-no-drag' : ''}`}>
+        <div className={`flex-1 flex items-center justify-center relative min-w-0 overflow-visible ${shouldUseAppRegion ? 'app-region-no-drag' : ''}`}>
           <HeaderIsland />
         </div>
       ) : (
@@ -111,7 +117,7 @@ export function IslandHeader({ mode, onModeChange, isExpanded = false, onDragSta
       )}
 
       {/* 右侧：工具按钮 + 窗口控制 */}
-      <div className={`flex items-center gap-2 ${!canDrag ? 'app-region-no-drag' : ''}`}>
+      <div className={`flex items-center gap-2 ${shouldUseAppRegion ? 'app-region-no-drag' : ''}`}>
         {/* 工具按钮 - 全屏模式或 SIDEBAR 已展开时显示 */}
         {shouldShowTools && (
           <>

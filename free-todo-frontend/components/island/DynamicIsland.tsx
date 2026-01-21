@@ -30,6 +30,10 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ mode, onModeChange }) => 
     // 仅响应左键
     if (e.button !== 0) return;
 
+    // 阻止默认拖拽行为（防止浏览器拖拽图片、文本等，避免在 Windows 上与自定义拖拽冲突）
+    e.preventDefault();
+    e.stopPropagation();
+
     setIsDragging(true);
 
     // 发送拖拽开始事件到主进程

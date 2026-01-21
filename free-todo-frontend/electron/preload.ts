@@ -85,6 +85,11 @@ export interface NotificationData {
 // 暴露安全的 API 给渲染进程
 contextBridge.exposeInMainWorld("electronAPI", {
 	/**
+	 * 平台信息
+	 */
+	platform: process.platform,
+
+	/**
 	 * 显示系统通知
 	 * @param data 通知数据
 	 * @returns Promise<void>
