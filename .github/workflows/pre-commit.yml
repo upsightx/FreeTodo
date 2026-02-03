@@ -106,9 +106,10 @@ jobs:
       - name: Prepare data directories
         run: mkdir -p "$LIFETRACE_DATA_DIR/data"
       - name: Alembic heads check
+        working-directory: lifetrace
         run: |
           set +e
-          uv run alembic -c lifetrace/alembic.ini heads > /tmp/alembic_heads.txt 2> /tmp/alembic_heads_err.txt
+          uv run alembic -c alembic.ini heads > /tmp/alembic_heads.txt 2> /tmp/alembic_heads_err.txt
           alembic_status=$?
           if [ $alembic_status -ne 0 ]; then
             echo "Alembic heads command failed with exit code ${alembic_status}."
@@ -145,7 +146,8 @@ jobs:
             exit $alembic_status
           fi
       - name: Alembic upgrade check
-        run: uv run alembic -c lifetrace/alembic.ini upgrade head
+        working-directory: lifetrace
+        run: uv run alembic -c alembic.ini upgrade head
 
   precommit-frontend:
     runs-on: ${{ matrix.os }}
