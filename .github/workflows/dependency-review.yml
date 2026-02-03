@@ -2,6 +2,14 @@ name: Dependency Review
 
 on:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      base-ref:
+        description: "Base ref (e.g. main)"
+        required: true
+      head-ref:
+        description: "Head ref (e.g. vk/b02a-ci-monitor-2)"
+        required: true
 
 permissions:
   contents: read
@@ -12,7 +20,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
+      - name: Dependency review (PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
           comment-summary-in-pr: always
+      - name: Dependency review (manual)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: never
+          base-ref: ${{ inputs.base-ref }}
+          head-ref: ${{ inputs.head-ref }}

@@ -396,7 +396,7 @@ async fn start_backend_process(app: &AppHandle, mode: ServerMode) -> Result<u16,
 fn stop_managed_backend() {
     let state = state();
     let mut guard = state.process.lock().unwrap();
-    if let Some(mut child) = guard.take() {
+    if let Some(child) = guard.take() {
         #[cfg(unix)]
         {
             unsafe {
@@ -406,6 +406,7 @@ fn stop_managed_backend() {
 
         #[cfg(windows)]
         {
+            let mut child = child;
             let _ = child.kill();
         }
     }
