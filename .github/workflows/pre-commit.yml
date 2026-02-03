@@ -105,6 +105,17 @@ jobs:
         run: uv sync --group dev
       - name: Prepare data directories
         run: mkdir -p "$LIFETRACE_DATA_DIR/data"
+      - name: Initialize database schema
+        run: |
+          python - <<'PY'
+          from sqlmodel import SQLModel, create_engine
+
+          from lifetrace.storage import models  # noqa: F401
+          from lifetrace.util.path_utils import get_database_path
+
+          engine = create_engine(f"sqlite:///{get_database_path()}")
+          SQLModel.metadata.create_all(engine)
+          PY
       - name: Alembic heads check
         working-directory: lifetrace
         run: |
