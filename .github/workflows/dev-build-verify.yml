@@ -1,0 +1,151 @@
+name: Dev Build Verify
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: dev-build-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tauri-build-verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            script_suffix: win
+          - os: macos-latest
+            script_suffix: mac
+          - os: ubuntu-latest
+            script_suffix: linux
+    runs-on: ${{ matrix.os }}
+    env:
+      TAURI_VARIANT: web
+      BACKEND_RUNTIME: script
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "9"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install macOS targets
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - name: Install Linux system deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libglib2.0-dev libgtk-3-dev libwebkit2gtk-4.1-dev
+      - name: Install frontend deps
+        run: pnpm install --frozen-lockfile
+        working-directory: free-todo-frontend
+      - name: Build Tauri bundle
+        run: pnpm run build:tauri:${{ env.TAURI_VARIANT }}:${{ env.BACKEND_RUNTIME }}:full:${{ matrix.script_suffix }}
+        working-directory: free-todo-frontend
+
+  electron-build-verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "9"
+      - name: Install frontend deps
+        run: pnpm install --frozen-lockfile
+        working-directory: free-todo-frontend
+      - name: Build Electron app (dir)
+        run: pnpm run build:electron:web:script:full:dir
+        working-directory: free-todo-frontend
+
+  web-build-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "9"
+      - name: Install frontend deps
+        run: pnpm install --frozen-lockfile
+        working-directory: free-todo-frontend
+      - name: Build frontend (web)
+        run: pnpm run build:frontend:web
+        working-directory: free-todo-frontend
+
+  backend-uv-verify:
+    runs-on: ubuntu-latest
+    env:
+      LIFETRACE_DATA_DIR: ${{ runner.temp }}/lifetrace
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v3
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y portaudio19-dev
+      - name: Install backend deps
+        run: uv sync --group dev
+      - name: Backend CLI smoke check
+        run: uv run python -m lifetrace.server --help
+
+  install-sh-verify:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run install.sh (no-run)
+        env:
+          LIFETRACE_REPO: https://github.com/${{ github.repository }}.git
+          LIFETRACE_REF: ${{ github.ref_name }}
+          LIFETRACE_DIR: ${{ runner.temp }}/lifetrace-install
+          LIFETRACE_MODE: web
+          LIFETRACE_FRONTEND: build
+          LIFETRACE_BACKEND: script
+          LIFETRACE_RUN: "0"
+        run: bash scripts/install.sh
+
+  install-ps1-verify:
+    if: github.event_name == 'push'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run install.ps1 (no-run)
+        env:
+          LIFETRACE_REPO: https://github.com/${{ github.repository }}.git
+          LIFETRACE_REF: ${{ github.ref_name }}
+          LIFETRACE_DIR: ${{ runner.temp }}\\lifetrace-install
+          LIFETRACE_MODE: web
+          LIFETRACE_FRONTEND: build
+          LIFETRACE_BACKEND: script
+          LIFETRACE_RUN: "0"
+        run: >
+          powershell -ExecutionPolicy Bypass -File scripts/install.ps1
+          -Repo "$env:LIFETRACE_REPO"
+          -Ref "$env:LIFETRACE_REF"
+          -Dir "$env:LIFETRACE_DIR"
+          -Mode "$env:LIFETRACE_MODE"
+          -Variant "web"
+          -Frontend "$env:LIFETRACE_FRONTEND"
+          -Backend "$env:LIFETRACE_BACKEND"
+          -Run "$env:LIFETRACE_RUN"
