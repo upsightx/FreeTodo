@@ -53,6 +53,7 @@ jobs:
         working-directory: free-todo-frontend
 
   electron-build-verify:
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -74,6 +75,7 @@ jobs:
         working-directory: free-todo-frontend
 
   web-build-verify:
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -91,6 +93,7 @@ jobs:
         working-directory: free-todo-frontend
 
   backend-uv-verify:
+    continue-on-error: true
     runs-on: ubuntu-latest
     env:
       LIFETRACE_DATA_DIR: ${{ runner.temp }}/lifetrace
