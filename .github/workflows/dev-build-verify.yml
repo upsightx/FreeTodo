@@ -110,14 +110,13 @@ jobs:
         run: uv run python -m lifetrace.server --help
 
   install-sh-verify:
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Run install.sh (no-run)
         env:
           LIFETRACE_REPO: https://github.com/${{ github.repository }}.git
-          LIFETRACE_REF: ${{ github.ref_name }}
+          LIFETRACE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
           LIFETRACE_DIR: ${{ runner.temp }}/lifetrace-install
           LIFETRACE_MODE: web
           LIFETRACE_FRONTEND: build
@@ -126,14 +125,13 @@ jobs:
         run: bash scripts/install.sh
 
   install-ps1-verify:
-    if: github.event_name == 'push'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - name: Run install.ps1 (no-run)
         env:
           LIFETRACE_REPO: https://github.com/${{ github.repository }}.git
-          LIFETRACE_REF: ${{ github.ref_name }}
+          LIFETRACE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
           LIFETRACE_DIR: ${{ runner.temp }}\\lifetrace-install
           LIFETRACE_MODE: web
           LIFETRACE_FRONTEND: build
