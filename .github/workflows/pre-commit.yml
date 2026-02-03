@@ -85,6 +85,42 @@ jobs:
           pre-commit run pyright --all-files
           pre-commit run check-backend-code-lines --all-files
 
+  migration-check:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.python == 'true' }}
+    env:
+      LIFETRACE_DATA_DIR: ${{ runner.temp }}/lifetrace
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v3
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y portaudio19-dev
+      - name: Install backend deps
+        run: uv sync --group dev
+      - name: Prepare data directories
+        run: mkdir -p "$LIFETRACE_DATA_DIR/data"
+      - name: Alembic heads check
+        run: |
+          uv run alembic -c lifetrace/alembic.ini heads > /tmp/alembic_heads.txt
+          python - <<'PY'
+          from pathlib import Path
+
+          output = Path("/tmp/alembic_heads.txt").read_text().strip().splitlines()
+          heads = [line for line in output if line.strip()]
+          if len(heads) > 1:
+              print("Multiple Alembic heads detected:")
+              print("\n".join(heads))
+              raise SystemExit(1)
+          PY
+      - name: Alembic upgrade check
+        run: uv run alembic -c lifetrace/alembic.ini upgrade head
+
   precommit-frontend:
     runs-on: ${{ matrix.os }}
     strategy:
