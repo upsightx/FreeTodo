@@ -107,7 +107,7 @@ jobs:
         run: mkdir -p "$LIFETRACE_DATA_DIR/data"
       - name: Initialize database schema
         run: |
-          python - <<'PY'
+          uv run python - <<'PY'
           from sqlmodel import SQLModel, create_engine
 
           from lifetrace.storage import models  # noqa: F401
