@@ -64,7 +64,7 @@ FreeTodo adopts a **frontend-backend separation** architecture:
 - Node.js 20+
 - pnpm package manager
 
-### One-Click Install & Start
+<!-- ### One-Click Install & Start
 
 > Requires Python 3.12+, Node.js 20+, and Git. Tauri/Electron build also requires Rust.
 
@@ -80,7 +80,7 @@ curl -fsSL https://raw.githubusercontent.com/FreeU-group/FreeTodo/main/scripts/i
 iwr -useb https://raw.githubusercontent.com/FreeU-group/FreeTodo/main/scripts/install.ps1 | iex
 ```
 
-For full options, environment variables, and examples, see: [.github/INSTALL.md](.github/INSTALL.md)
+For full options, environment variables, and examples, see: [.github/INSTALL.md](.github/INSTALL.md) -->
 
 ### Install Dependencies
 
