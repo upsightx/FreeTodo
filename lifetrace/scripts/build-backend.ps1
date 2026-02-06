@@ -54,6 +54,17 @@ try {
     exit 1
 }
 
+# Include vector modules in PyInstaller bundle.
+$env:LIFETRACE_INCLUDE_VECTOR = "1"
+
+# Enable UPX compression if available.
+if (Get-Command upx -ErrorAction SilentlyContinue) {
+    $env:PYINSTALLER_UPX = "1"
+    Write-Host "UPX found: enabling PyInstaller compression."
+} else {
+    Write-Host "UPX not found: skipping PyInstaller compression."
+}
+
 # Clean previous build
 if (Test-Path $DIST_DIR) {
     Write-Host "Cleaning previous build..."

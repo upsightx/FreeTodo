@@ -229,8 +229,6 @@ datas.extend(rapidocr_datas)
 # ChromaDB and sentence-transformers are optional; include only if enabled
 vector_modules = [
     "torch",
-    "torchvision",
-    "torchaudio",
     "transformers",  # sentence-transformers 依赖
     "scipy",
     "hdbscan",
@@ -294,6 +292,23 @@ excludes = [
     "test",
     "tests",
 ]
+# Reduce bundle size by excluding tests/telemetry and unused torch extras.
+excludes.extend(
+    [
+        "chromadb.test",
+        "chromadb.tests",
+        "chromadb.telemetry",
+        "chromadb.telemetry.product",
+        "chromadb.telemetry.product.posthog",
+        "posthog",
+        "sentence_transformers.tests",
+        "transformers.tests",
+        "transformers.testing_utils",
+        "torch.testing",
+        "torchvision",
+        "torchaudio",
+    ]
+)
 if not include_vector:
     excludes.extend(vector_modules)
 
