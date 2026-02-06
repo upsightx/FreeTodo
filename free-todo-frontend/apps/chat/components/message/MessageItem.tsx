@@ -13,10 +13,13 @@ import {
 
 type MessageItemProps = {
 	message: ChatMessage;
+	contentOverride?: string;
 	isLastMessage: boolean;
 	isStreaming: boolean;
 	typingText: string;
 	extractionState?: ExtractionState;
+	showMenu?: boolean;
+	showExtractionPanel?: boolean;
 	onRemoveExtractionState: () => void;
 	onMenuButtonClick: (event: React.MouseEvent, messageId: string) => void;
 	onMessageBoxRef: (messageId: string, ref: HTMLDivElement | null) => void;
@@ -24,10 +27,13 @@ type MessageItemProps = {
 
 export function MessageItem({
 	message,
+	contentOverride,
 	isLastMessage,
 	isStreaming,
 	typingText,
 	extractionState,
+	showMenu = false,
+	showExtractionPanel = false,
 	onRemoveExtractionState,
 	onMenuButtonClick,
 	onMessageBoxRef,
@@ -35,8 +41,9 @@ export function MessageItem({
 	const tContextMenu = useTranslations("contextMenu");
 	const [hovered, setHovered] = useState(false);
 
-	const sanitizedContent = message.content
-		? removeToolEvents(message.content)
+	const rawContent = contentOverride ?? message.content;
+	const sanitizedContent = rawContent
+		? removeToolEvents(rawContent)
 		: "";
 	// 移除工具调用标记后的内容
 	const contentWithoutToolCalls = sanitizedContent
@@ -70,12 +77,14 @@ export function MessageItem({
 
 	// 处理消息菜单按钮点击
 	const handleMessageMenuClick = (event: React.MouseEvent) => {
+		if (!showMenu) return;
 		event.stopPropagation();
 		onMenuButtonClick(event, message.id);
 	};
 
 	// 使用 ref callback 来传递 ref
 	const handleMessageBoxRef = (el: HTMLDivElement | null) => {
+		if (!showMenu) return;
 		onMessageBoxRef(message.id, el);
 	};
 
@@ -104,7 +113,7 @@ export function MessageItem({
 								: "bg-primary/10 dark:bg-primary/20 text-foreground",
 						)}
 						onMouseEnter={() => {
-							if (isAssistantMessageWithContent) {
+							if (showMenu && isAssistantMessageWithContent) {
 								setHovered(true);
 							}
 						}}
@@ -117,7 +126,7 @@ export function MessageItem({
 						</div> */}
 						<div className="leading-relaxed relative">
 							{/* Hover 时显示的菜单按钮 - 位于右下角 */}
-							{hovered && isAssistantMessageWithContent && (
+							{showMenu && hovered && isAssistantMessageWithContent && (
 								<button
 									type="button"
 									onClick={handleMessageMenuClick}
@@ -127,13 +136,16 @@ export function MessageItem({
 									<MoreVertical className="h-3.5 w-3.5" />
 								</button>
 							)}
-							<MessageContent message={message} />
+							<MessageContent
+								message={message}
+								contentOverride={contentOverride}
+							/>
 						</div>
 					</div>
 				)}
 			</div>
 			{/* 提取待办面板 - 显示在消息下方 */}
-			{extractionState && (
+			{showExtractionPanel && extractionState && (
 				<div
 					className={cn(
 						"w-full",

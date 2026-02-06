@@ -10,6 +10,10 @@ export type ToolCall = {
 	fullMatch: string;
 };
 
+export type ToolCallSegment =
+	| { type: "text"; content: string }
+	| { type: "tool"; name: string; params?: string };
+
 /**
  * 提取工具调用信息
  */
@@ -29,6 +33,46 @@ export function extractToolCalls(content: string): Array<ToolCall> {
 		match = TOOL_CALL_PATTERN.exec(content);
 	}
 	return matches;
+}
+
+/**
+ * 按工具调用标记拆分内容
+ */
+export function splitContentByToolCalls(content: string): ToolCallSegment[] {
+	const segments: ToolCallSegment[] = [];
+	if (!content) return segments;
+
+	TOOL_CALL_PATTERN.lastIndex = 0;
+	let lastIndex = 0;
+	let match: RegExpExecArray | null = TOOL_CALL_PATTERN.exec(content);
+
+	while (match !== null) {
+		const matchStart = match.index;
+		if (matchStart > lastIndex) {
+			const text = content.slice(lastIndex, matchStart);
+			if (text) {
+				segments.push({ type: "text", content: text });
+			}
+		}
+
+		segments.push({
+			type: "tool",
+			name: match[1]?.trim() ?? "",
+			params: match[2]?.trim(),
+		});
+
+		lastIndex = match.index + match[0].length;
+		match = TOOL_CALL_PATTERN.exec(content);
+	}
+
+	if (lastIndex < content.length) {
+		const tail = content.slice(lastIndex);
+		if (tail) {
+			segments.push({ type: "text", content: tail });
+		}
+	}
+
+	return segments;
 }
 
 /**
