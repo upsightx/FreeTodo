@@ -14,6 +14,7 @@ class ChatMessage(BaseModel):
     context: str | None = None  # 待办上下文（可选，用于 Agent 处理）
     system_prompt: str | None = None  # 系统提示词（可选）
     conversation_id: str | None = None  # 会话ID
+    user_id: str | None = None  # 用户ID（用于 Agno Learning 记忆）
     use_rag: bool = True  # 是否使用RAG
     mode: str | None = None  # 前端聊天模式（ask/plan/edit/dify_test/agno 等）
 
