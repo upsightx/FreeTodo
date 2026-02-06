@@ -71,7 +71,8 @@
       "../../lifetrace/storage",
       "../../lifetrace/util",
       "../../requirements-runtime.txt",
-      "../.next/standalone"
+      "../.next/standalone",
+      "resources/node"
     ],
     "windows": {
       "certificateThumbprint": null,

@@ -48,7 +48,8 @@
     "targets": "all",
     "resources": [
       "../../dist-backend",
-      "../.next/standalone"
+      "../.next/standalone",
+      "resources/node"
     ],
     "windows": {
       "certificateThumbprint": null,

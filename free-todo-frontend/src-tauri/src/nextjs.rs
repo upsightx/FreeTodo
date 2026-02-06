@@ -162,8 +162,8 @@ pub async fn start_nextjs(app: &AppHandle) -> Result<(), Box<dyn std::error::Err
     // Get backend URL for environment variable
     let backend_url = backend::get_backend_url();
 
-    // Check for Node.js
-    let node_path = which_node()?;
+    // Check for Node.js (embedded or system)
+    let node_path = resolve_node_path(app)?;
     info!("Node.js path: {:?}", node_path);
 
     // Spawn Next.js server process
@@ -204,6 +204,24 @@ pub async fn start_nextjs(app: &AppHandle) -> Result<(), Box<dyn std::error::Err
 }
 
 /// Find Node.js executable
+fn resolve_node_path(app: &AppHandle) -> Result<PathBuf, String> {
+    if let Some(embedded) = embedded_node_path(app) {
+        return Ok(embedded);
+    }
+    which_node()
+}
+
+fn embedded_node_path(app: &AppHandle) -> Option<PathBuf> {
+    let resource_dir = app.path().resource_dir().ok()?;
+    let exec_name = if cfg!(windows) { "node.exe" } else { "node" };
+    let candidates = [
+        resource_dir.join("node").join(exec_name),
+        resource_dir.join(exec_name),
+    ];
+
+    candidates.into_iter().find(|candidate| candidate.exists())
+}
+
 fn which_node() -> Result<PathBuf, String> {
     // Try common Node.js locations
     let candidates = if cfg!(windows) {
@@ -246,7 +264,7 @@ fn which_node() -> Result<PathBuf, String> {
         }
     }
 
-    Err("Node.js not found. Please install Node.js.".to_string())
+    Err("Node.js not found. Install Node.js or bundle it at resources/node/node(.exe).".to_string())
 }
 
 /// Start health check loop

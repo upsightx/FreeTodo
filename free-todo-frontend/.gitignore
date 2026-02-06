@@ -54,3 +54,4 @@ next-env.d.ts
 /src-tauri/Cargo.lock
 /src-tauri/WixTools/
 /src-tauri/gen/
+/src-tauri/resources/node/
