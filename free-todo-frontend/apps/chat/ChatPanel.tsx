@@ -96,8 +96,6 @@ export function ChatPanel() {
 		};
 	}, [historyOpen, historyPinned, setHistoryOpen]);
 
-	const typingText = useMemo(() => tChat("aiThinking"), [tChat]);
-
 	const formatMessageCount = useCallback(
 		(count?: number) => tPage("messagesCount", { count: count ?? 0 }),
 		[tPage],
@@ -205,7 +203,6 @@ export function ChatPanel() {
 						<MessageList
 							messages={chatController.messages}
 							isStreaming={chatController.isStreaming}
-							typingText={typingText}
 							effectiveTodos={chatController.effectiveTodos}
 						/>
 					)}

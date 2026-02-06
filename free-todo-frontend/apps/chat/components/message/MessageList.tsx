@@ -19,7 +19,6 @@ import {
 type MessageListProps = {
 	messages: ChatMessage[];
 	isStreaming: boolean;
-	typingText: string;
 	effectiveTodos?: Todo[];
 };
 
@@ -29,7 +28,6 @@ type RenderBlock =
 			key: string;
 			message: ChatMessage;
 			content: string;
-			isLastBlock: boolean;
 			showMenu: boolean;
 			showExtraction: boolean;
 		}
@@ -42,7 +40,6 @@ type RenderBlock =
 export function MessageList({
 	messages,
 	isStreaming,
-	typingText,
 	effectiveTodos = [],
 }: MessageListProps) {
 	const tChat = useTranslations("chat");
@@ -196,7 +193,6 @@ export function MessageList({
 					key: `${message.id}-segment-${blocks.length}`,
 					message,
 					content,
-					isLastBlock: false,
 					showMenu: false,
 					showExtraction: false,
 				});
@@ -314,7 +310,6 @@ export function MessageList({
 					key: `${message.id}-segment-0`,
 					message,
 					content: message.content,
-					isLastBlock: false,
 					showMenu: false,
 					showExtraction: false,
 				});
@@ -322,20 +317,6 @@ export function MessageList({
 			}
 
 			blocks.push(...buildAssistantBlocks(message, isLastMessage));
-		});
-
-		let lastMessageBlockIndex = -1;
-		for (let i = blocks.length - 1; i >= 0; i -= 1) {
-			if (blocks[i].type === "message") {
-				lastMessageBlockIndex = i;
-				break;
-			}
-		}
-
-		blocks.forEach((block, index) => {
-			if (block.type === "message") {
-				block.isLastBlock = index === lastMessageBlockIndex;
-			}
 		});
 
 		const lastContentBlockKeyById = new Map<string, string>();
@@ -370,7 +351,7 @@ export function MessageList({
 					return <ToolCallBlock key={block.key} steps={block.steps} />;
 				}
 
-				const { message, content, isLastBlock } = block;
+				const { message, content } = block;
 				const extractionState = extractionStates.get(message.id);
 				const isAssistantMessage = message.role === "assistant";
 				const shouldShowMenu = isAssistantMessage && content.trim().length > 0;
@@ -383,9 +364,6 @@ export function MessageList({
 						key={block.key}
 						message={message}
 						contentOverride={content}
-						isLastMessage={isLastBlock}
-						isStreaming={isStreaming}
-						typingText={typingText}
 						extractionState={extractionState}
 						showMenu={shouldShowMenu && isLastContentBlockForMessage}
 						showExtractionPanel={
