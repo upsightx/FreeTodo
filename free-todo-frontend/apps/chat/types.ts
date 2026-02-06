@@ -25,6 +25,17 @@ export type ToolCallStep = {
 	endTime?: number;
 };
 
+export type ToolCallAnchor = {
+	/** 关联的工具步骤 ID */
+	stepId: string;
+	/** 工具名称（用于缺失步骤时兜底展示） */
+	toolName: string;
+	/** 工具参数（用于缺失步骤时兜底展示） */
+	toolArgs?: Record<string, unknown>;
+	/** 工具调用发生时的内容偏移量 */
+	offset: number;
+};
+
 /**
  * 聊天消息
  */
@@ -34,6 +45,8 @@ export type ChatMessage = {
 	content: string;
 	/** 工具调用步骤（仅 assistant 消息可能有） */
 	toolCallSteps?: ToolCallStep[];
+	/** 工具调用在消息内容中的锚点（仅 assistant 消息可能有） */
+	toolCallAnchors?: ToolCallAnchor[];
 };
 
 export type ChatMode = "agno";

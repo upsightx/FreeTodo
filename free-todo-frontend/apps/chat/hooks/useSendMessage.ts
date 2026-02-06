@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import type { SessionCacheReturn } from "@/apps/chat/hooks/useSessionCache";
 import type { StreamControllerReturn } from "@/apps/chat/hooks/useStreamController";
 import type { ToolCallTrackerReturn } from "@/apps/chat/hooks/useToolCallTracker";
-import type { ChatMessage } from "@/apps/chat/types";
+import type { ChatMessage, ToolCallAnchor } from "@/apps/chat/types";
 import { createId } from "@/apps/chat/utils/id";
 import {
 	buildPayloadMessage,
@@ -152,25 +152,37 @@ export const useSendMessage = ({
 			let cachedToolCallSteps: ReturnType<
 				typeof toolCallTracker.getToolCallSteps
 			> = [];
+			let cachedToolCallAnchors: ToolCallAnchor[] = [];
 
 			// 辅助函数：更新消息
 			const updateAssistantMessage = (
 				content: string,
 				newToolCallSteps?: ReturnType<typeof toolCallTracker.getToolCallSteps>,
+				newToolCallAnchors?: ToolCallAnchor[],
 			) => {
 				// 如果传入了非空的新步骤，更新本地缓存
 				if (newToolCallSteps && newToolCallSteps.length > 0) {
 					cachedToolCallSteps = newToolCallSteps;
 				}
+				if (newToolCallAnchors && newToolCallAnchors.length > 0) {
+					cachedToolCallAnchors = newToolCallAnchors;
+				}
 
 				// 使用本地缓存的步骤，确保不会丢失
 				const stepsToUse =
 					cachedToolCallSteps.length > 0 ? cachedToolCallSteps : undefined;
+				const anchorsToUse =
+					cachedToolCallAnchors.length > 0 ? cachedToolCallAnchors : undefined;
 
 				const messageUpdater = (prev: ChatMessage[]) =>
 					prev.map((msg) =>
 						msg.id === assistantMessageId
-							? { ...msg, content, toolCallSteps: stepsToUse }
+							? {
+									...msg,
+									content,
+									toolCallSteps: stepsToUse,
+									toolCallAnchors: anchorsToUse,
+								}
 							: msg,
 					);
 
@@ -257,7 +269,34 @@ export const useSendMessage = ({
 
 						const updatedSteps = toolCallTracker.handleToolEvent(event);
 						if (updatedSteps) {
-							updateAssistantMessage(assistantContent, updatedSteps);
+							let nextAnchors = cachedToolCallAnchors;
+							if (event.type === "tool_call_start") {
+								const existingAnchorIds = new Set(
+									cachedToolCallAnchors.map((anchor) => anchor.stepId),
+								);
+								const existingStepIds = new Set(
+									cachedToolCallSteps.map((step) => step.id),
+								);
+								const newStep = updatedSteps.find(
+									(step) => !existingStepIds.has(step.id),
+								);
+								if (newStep && !existingAnchorIds.has(newStep.id)) {
+									nextAnchors = [
+										...cachedToolCallAnchors,
+										{
+											stepId: newStep.id,
+											toolName: newStep.toolName,
+											toolArgs: newStep.toolArgs,
+											offset: assistantContent.length,
+										},
+									];
+								}
+							}
+							updateAssistantMessage(
+								assistantContent,
+								updatedSteps,
+								nextAnchors,
+							);
 						}
 					},
 				);

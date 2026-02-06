@@ -1,10 +1,11 @@
 "use client";
 
-import { Calendar, Flag, Tag as TagIcon } from "lucide-react";
+import { Calendar, Flag, FolderOpen, Tag as TagIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import type { Todo, TodoPriority, TodoStatus, UpdateTodoInput } from "@/lib/types";
 import { cn, getPriorityLabel, getStatusLabel } from "@/lib/utils";
+import { getTodoFolder, parseTodoFolder } from "@/lib/utils/todoFolder";
 import {
 	formatScheduleSummary,
 	getPriorityClassNames,
@@ -19,6 +20,7 @@ interface MetaSectionProps {
 	onStatusChange: (status: TodoStatus) => void;
 	onPriorityChange: (priority: TodoPriority) => void;
 	onTagsChange: (tags: string[]) => void;
+	onFolderChange: (folder: string | null) => void;
 	onScheduleChange: (input: UpdateTodoInput) => void;
 }
 
@@ -27,6 +29,7 @@ export function MetaSection({
 	onStatusChange,
 	onPriorityChange,
 	onTagsChange,
+	onFolderChange,
 	onScheduleChange,
 }: MetaSectionProps) {
 	const tCommon = useTranslations("common");
@@ -39,7 +42,9 @@ export function MetaSection({
 	const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false);
 	const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 	const [isEditingTags, setIsEditingTags] = useState(false);
+	const [isEditingFolder, setIsEditingFolder] = useState(false);
 	const [tagsInput, setTagsInput] = useState(todo.tags?.join(", ") ?? "");
+	const [folderInput, setFolderInput] = useState(getTodoFolder(todo) ?? "");
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -76,8 +81,10 @@ export function MetaSection({
 		setIsPriorityMenuOpen(false);
 		setIsDatePickerOpen(false);
 		setIsEditingTags(false);
+		setIsEditingFolder(false);
 		setTagsInput(todo.tags?.join(", ") ?? "");
-	}, [todo.tags]);
+		setFolderInput(parseTodoFolder(todo.categories) ?? "");
+	}, [todo.tags, todo.categories]);
 
 	const handleTagsSave = () => {
 		const parsedTags = tagsInput
@@ -94,6 +101,18 @@ export function MetaSection({
 		setIsEditingTags(false);
 	};
 
+	const handleFolderSave = () => {
+		const normalized = folderInput.split(",")[0].trim();
+		onFolderChange(normalized ? normalized : null);
+		setIsEditingFolder(false);
+	};
+
+	const handleFolderClear = () => {
+		onFolderChange(null);
+		setFolderInput("");
+		setIsEditingFolder(false);
+	};
+
 	const scheduleSummary =
 		formatScheduleSummary({
 			startTime: todo.startTime,
@@ -101,6 +120,7 @@ export function MetaSection({
 			timeZone: todo.timeZone,
 			isAllDay: todo.isAllDay,
 		}) || tTodoDetail("addDeadline");
+	const folderLabel = getTodoFolder(todo);
 
 	return (
 		<div className="mb-6 text-sm text-muted-foreground">
@@ -254,6 +274,20 @@ export function MetaSection({
 					</span>
 				</button>
 
+				<button
+					type="button"
+					onClick={() => {
+						setFolderInput(getTodoFolder(todo) ?? "");
+						setIsEditingFolder(true);
+					}}
+					className="flex items-center gap-1 rounded-md border border-transparent px-2 py-1 text-xs transition-colors hover:border-border hover:bg-muted/40"
+				>
+					<FolderOpen className="h-3 w-3" />
+					<span className="truncate">
+						{folderLabel ?? tTodoDetail("addFolder")}
+					</span>
+				</button>
+
 			</div>
 
 			{isEditingTags && (
@@ -285,6 +319,42 @@ export function MetaSection({
 					<button
 						type="button"
 						onClick={handleTagsClear}
+						className="rounded-md border border-destructive/40 px-2 py-1 text-sm text-destructive transition-colors hover:bg-destructive/10"
+					>
+						{tTodoDetail("clear")}
+					</button>
+				</div>
+			)}
+
+			{isEditingFolder && (
+				<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-foreground">
+					<input
+						type="text"
+						value={folderInput}
+						onChange={(e) => setFolderInput(e.target.value)}
+						placeholder={tTodoDetail("folderPlaceholder")}
+						className="min-w-[200px] rounded-md border border-border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+					/>
+					<button
+						type="button"
+						onClick={handleFolderSave}
+						className="rounded-md bg-primary px-2 py-1 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
+					>
+						{tTodoDetail("save")}
+					</button>
+					<button
+						type="button"
+						onClick={() => {
+							setIsEditingFolder(false);
+							setFolderInput(getTodoFolder(todo) ?? "");
+						}}
+						className="rounded-md border border-border px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted/40"
+					>
+						{tTodoDetail("cancel")}
+					</button>
+					<button
+						type="button"
+						onClick={handleFolderClear}
 						className="rounded-md border border-destructive/40 px-2 py-1 text-sm text-destructive transition-colors hover:bg-destructive/10"
 					>
 						{tTodoDetail("clear")}

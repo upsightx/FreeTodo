@@ -348,6 +348,9 @@ export function TodoDetail() {
 							onStatusChange={(status) => updateTodo(todo.id, { status })}
 							onPriorityChange={(priority) => updateTodo(todo.id, { priority })}
 							onTagsChange={(tags) => updateTodo(todo.id, { tags })}
+							onFolderChange={(folder) =>
+								updateTodo(todo.id, { categories: folder ?? null })
+							}
 							onScheduleChange={(input) => updateTodo(todo.id, input)}
 						/>
 
