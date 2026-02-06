@@ -212,6 +212,17 @@ function Show-MissingDeps {
     throw "Missing required dependencies. Install them and retry."
 }
 
+function Invoke-HookSetup {
+    $hookScript = Join-Path (Get-Location).Path "scripts\\setup_hooks_here.ps1"
+    if (Test-Path -LiteralPath $hookScript) {
+        try {
+            & $hookScript
+        } catch {
+            Write-Warning "Failed to configure git hooks: $($_.Exception.Message)"
+        }
+    }
+}
+
 function Install-Winget {
     if (Test-Command "winget") {
         return $true
@@ -422,6 +433,8 @@ if (-not $repoReady -or -not $depsReady) {
 } else {
     Write-Host "Repository is up to date. Skipping install steps."
 }
+
+Invoke-HookSetup
 
 if ($Run -ne "1") {
     Write-Host "Install complete."

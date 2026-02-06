@@ -562,6 +562,13 @@ report_missing() {
   exit 1
 }
 
+configure_hooks() {
+  local hook_script="scripts/setup_hooks_here.sh"
+  if [ -f "$hook_script" ]; then
+    bash "$hook_script" >/dev/null 2>&1 || true
+  fi
+}
+
 download() {
   local url="$1"
   if command -v curl >/dev/null 2>&1; then
@@ -718,6 +725,8 @@ if [ "$REPO_READY" -eq 0 ] || [ "$DEPS_READY" -eq 0 ]; then
 else
   echo "Repository is up to date. Skipping install steps."
 fi
+
+configure_hooks
 
 if [ "$RUN_AFTER_INSTALL" != "1" ]; then
   echo "Install complete."

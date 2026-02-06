@@ -237,7 +237,9 @@ Free Todo's panel switch bar contains some panels that are currently under devel
 
 ### Git Hooks (Pre-commit)
 
-This repo uses a shared `.githooks/` directory. Run the setup script once per clone/worktree:
+This repo uses a shared `.githooks/` directory. Hooks are configured automatically when you run
+`pnpm install` in `free-todo-frontend` or use the install scripts. If you cloned the repo without
+running those, run the setup script once per clone/worktree:
 
 ```bash
 # macOS/Linux

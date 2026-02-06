@@ -66,6 +66,16 @@ def run_link_deps(root: Path, worktree_path: Path, force: bool) -> int:
     return result.returncode
 
 
+def configure_hooks(worktree_path: Path) -> None:
+    hooks_dir = worktree_path / ".githooks"
+    if not hooks_dir.is_dir():
+        print(f"Missing hooks directory: {hooks_dir}", file=sys.stderr)
+        return
+    result = run_git(worktree_path, ["config", "core.hooksPath", ".githooks"], check=False)
+    if result.returncode != 0:
+        print("Warning: failed to configure core.hooksPath for worktree.", file=sys.stderr)
+
+
 def get_repo_root() -> Path:
     git_path = _get_git_path()
     result = subprocess.run(  # nosec B603
@@ -182,6 +192,8 @@ def main() -> int:
 
     if result.returncode != 0:
         return result.returncode
+
+    configure_hooks(worktree_path)
 
     if args.link_deps:
         link_code = run_link_deps(root, worktree_path, force=args.force_link)

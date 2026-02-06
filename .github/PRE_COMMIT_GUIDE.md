@@ -33,7 +33,9 @@ uv sync --group dev
 ### 2. Configure Git Hooks (Repo-Local)
 
 This repo uses a shared `.githooks/` directory (repo-local) instead of `pre-commit install`.
-Run the setup script once per clone/worktree to set `core.hooksPath`:
+Hooks are configured automatically when you run `pnpm install` in `free-todo-frontend` or use
+the install scripts. If you cloned the repo without running those, run the setup script once
+per clone/worktree to set `core.hooksPath`:
 
 ```bash
 # macOS/Linux
