@@ -63,17 +63,16 @@ Packaging:
   which local branch to track. Only fall back to remote detection when needed,
   and detect the remote name first (e.g., `origin`, `upstream`).
 
-## Worktree Dependency Sharing (Recommended)
-- Install dependencies only once in the main worktree.
-- Reuse them in other worktrees via linking scripts:
-  - Windows (PowerShell): `powershell -ExecutionPolicy Bypass -File scripts/link_worktree_deps.ps1 -Main "<main-root>" -Worktree "<worktree-root>"`
-  - macOS/Linux (bash): `scripts/link_worktree_deps.sh --main "<main-root>" --worktree "<worktree-root>"`
-- Optional: add `--force` to overwrite existing links.
+## Worktree Dependencies (Local Install)
+- Each worktree should create its own environments.
+- Backend: run `uv sync --group dev` in the worktree.
+- Frontend: run `pnpm install` in `free-todo-frontend/` in the worktree.
+- Avoid sharing `.venv` or `node_modules` across worktrees; linking scripts are disabled.
 
 ## Integration When Main Is Dirty
 - Keep coding in task worktrees; do not commit on a dirty main worktree.
 - Create a clean integration worktree and cherry-pick task commits into it.
-- Run checks from the integration worktree (using shared dependencies), then merge.
+- Run checks from the integration worktree using its own dependencies, then merge.
 
 ## Security & Configuration Tips
 - Do not commit `lifetrace/config/config.yaml` or `lifetrace/data/`.

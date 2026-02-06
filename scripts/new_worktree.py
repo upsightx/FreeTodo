@@ -159,14 +159,14 @@ def main() -> int:
         "--link-deps",
         dest="link_deps",
         action="store_true",
-        default=True,
-        help="Link worktree deps (.venv, node_modules) from the main worktree (default).",
+        default=False,
+        help="Link worktree deps (.venv, node_modules) from the main worktree (disabled by default).",
     )
     parser.add_argument(
         "--no-link-deps",
         dest="link_deps",
         action="store_false",
-        help="Skip linking worktree deps from the main worktree.",
+        help="Skip linking worktree deps from the main worktree (default).",
     )
     parser.add_argument(
         "--force-link",
@@ -207,6 +207,10 @@ def main() -> int:
         link_code = run_link_deps(root, worktree_path, force=args.force_link)
         if link_code != 0:
             return link_code
+    else:
+        print("Worktree deps not linked. Create local environments in the worktree:")
+        print("  uv sync --group dev")
+        print("  pnpm install")
 
     print(f"Worktree ready: {worktree_path}")
     print(f"Branch: {branch}")

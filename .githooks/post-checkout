@@ -1,37 +1,5 @@
 #!/usr/bin/env sh
 set -u
 
-repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
-if [ -z "$repo_root" ]; then
-  echo "post-checkout: unable to locate repo root; skipping link_worktree_deps." >&2
-  exit 0
-fi
-
-run_ps=0
-sh_script="$repo_root/scripts/link_worktree_deps_here.sh"
-if [ -f "$sh_script" ]; then
-  if command -v bash >/dev/null 2>&1; then
-    bash "$sh_script" || run_ps=1
-  else
-    sh "$sh_script" || run_ps=1
-  fi
-else
-  run_ps=1
-fi
-
-if [ "$run_ps" -eq 1 ]; then
-  ps_script="$repo_root/scripts/link_worktree_deps_here.ps1"
-  if [ -f "$ps_script" ]; then
-    if command -v powershell.exe >/dev/null 2>&1; then
-      powershell.exe -ExecutionPolicy Bypass -File "$ps_script" || true
-    elif command -v pwsh >/dev/null 2>&1; then
-      pwsh -ExecutionPolicy Bypass -File "$ps_script" || true
-    else
-      echo "post-checkout: PowerShell not found; skipping link_worktree_deps." >&2
-    fi
-  else
-    echo "post-checkout: missing link_worktree_deps scripts; skipping." >&2
-  fi
-fi
-
+# Worktree dependency linking is disabled; install deps locally per worktree.
 exit 0
