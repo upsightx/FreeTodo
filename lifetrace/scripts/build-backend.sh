@@ -110,6 +110,17 @@ echo "Verifying dependencies in .venv..."
     exit 1
 }
 
+# Include vector modules in PyInstaller bundle.
+export LIFETRACE_INCLUDE_VECTOR=1
+
+# Enable UPX compression if available.
+if command -v upx &> /dev/null; then
+    export PYINSTALLER_UPX=1
+    echo "UPX found: enabling PyInstaller compression."
+else
+    echo "UPX not found: skipping PyInstaller compression."
+fi
+
 # Clean previous build
 if [ -d "$DIST_DIR" ]; then
     echo "Cleaning previous build..."
