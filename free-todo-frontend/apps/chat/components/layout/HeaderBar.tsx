@@ -12,6 +12,7 @@ type HeaderBarProps = {
 	newChatLabel: string;
 	onToggleHistory: () => void;
 	onNewChat: () => void;
+	historyOpen: boolean;
 };
 
 export function HeaderBar({
@@ -19,28 +20,41 @@ export function HeaderBar({
 	newChatLabel,
 	onToggleHistory,
 	onNewChat,
+	historyOpen,
 }: HeaderBarProps) {
 	const t = useTranslations("page");
+
+	const historyButtonOverrides = historyOpen
+		? {
+				background: "bg-muted/60",
+				hoverBackground: "hover:bg-muted/70",
+				textColor: "text-foreground",
+			}
+		: undefined;
 
 	return (
 		<PanelHeader
 			icon={MessageSquare}
 			title={t("chatLabel")}
-			actions={
-				<>
+			titleAddon={
+				<span data-history-toggle="true">
 					<PanelActionButton
 						variant="default"
 						icon={History}
 						onClick={onToggleHistory}
 						aria-label={chatHistoryLabel}
+						buttonOverrides={historyButtonOverrides}
+						iconOverrides={historyOpen ? { color: "text-foreground" } : undefined}
 					/>
-					<PanelActionButton
-						variant="default"
-						icon={PlusCircle}
-						onClick={onNewChat}
-						aria-label={newChatLabel}
-					/>
-				</>
+				</span>
+			}
+			actions={
+				<PanelActionButton
+					variant="default"
+					icon={PlusCircle}
+					onClick={onNewChat}
+					aria-label={newChatLabel}
+				/>
 			}
 		/>
 	);

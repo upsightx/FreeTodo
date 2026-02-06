@@ -40,8 +40,10 @@ export const useChatController = ({
 	const {
 		conversationId,
 		historyOpen,
+		historyPinned,
 		setConversationId,
 		setHistoryOpen,
+		setHistoryPinned,
 	} = useChatStore();
 
 	const resetBreakdown = useBreakdownStore((state) => state.resetBreakdown);
@@ -183,6 +185,8 @@ export const useChatController = ({
 		setError,
 		historyOpen,
 		setHistoryOpen,
+		historyPinned,
+		setHistoryPinned,
 		historyLoading,
 		historyError,
 		sessions,

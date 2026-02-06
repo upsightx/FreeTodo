@@ -15,6 +15,8 @@ type HistoryDrawerProps = {
 		chatHistory: string;
 	};
 	onSelectSession: (id: string) => void;
+	className?: string;
+	listClassName?: string;
 };
 
 export function HistoryDrawer({
@@ -25,9 +27,13 @@ export function HistoryDrawer({
 	formatMessageCount,
 	labels,
 	onSelectSession,
+	className,
+	listClassName,
 }: HistoryDrawerProps) {
 	return (
-		<div className="border-b border-border bg-muted/40 px-4 py-3">
+		<div
+			className={cn("border-b border-border bg-muted/40 px-4 py-3", className)}
+		>
 			<div className="mb-2 flex items-center justify-between">
 				<p className="text-sm font-medium text-foreground">
 					{labels.recentSessions}
@@ -43,7 +49,12 @@ export function HistoryDrawer({
 				<p className="text-xs text-destructive">{historyError}</p>
 			)}
 			{!historyError && (
-				<div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+				<div
+					className={cn(
+						"max-h-72 space-y-2 overflow-y-auto pr-1",
+						listClassName,
+					)}
+				>
 					{!historyLoading && sessions.length === 0 ? (
 						<p className="text-xs text-muted-foreground">{labels.noHistory}</p>
 					) : (

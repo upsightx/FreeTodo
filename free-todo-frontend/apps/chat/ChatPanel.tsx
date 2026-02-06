@@ -1,7 +1,8 @@
 "use client";
 
+import { History, Pin, PinOff } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BreakdownStageRenderer } from "@/apps/chat/components/breakdown/BreakdownStageRenderer";
 import { ChatInputSection } from "@/apps/chat/components/input/ChatInputSection";
 import { PromptSuggestions } from "@/apps/chat/components/input/PromptSuggestions";
@@ -10,14 +11,17 @@ import { HistoryDrawer } from "@/apps/chat/components/layout/HistoryDrawer";
 import { MessageList } from "@/apps/chat/components/message/MessageList";
 import { useBreakdownQuestionnaire } from "@/apps/chat/hooks/useBreakdownQuestionnaire";
 import { useChatController } from "@/apps/chat/hooks/useChatController";
+import { PanelActionButton } from "@/components/common/layout/PanelHeader";
 import { useChatStore } from "@/lib/store/chat-store";
 import { useLocaleStore } from "@/lib/store/locale";
 import { useTodoStore } from "@/lib/store/todo-store";
+import { cn } from "@/lib/utils";
 
 export function ChatPanel() {
 	const { locale } = useLocaleStore();
 	const tChat = useTranslations("chat");
 	const tPage = useTranslations("page");
+	const tPanelMenu = useTranslations("panelMenu");
 
 	// 从 Zustand 获取 UI 状态
 	const { selectedTodoIds, clearTodoSelection, toggleTodoSelection } =
@@ -60,6 +64,37 @@ export function ChatPanel() {
 	}, [pendingPrompt, pendingNewChat, chatController, setPendingPrompt]);
 
 	const [showTodosExpanded, setShowTodosExpanded] = useState(false);
+	const historyPanelRef = useRef<HTMLDivElement | null>(null);
+
+	const {
+		historyOpen,
+		setHistoryOpen,
+		historyPinned,
+		setHistoryPinned,
+	} = chatController;
+
+	const isHistoryDocked = historyOpen && historyPinned;
+
+	useEffect(() => {
+		if (!historyOpen || historyPinned) {
+			return undefined;
+		}
+
+		const handlePointerDown = (event: PointerEvent) => {
+			const target = event.target as HTMLElement | null;
+			if (!target) return;
+
+			if (historyPanelRef.current?.contains(target)) return;
+			if (target.closest('[data-history-toggle="true"]')) return;
+
+			setHistoryOpen(false);
+		};
+
+		document.addEventListener("pointerdown", handlePointerDown, true);
+		return () => {
+			document.removeEventListener("pointerdown", handlePointerDown, true);
+		};
+	}, [historyOpen, historyPinned, setHistoryOpen]);
 
 	const typingText = useMemo(() => tChat("aiThinking"), [tChat]);
 
@@ -82,83 +117,129 @@ export function ChatPanel() {
 			<HeaderBar
 				chatHistoryLabel={tPage("chatHistory")}
 				newChatLabel={tPage("newChat")}
-				onToggleHistory={() =>
-					chatController.setHistoryOpen(!chatController.historyOpen)
-				}
+				onToggleHistory={() => setHistoryOpen(!historyOpen)}
 				onNewChat={chatController.handleNewChat}
+				historyOpen={historyOpen}
 			/>
 
-			{chatController.historyOpen && (
-				<HistoryDrawer
-					historyLoading={chatController.historyLoading}
-					historyError={chatController.historyError}
-					sessions={chatController.sessions}
-					conversationId={chatController.conversationId}
-					formatMessageCount={formatMessageCount}
-					labels={{
-						recentSessions: tPage("recentSessions"),
-						noHistory: tPage("noHistory"),
-						loading: tChat("loading"),
-						chatHistory: tPage("chatHistory"),
-					}}
-					onSelectSession={chatController.handleLoadSession}
-				/>
-			)}
+			<div className="relative flex min-h-0 flex-1">
+				<div
+					ref={historyPanelRef}
+					aria-hidden={!historyOpen}
+					className={cn(
+						"absolute left-0 top-0 z-30 flex h-full w-72 flex-col border-r border-border bg-background/95 shadow-lg backdrop-blur-sm transition-transform duration-200 ease-out",
+						"sm:w-80",
+						historyOpen
+							? "translate-x-0 opacity-100"
+							: "-translate-x-full opacity-0 pointer-events-none",
+					)}
+				>
+					<div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+						<div className="flex items-center gap-2 text-sm font-medium text-foreground">
+							<History className="h-4 w-4 text-muted-foreground" />
+							<span>{tPage("chatHistory")}</span>
+							{historyPinned && (
+								<span className="inline-flex items-center gap-1 rounded-full border border-amber-200/70 bg-amber-50/80 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+									<Pin className="h-3 w-3" />
+									{tPanelMenu("pinnedBadge")}
+								</span>
+							)}
+						</div>
+						<PanelActionButton
+							variant="default"
+							icon={historyPinned ? PinOff : Pin}
+							onClick={() => setHistoryPinned(!historyPinned)}
+							aria-label={
+								historyPinned
+									? tPanelMenu("unpinPanel")
+									: tPanelMenu("pinPanel")
+							}
+						/>
+					</div>
 
-			<BreakdownStageRenderer
-				stage={breakdownQuestionnaire.stage}
-				questions={breakdownQuestionnaire.questions}
-				answers={breakdownQuestionnaire.answers}
-				summary={breakdownQuestionnaire.summary}
-				subtasks={breakdownQuestionnaire.subtasks}
-				breakdownLoading={breakdownQuestionnaire.breakdownLoading}
-				isGeneratingSummary={breakdownQuestionnaire.isGeneratingSummary}
-				summaryStreamingText={breakdownQuestionnaire.summaryStreamingText}
-				isGeneratingQuestions={breakdownQuestionnaire.isGeneratingQuestions}
-				questionStreamingCount={breakdownQuestionnaire.questionStreamingCount}
-				questionStreamingTitle={breakdownQuestionnaire.questionStreamingTitle}
-				breakdownError={breakdownQuestionnaire.breakdownError}
-				locale={locale}
-				onAnswerChange={breakdownQuestionnaire.setAnswer}
-				onSubmit={breakdownQuestionnaire.handleSubmitAnswers}
-				onAccept={breakdownQuestionnaire.handleAcceptBreakdown}
-			/>
+					<HistoryDrawer
+						historyLoading={chatController.historyLoading}
+						historyError={chatController.historyError}
+						sessions={chatController.sessions}
+						conversationId={chatController.conversationId}
+						formatMessageCount={formatMessageCount}
+						labels={{
+							recentSessions: tPage("recentSessions"),
+							noHistory: tPage("noHistory"),
+							loading: tChat("loading"),
+							chatHistory: tPage("chatHistory"),
+						}}
+						onSelectSession={chatController.handleLoadSession}
+						className="flex h-full min-h-0 flex-col border-b-0 bg-transparent"
+						listClassName="min-h-0 max-h-none flex-1"
+					/>
+				</div>
 
-			{(breakdownQuestionnaire.stage === "idle" ||
-				breakdownQuestionnaire.stage === "completed") && (
-				<MessageList
-					messages={chatController.messages}
-					isStreaming={chatController.isStreaming}
-					typingText={typingText}
-					effectiveTodos={chatController.effectiveTodos}
-				/>
-			)}
+				<div
+					className={cn(
+						"flex min-h-0 flex-1 flex-col",
+						isHistoryDocked && "pl-72 sm:pl-80",
+					)}
+				>
+					<BreakdownStageRenderer
+						stage={breakdownQuestionnaire.stage}
+						questions={breakdownQuestionnaire.questions}
+						answers={breakdownQuestionnaire.answers}
+						summary={breakdownQuestionnaire.summary}
+						subtasks={breakdownQuestionnaire.subtasks}
+						breakdownLoading={breakdownQuestionnaire.breakdownLoading}
+						isGeneratingSummary={breakdownQuestionnaire.isGeneratingSummary}
+						summaryStreamingText={breakdownQuestionnaire.summaryStreamingText}
+						isGeneratingQuestions={breakdownQuestionnaire.isGeneratingQuestions}
+						questionStreamingCount={breakdownQuestionnaire.questionStreamingCount}
+						questionStreamingTitle={breakdownQuestionnaire.questionStreamingTitle}
+						breakdownError={breakdownQuestionnaire.breakdownError}
+						locale={locale}
+						onAnswerChange={breakdownQuestionnaire.setAnswer}
+						onSubmit={breakdownQuestionnaire.handleSubmitAnswers}
+						onAccept={breakdownQuestionnaire.handleAcceptBreakdown}
+					/>
 
-			{/* 首页时在输入框上方显示建议按钮 */}
-			{shouldShowSuggestions &&
-				(breakdownQuestionnaire.stage === "idle" ||
-					breakdownQuestionnaire.stage === "completed") && (
-					<PromptSuggestions onSelect={handleSelectPrompt} className="pb-4" />
-				)}
+					{(breakdownQuestionnaire.stage === "idle" ||
+						breakdownQuestionnaire.stage === "completed") && (
+						<MessageList
+							messages={chatController.messages}
+							isStreaming={chatController.isStreaming}
+							typingText={typingText}
+							effectiveTodos={chatController.effectiveTodos}
+						/>
+					)}
 
-			<ChatInputSection
-				locale={locale}
-				inputValue={chatController.inputValue}
-				isStreaming={chatController.isStreaming}
-				error={chatController.error}
-				effectiveTodos={chatController.effectiveTodos}
-				hasSelection={chatController.hasSelection}
-				showTodosExpanded={showTodosExpanded}
-				onInputChange={chatController.setInputValue}
-				onSend={chatController.handleSend}
-				onStop={chatController.handleStop}
-				onKeyDown={chatController.handleKeyDown}
-				onCompositionStart={() => chatController.setIsComposing(true)}
-				onCompositionEnd={() => chatController.setIsComposing(false)}
-				onToggleExpand={() => setShowTodosExpanded((prev) => !prev)}
-				onClearSelection={clearTodoSelection}
-				onToggleTodo={toggleTodoSelection}
-			/>
+					{/* 首页时在输入框上方显示建议按钮 */}
+					{shouldShowSuggestions &&
+						(breakdownQuestionnaire.stage === "idle" ||
+							breakdownQuestionnaire.stage === "completed") && (
+							<PromptSuggestions
+								onSelect={handleSelectPrompt}
+								className="pb-4"
+							/>
+						)}
+
+					<ChatInputSection
+						locale={locale}
+						inputValue={chatController.inputValue}
+						isStreaming={chatController.isStreaming}
+						error={chatController.error}
+						effectiveTodos={chatController.effectiveTodos}
+						hasSelection={chatController.hasSelection}
+						showTodosExpanded={showTodosExpanded}
+						onInputChange={chatController.setInputValue}
+						onSend={chatController.handleSend}
+						onStop={chatController.handleStop}
+						onKeyDown={chatController.handleKeyDown}
+						onCompositionStart={() => chatController.setIsComposing(true)}
+						onCompositionEnd={() => chatController.setIsComposing(false)}
+						onToggleExpand={() => setShowTodosExpanded((prev) => !prev)}
+						onClearSelection={clearTodoSelection}
+						onToggleTodo={toggleTodoSelection}
+					/>
+				</div>
+			</div>
 		</div>
 	);
 }

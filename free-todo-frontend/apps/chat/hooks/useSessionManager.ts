@@ -131,7 +131,8 @@ export const useSessionManager = ({
 	 */
 	const handleNewChat = useCallback(
 		(keepStreaming = false) => {
-			const currentSessionId = useChatStore.getState().conversationId;
+			const { conversationId: currentSessionId, historyPinned } =
+				useChatStore.getState();
 
 			// 保存当前对话的消息到缓存
 			if (currentSessionId) {
@@ -155,7 +156,9 @@ export const useSessionManager = ({
 			setMessages([]);
 			setInputValue("");
 			setError(null);
-			setHistoryOpen(false);
+			if (!historyPinned) {
+				setHistoryOpen(false);
+			}
 		},
 		[
 			setConversationId,
@@ -175,7 +178,8 @@ export const useSessionManager = ({
 	 */
 	const handleLoadSession = useCallback(
 		async (sessionId: string) => {
-			const currentSessionId = useChatStore.getState().conversationId;
+			const { conversationId: currentSessionId, historyPinned } =
+				useChatStore.getState();
 
 			// 1. 先保存当前对话的消息到缓存
 			if (currentSessionId) {
@@ -208,7 +212,9 @@ export const useSessionManager = ({
 
 			// 4. 更新 conversationId，触发 TanStack Query 获取历史记录
 			setConversationId(sessionId);
-			setHistoryOpen(false);
+			if (!historyPinned) {
+				setHistoryOpen(false);
+			}
 		},
 		[
 			setConversationId,
