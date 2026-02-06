@@ -47,50 +47,23 @@ export function MessageItem({
 	const contentWithoutToolCalls = sanitizedContent
 		? removeToolCalls(sanitizedContent)
 		: "";
+	const trimmedContent = contentWithoutToolCalls.trim();
 
 	// 获取新的工具调用步骤（来自 toolCallSteps 属性）
 	const toolCallSteps = message.toolCallSteps || [];
 	const hasToolCallSteps = toolCallSteps.length > 0;
-
-	// 判断是否正在工具调用（有工具调用标记且移除标记后内容为空）
-	// 或者有新的 toolCallSteps 且没有内容
-	// 注意：只要有 toolCallSteps（无论是 running 还是 completed），就显示工具调用步骤
-	const isToolCallingOnly =
-		isStreaming &&
-		isLastMessage &&
-		message.role === "assistant" &&
-		((toolCalls.length > 0 && !contentWithoutToolCalls.trim()) ||
-			(hasToolCallSteps && !contentWithoutToolCalls.trim()));
-
-	// 如果正在工具调用且没有实际内容，显示工具调用步骤
-	if (isToolCallingOnly) {
-		// 优先使用新的 toolCallSteps
-		if (hasToolCallSteps) {
-			return (
-				<div className="flex flex-col items-start w-full px-4">
-					<ToolCallSteps steps={toolCallSteps} />
-				</div>
-			);
+	const hasLegacyToolCalls = toolCalls.length > 0;
+	const hasToolCallBlock =
+		message.role === "assistant" && (hasToolCallSteps || hasLegacyToolCalls);
+	const lastToolCall = hasLegacyToolCalls
+		? toolCalls[toolCalls.length - 1]
+		: undefined;
+	let legacySearchQuery: string | undefined;
+	if (lastToolCall?.params) {
+		const keywordMatch = lastToolCall.params.match(/关键词:\s*(.+)/);
+		if (keywordMatch) {
+			legacySearchQuery = keywordMatch[1].trim();
 		}
-
-		// 降级到旧的 ToolCallLoading（兼容旧的工具调用标记）
-		const lastToolCall = toolCalls[toolCalls.length - 1];
-		// 提取搜索关键词（如果参数中包含"关键词:"）
-		let searchQuery: string | undefined;
-		if (lastToolCall.params) {
-			const keywordMatch = lastToolCall.params.match(/关键词:\s*(.+)/);
-			if (keywordMatch) {
-				searchQuery = keywordMatch[1].trim();
-			}
-		}
-		return (
-			<div className="flex flex-col items-start w-full px-4">
-				<ToolCallLoading
-					toolName={lastToolCall.name}
-					searchQuery={searchQuery}
-				/>
-			</div>
-		);
 	}
 
 	// 判断是否是正在等待首次回复的空 assistant 消息
@@ -98,14 +71,15 @@ export function MessageItem({
 		isStreaming &&
 		isLastMessage &&
 		message.role === "assistant" &&
-		!contentWithoutToolCalls.trim();
+		!trimmedContent;
 
 	// 跳过没有内容的非 streaming assistant 消息
 	// 注意：这里使用 contentWithoutToolCalls 来判断，排除工具调用标记
 	if (
-		!contentWithoutToolCalls.trim() &&
+		!trimmedContent &&
 		message.role === "assistant" &&
-		!isEmptyStreamingMessage
+		!isEmptyStreamingMessage &&
+		!hasToolCallBlock
 	) {
 		return null;
 	}
@@ -114,7 +88,7 @@ export function MessageItem({
 	// 使用 contentWithoutToolCalls 来判断，排除工具调用标记
 	const isAssistantMessageWithContent =
 		message.role === "assistant" &&
-		contentWithoutToolCalls.trim() &&
+		trimmedContent &&
 		!isEmptyStreamingMessage;
 
 	// 处理消息菜单按钮点击
@@ -135,18 +109,14 @@ export function MessageItem({
 				message.role === "assistant" ? "items-start" : "items-end",
 			)}
 		>
-			{/* 空的 streaming 消息显示 loading 指示器 */}
-			{isEmptyStreamingMessage ? (
-				<div className="flex items-center gap-2 rounded-full bg-muted px-3 py-2 text-xs text-muted-foreground">
-					<Loader2 className="h-4 w-4 animate-spin" />
-					{typingText}
-				</div>
-			) : (
-				<div className="max-w-[80%]">
-					{/* 工具调用步骤（显示在消息内容之前） */}
-					{message.role === "assistant" && hasToolCallSteps && (
-						<ToolCallSteps steps={toolCallSteps} className="mb-2" />
-					)}
+			<div className="max-w-[80%] flex flex-col">
+				{/* 空的 streaming 消息显示 loading 指示器 */}
+				{isEmptyStreamingMessage ? (
+					<div className="flex items-center gap-2 rounded-full bg-muted px-3 py-2 text-xs text-muted-foreground">
+						<Loader2 className="h-4 w-4 animate-spin" />
+						{typingText}
+					</div>
+				) : (
 					<div
 						ref={handleMessageBoxRef}
 						role="group"
@@ -183,8 +153,22 @@ export function MessageItem({
 							<MessageContent message={message} />
 						</div>
 					</div>
-				</div>
-			)}
+				)}
+
+				{/* 工具调用步骤（显示在消息内容之后） */}
+				{hasToolCallBlock && (
+					<div className="mt-2">
+						{hasToolCallSteps ? (
+							<ToolCallSteps steps={toolCallSteps} />
+						) : (
+							<ToolCallLoading
+								toolName={lastToolCall?.name ?? ""}
+								searchQuery={legacySearchQuery}
+							/>
+						)}
+					</div>
+				)}
+			</div>
 			{/* 提取待办面板 - 显示在消息下方 */}
 			{extractionState && (
 				<div
