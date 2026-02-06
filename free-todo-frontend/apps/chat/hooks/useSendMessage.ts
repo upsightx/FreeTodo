@@ -380,13 +380,15 @@ export const useSendMessage = ({
 				}
 
 				// 检查是否应该更新 isStreaming
-				const currentDisplayedSessionId =
-					useChatStore.getState().conversationId;
-				if (
-					requestSessionId &&
-					currentDisplayedSessionId === requestSessionId
-				) {
-					setIsStreaming(false);
+				if (streamController.isActiveRequest(requestId)) {
+					const currentDisplayedSessionId =
+						useChatStore.getState().conversationId;
+					if (
+						!requestSessionId ||
+						currentDisplayedSessionId === requestSessionId
+					) {
+						setIsStreaming(false);
+					}
 				}
 
 				// 清理 abortController
