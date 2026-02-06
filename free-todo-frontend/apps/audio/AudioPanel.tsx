@@ -248,7 +248,7 @@ export function AudioPanel() {
 	})} 录音`;
 
 	const Icon = FEATURE_ICON_MAP.audio;
-	const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+	const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 	const handlePlayFromTranscription = useCallback(() => {
 		if (!selectedRecordingId) return;

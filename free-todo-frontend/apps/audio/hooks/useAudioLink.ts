@@ -35,7 +35,7 @@ type ExtractionData = {
  * 用于将提取的待办/日程关联到待办列表
  */
 export function useAudioLink() {
-	const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+	const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 	/**
 	 * Link extracted items to todos

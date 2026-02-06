@@ -4,7 +4,7 @@
  */
 function getStreamApiBaseUrl(): string {
 	// 流式请求始终直接调用后端，避免 Next.js 代理导致的缓冲/压缩问题
-	return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+	return process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 }
 
 // ============================================================================
@@ -342,7 +342,7 @@ export function getScreenshotImage(id: number): string {
 	const baseUrl =
 		typeof window !== "undefined"
 			? ""
-			: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+			: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 	return `${baseUrl}/api/screenshots/${id}/image`;
 }
 

@@ -4,7 +4,7 @@ export default defineConfig({
 	lifetrace: {
 		input: {
 			// 从后端获取 OpenAPI schema
-			target: "http://localhost:8001/openapi.json",
+			target: "http://127.0.0.1:8001/openapi.json",
 		},
 		output: {
 			// 生成文件的目标目录
