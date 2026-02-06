@@ -7,9 +7,7 @@ type HistoryDrawerProps = {
 	historyError: string | null;
 	sessions: ChatSessionSummary[];
 	conversationId: string | null;
-	formatMessageCount: (count?: number) => string;
 	labels: {
-		recentSessions: string;
 		noHistory: string;
 		loading: string;
 		chatHistory: string;
@@ -24,7 +22,6 @@ export function HistoryDrawer({
 	historyError,
 	sessions,
 	conversationId,
-	formatMessageCount,
 	labels,
 	onSelectSession,
 	className,
@@ -34,17 +31,12 @@ export function HistoryDrawer({
 		<div
 			className={cn("border-b border-border bg-muted/40 px-4 py-3", className)}
 		>
-			<div className="mb-2 flex items-center justify-between">
-				<p className="text-sm font-medium text-foreground">
-					{labels.recentSessions}
-				</p>
-				{historyLoading && (
-					<span className="flex items-center gap-2 text-xs text-muted-foreground">
-						<Loader2 className="h-3.5 w-3.5 animate-spin" />
-						{labels.loading}
-					</span>
-				)}
-			</div>
+			{historyLoading && (
+				<div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+					<Loader2 className="h-3.5 w-3.5 animate-spin" />
+					{labels.loading}
+				</div>
+			)}
 			{historyError && (
 				<p className="text-xs text-destructive">{historyError}</p>
 			)}
@@ -77,22 +69,9 @@ export function HistoryDrawer({
 										: "",
 								)}
 							>
-								<div className="flex items-center justify-between gap-2">
-									<span className="font-medium text-foreground">
-										{session.title || labels.chatHistory}
-									</span>
-									<span className="text-[11px] text-muted-foreground">
-										{formatMessageCount(session.messageCount)}
-									</span>
-								</div>
-								<div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
-									<span className="truncate">
-										{session.lastActive || session.sessionId}
-									</span>
-									<span className="uppercase tracking-wide">
-										{session.chatType || "default"}
-									</span>
-								</div>
+								<span className="block truncate font-medium text-foreground">
+									{session.title || labels.chatHistory}
+								</span>
 							</button>
 						))
 					)}

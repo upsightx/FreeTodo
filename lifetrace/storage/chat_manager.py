@@ -12,9 +12,6 @@ from lifetrace.util.time_utils import get_utc_now
 
 logger = get_logger()
 
-# 聊天标题最大长度
-CHAT_TITLE_MAX_LENGTH = 50
-
 
 class ChatManager:
     """聊天管理类"""
@@ -220,13 +217,6 @@ class ChatManager:
 
                 # 更新会话的最后消息时间
                 chat.last_message_at = get_utc_now()
-
-                # 如果会话没有标题且这是第一条用户消息，可以设置标题
-                if not chat.title and role == "user":
-                    # 使用消息内容的前N个字符作为标题
-                    chat.title = content[:CHAT_TITLE_MAX_LENGTH] + (
-                        "..." if len(content) > CHAT_TITLE_MAX_LENGTH else ""
-                    )
 
                 session.flush()
 

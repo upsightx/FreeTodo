@@ -8,6 +8,7 @@ from lifetrace.schemas.chat import ChatMessageWithContext
 from lifetrace.services.chat_service import ChatService
 
 from .base import _create_llm_stream_generator, logger, router
+from .helpers import schedule_chat_title_update
 
 
 @router.post("/stream-with-context")
@@ -24,7 +25,16 @@ async def chat_with_context_stream(
         # 1. 确保会话存在（事件助手类型）
         session_id = _ensure_context_stream_session(message, chat_service)
 
-        # 2. 基于上下文构建 messages / temperature，并处理 RAG 失败场景
+        # 2. 生成并更新聊天标题（后台执行，不阻塞主请求）
+        context_text = _build_event_context_text(message.event_context)
+        schedule_chat_title_update(
+            chat_service=chat_service,
+            session_id=session_id,
+            user_input=message.message,
+            context=context_text,
+        )
+
+        # 3. 基于上下文构建 messages / temperature，并处理 RAG 失败场景
         (
             messages,
             temperature,
@@ -33,14 +43,14 @@ async def chat_with_context_stream(
         if error_response is not None:
             return error_response
 
-        # 3. 保存用户消息到数据库
+        # 4. 保存用户消息到数据库
         chat_service.add_message(
             session_id=session_id,
             role="user",
             content=message.message,
         )
 
-        # 4. 调用统一的 LLM 流式生成器
+        # 5. 调用统一的 LLM 流式生成器
         rag_svc = get_rag_service()
         token_generator = _create_llm_stream_generator(
             rag_svc=rag_svc,
@@ -58,7 +68,7 @@ async def chat_with_context_stream(
             },
         )
 
-        # 5. 返回流式响应
+        # 6. 返回流式响应
         headers = {
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",
@@ -84,11 +94,9 @@ def _ensure_context_stream_session(
 
     chat = chat_service.get_chat_by_session_id(session_id)
     if not chat:
-        title = message.message[:50] if len(message.message) > 50 else message.message  # noqa: PLR2004
         chat_service.create_chat(
             session_id=session_id,
             chat_type="event",
-            title=title,
         )
         logger.info(f"[stream-with-context] 在数据库中创建会话: {session_id}")
 
