@@ -453,6 +453,91 @@ class Transcription(TimestampMixin, table=True):
         return f"<Transcription(id={self.id}, audio_recording_id={self.audio_recording_id})>"
 
 
+# ========== Agent 执行计划模型 ==========
+
+
+class AgentPlan(TimestampMixin, table=True):
+    """Agent 执行计划模型"""
+
+    __tablename__: ClassVar[str] = "agent_plans"
+
+    plan_id: str = Field(primary_key=True, max_length=64)
+    title: str = Field(max_length=200)
+    spec_json: str = Field(sa_column=Column(Text))
+    todo_id: int | None = None
+    session_id: str | None = Field(default=None, max_length=100)
+
+    def __repr__(self):
+        return f"<AgentPlan(plan_id={self.plan_id}, title={self.title})>"
+
+
+class AgentPlanRun(TimestampMixin, table=True):
+    """Agent 执行计划运行记录"""
+
+    __tablename__: ClassVar[str] = "agent_plan_runs"
+
+    run_id: str = Field(primary_key=True, max_length=64)
+    plan_id: str = Field(max_length=64, index=True)
+    status: str = Field(default="pending", max_length=20)
+    session_id: str | None = Field(default=None, max_length=100)
+    error: str | None = Field(default=None, sa_column=Column(Text))
+    rollback_status: str | None = Field(default=None, max_length=20)
+    rollback_error: str | None = Field(default=None, sa_column=Column(Text))
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
+    cancel_requested: bool = Field(default=False)
+
+    def __repr__(self):
+        return f"<AgentPlanRun(run_id={self.run_id}, plan_id={self.plan_id}, status={self.status})>"
+
+
+class AgentPlanStep(TimestampMixin, table=True):
+    """Agent 执行计划步骤记录"""
+
+    __tablename__: ClassVar[str] = "agent_plan_steps"
+
+    id: int | None = Field(default=None, primary_key=True)
+    run_id: str = Field(max_length=64, index=True)
+    step_id: str = Field(max_length=64)
+    step_name: str = Field(max_length=200)
+    status: str = Field(default="pending", max_length=20)
+    retry_count: int = Field(default=0)
+    input_json: str | None = Field(default=None, sa_column=Column(Text))
+    output_json: str | None = Field(default=None, sa_column=Column(Text))
+    error: str | None = Field(default=None, sa_column=Column(Text))
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
+    is_side_effect: bool = Field(default=False)
+    rollback_required: bool = Field(default=False)
+
+    def __repr__(self):
+        return (
+            f"<AgentPlanStep(run_id={self.run_id}, step_id={self.step_id}, status={self.status})>"
+        )
+
+
+class AgentPlanJournal(TimestampMixin, table=True):
+    """Agent 执行计划回滚日志"""
+
+    __tablename__: ClassVar[str] = "agent_plan_journals"
+
+    journal_id: str = Field(primary_key=True, max_length=64)
+    run_id: str = Field(max_length=64, index=True)
+    step_id: str = Field(max_length=64)
+    op_type: str = Field(max_length=20)
+    target_path: str | None = Field(default=None, max_length=500)
+    backup_path: str | None = Field(default=None, max_length=500)
+    trash_path: str | None = Field(default=None, max_length=500)
+    from_path: str | None = Field(default=None, max_length=500)
+    to_path: str | None = Field(default=None, max_length=500)
+    created_paths_json: str | None = Field(default=None, sa_column=Column(Text))
+    status: str = Field(default="applied", max_length=20)
+    error: str | None = Field(default=None, sa_column=Column(Text))
+
+    def __repr__(self):
+        return f"<AgentPlanJournal(journal_id={self.journal_id}, op_type={self.op_type})>"
+
+
 # 为兼容旧代码，保留 Base 引用（指向 SQLModel.metadata）
 # 这样现有的 Base.metadata.create_all() 调用仍然有效
 Base = SQLModel

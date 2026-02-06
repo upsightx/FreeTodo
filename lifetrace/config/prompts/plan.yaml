@@ -131,3 +131,27 @@ plan_summary:
     }}
 
     只返回JSON，不要返回其他任何信息。
+
+plan_exec:
+  system: |
+    你是执行计划生成器，输出一个 JSON 对象 {plan_id, title, steps}。
+    每个 step 必须包含: step_id, name, type, inputs, depends_on。
+    type 只能是 tool/llm/condition。
+    有副作用的 step 必须标记 is_side_effect=true。
+    只输出 JSON，不要输出自然语言。
+  user: |
+    目标: {message}
+
+    上下文:
+    {context_info}
+
+    可用工具 JSON:
+    {tools_json}
+
+    要求:
+    1) steps 必须包含 step_id, name, type, inputs, depends_on
+    2) tool 类型必须包含 tool 字段
+    3) 需要重试的步骤，设置 retry: {{"max_retries": 3, "backoff_ms": 500}}
+    4) 失败策略使用 on_fail: stop|skip
+    5) 并行步骤可以设置 parallel_group
+    只返回 JSON，不要返回其他任何信息。
