@@ -21,6 +21,7 @@ interface TodoToolbarProps {
 	onFilterChange: (filter: TodoFilterState) => void;
 	isSidebarOpen: boolean;
 	onToggleSidebar: () => void;
+	sidebarToggleRef?: React.RefObject<HTMLButtonElement>;
 }
 
 export function TodoToolbar({
@@ -31,6 +32,7 @@ export function TodoToolbar({
 	onFilterChange,
 	isSidebarOpen,
 	onToggleSidebar,
+	sidebarToggleRef,
 }: TodoToolbarProps) {
 	const t = useTranslations("page");
 	const tTodoList = useTranslations("todoList");
@@ -71,6 +73,7 @@ export function TodoToolbar({
 	const sidebarToggle = (
 		<button
 			type="button"
+			ref={sidebarToggleRef}
 			onClick={onToggleSidebar}
 			onPointerDown={(event) => event.stopPropagation()}
 			aria-label={tTodoList("toggleSidebar")}

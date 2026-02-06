@@ -25,6 +25,7 @@ interface TodoSidebarProps {
 	onFilterChange: (filter: TodoFilterState) => void;
 	isPinned: boolean;
 	onTogglePinned: () => void;
+	sidebarRef?: React.RefObject<HTMLElement>;
 }
 
 const statusOptions: { value: TodoStatus | "all"; labelKey: string }[] = [
@@ -53,6 +54,7 @@ export function TodoSidebar({
 	onFilterChange,
 	isPinned,
 	onTogglePinned,
+	sidebarRef,
 }: TodoSidebarProps) {
 	const tTodoList = useTranslations("todoList");
 
@@ -119,6 +121,7 @@ export function TodoSidebar({
 
 	return (
 		<aside
+			ref={sidebarRef}
 			aria-hidden={mode === "floating" && !isOpen}
 			className={cn(
 				baseClasses,

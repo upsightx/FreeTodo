@@ -10,7 +10,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type React from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MultiTodoContextMenu } from "@/components/common/context-menu/MultiTodoContextMenu";
 import type { DragData } from "@/lib/dnd";
 import { useTodoMutations, useTodos } from "@/lib/query";
@@ -49,6 +49,8 @@ export function TodoList() {
 	const [isCompletedCollapsed, setIsCompletedCollapsed] = useState(true);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const [isSidebarPinned, setIsSidebarPinned] = useState(false);
+	const sidebarRef = useRef<HTMLElement | null>(null);
+	const sidebarToggleRef = useRef<HTMLButtonElement | null>(null);
 	const [filter, setFilter] = useState<TodoFilterState>({
 		status: "all",
 		folder: "all",
@@ -316,6 +318,32 @@ export function TodoList() {
 		}
 	};
 
+	const handleToggleSidebar = () => {
+		setIsSidebarOpen((prev) => {
+			const next = !prev;
+			if (next && !prev) {
+				setIsSidebarPinned(false);
+			}
+			return next;
+		});
+	};
+
+	useEffect(() => {
+		if (!isSidebarOpen || isSidebarPinned) return;
+
+		const handleClickOutside = (event: MouseEvent) => {
+			const target = event.target as Node;
+			if (sidebarRef.current?.contains(target)) return;
+			if (sidebarToggleRef.current?.contains(target)) return;
+			setIsSidebarOpen(false);
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, [isSidebarOpen, isSidebarPinned]);
+
 	// 加载状态
 	if (isLoading) {
 		return (
@@ -336,16 +364,6 @@ export function TodoList() {
 		);
 	}
 
-	const handleToggleSidebar = () => {
-		setIsSidebarOpen((prev) => {
-			const next = !prev;
-			if (next && !prev) {
-				setIsSidebarPinned(false);
-			}
-			return next;
-		});
-	};
-
 	return (
 		<div className="relative flex h-full flex-col overflow-hidden bg-background dark:bg-background">
 			<TodoToolbar
@@ -356,6 +374,7 @@ export function TodoList() {
 				onFilterChange={setFilter}
 				isSidebarOpen={isSidebarOpen}
 				onToggleSidebar={handleToggleSidebar}
+				sidebarToggleRef={sidebarToggleRef}
 			/>
 
 			<div className="relative flex flex-1 overflow-hidden">
@@ -440,6 +459,7 @@ export function TodoList() {
 					onFilterChange={setFilter}
 					isPinned={isSidebarPinned}
 					onTogglePinned={() => setIsSidebarPinned((prev) => !prev)}
+					sidebarRef={sidebarRef}
 				/>
 			</div>
 		</div>
