@@ -73,7 +73,7 @@ export interface CreateTodoInput {
 	parentTodoId?: number | null;
 	itemType?: string;
 	location?: string;
-	categories?: string;
+	categories?: string | null;
 	classification?: string;
 	deadline?: string;
 	startTime?: string;
