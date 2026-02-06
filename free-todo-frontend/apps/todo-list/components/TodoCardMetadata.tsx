@@ -1,5 +1,6 @@
-import { Calendar, Paperclip, Tag } from "lucide-react";
+import { Calendar, FolderOpen, Paperclip, Tag } from "lucide-react";
 import type { Todo } from "@/lib/types";
+import { getTodoFolder } from "@/lib/utils/todoFolder";
 import { formatScheduleLabel } from "../utils/todoCardUtils";
 
 interface TodoCardMetadataProps {
@@ -11,6 +12,7 @@ export function TodoCardMetadata({ todo }: TodoCardMetadataProps) {
 		todo.startTime ||
 		todo.endTime ||
 		(todo.attachments && todo.attachments.length > 0) ||
+		todo.categories ||
 		(todo.tags && todo.tags.length > 0);
 
 	if (!hasMetadata) {
@@ -18,6 +20,7 @@ export function TodoCardMetadata({ todo }: TodoCardMetadataProps) {
 	}
 
 	const scheduleLabel = formatScheduleLabel(todo.startTime, todo.endTime);
+	const folder = getTodoFolder(todo);
 
 	return (
 		<div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
@@ -32,6 +35,13 @@ export function TodoCardMetadata({ todo }: TodoCardMetadataProps) {
 				<div className="flex items-center gap-1 rounded-md bg-muted/40 px-2 py-1">
 					<Paperclip className="h-3 w-3" />
 					<span>{todo.attachments.length}</span>
+				</div>
+			)}
+
+			{folder && (
+				<div className="flex items-center gap-1 rounded-md bg-muted/40 px-2 py-1">
+					<FolderOpen className="h-3 w-3" />
+					<span>{folder}</span>
 				</div>
 			)}
 
