@@ -23,6 +23,7 @@ import type { ToolCallEvent } from "@/lib/api";
 import { sendChatMessageStream } from "@/lib/api";
 import { queryKeys } from "@/lib/query/keys";
 import { useChatStore } from "@/lib/store/chat-store";
+import { toastInfo } from "@/lib/toast";
 import type { Todo } from "@/lib/types";
 
 /**
@@ -204,6 +205,43 @@ export const useSendMessage = ({
 				}
 			};
 
+			const buildMemoryToastMessage = (event: ToolCallEvent) => {
+				const items: string[] = [];
+
+				if (Array.isArray(event.profile_updates)) {
+					for (const update of event.profile_updates) {
+						const field = update.field.replace(/_/g, " ");
+						items.push(
+							t("memorySavedFieldFormat", {
+								field,
+								value: String(update.value),
+							}),
+						);
+					}
+				}
+
+				if (Array.isArray(event.memories)) {
+					for (const memory of event.memories) {
+						if (memory) {
+							items.push(memory);
+						}
+					}
+				}
+
+				if (items.length === 0) {
+					return t("memorySavedFallback");
+				}
+
+				const separator = t("memorySavedSeparator");
+				const content = items.join(separator);
+				const more =
+					typeof event.more_count === "number" && event.more_count > 0
+						? t("memorySavedMore", { count: event.more_count })
+						: "";
+
+				return t("memorySavedToast", { content, more });
+			};
+
 			try {
 				const modeForBackend = getModeForBackend();
 
@@ -266,6 +304,11 @@ export const useSendMessage = ({
 					// onToolEvent 回调
 					(event: ToolCallEvent) => {
 						if (abortController.signal.aborted) return;
+
+						if (event.type === "memory_saved") {
+							toastInfo(buildMemoryToastMessage(event), { duration: 3500 });
+							return;
+						}
 
 						const updatedSteps = toolCallTracker.handleToolEvent(event);
 						if (updatedSteps) {

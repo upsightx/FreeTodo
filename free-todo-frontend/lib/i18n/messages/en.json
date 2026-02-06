@@ -404,6 +404,11 @@
 		"generateQuestionsFailed": "Failed to generate questions, please try again",
 		"generateSummaryFailed": "Failed to generate summary, please try again",
 		"loading": "Loading",
+		"memorySavedToast": "Remembered: {content}{more}",
+		"memorySavedMore": " (+{count} more)",
+		"memorySavedSeparator": "; ",
+		"memorySavedFieldFormat": "{field}: {value}",
+		"memorySavedFallback": "I remembered something from this chat.",
 		"suggestions": {
 			"breakdown": "Break Down Task",
 			"breakdownPrompt": "Help me break down this task",
