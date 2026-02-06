@@ -1,13 +1,18 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { WelcomeGreetings } from "@/apps/chat/components/layout/WelcomeGreetings";
 import { useMessageExtraction } from "@/apps/chat/hooks/useMessageExtraction";
 import { useMessageScroll } from "@/apps/chat/hooks/useMessageScroll";
-import type { ChatMessage } from "@/apps/chat/types";
+import type { ChatMessage, ToolCallAnchor, ToolCallStep } from "@/apps/chat/types";
 import { useContextMenu } from "@/components/common/context-menu/BaseContextMenu";
 import { useTodos } from "@/lib/query";
 import type { Todo } from "@/lib/types";
 import { MessageContextMenu } from "./MessageContextMenu";
 import { MessageItem } from "./MessageItem";
+import { ToolCallBlock } from "./ToolCallBlock";
+import {
+	removeToolEvents,
+	splitContentByToolCalls,
+} from "./utils/messageContentUtils";
 
 type MessageListProps = {
 	messages: ChatMessage[];
@@ -15,6 +20,22 @@ type MessageListProps = {
 	typingText: string;
 	effectiveTodos?: Todo[];
 };
+
+type RenderBlock =
+	| {
+			type: "message";
+			key: string;
+			message: ChatMessage;
+			content: string;
+			isLastBlock: boolean;
+			showMenu: boolean;
+			showExtraction: boolean;
+		}
+	| {
+			type: "tool";
+			key: string;
+			steps: ToolCallStep[];
+		};
 
 export function MessageList({
 	messages,
@@ -97,6 +118,233 @@ export function MessageList({
 		});
 	};
 
+	const parseToolArgs = useCallback(
+		(params?: string): Record<string, string> | undefined => {
+			if (!params) return undefined;
+
+			const result: Record<string, string> = {};
+			const entries = params
+				.split(",")
+				.map((entry) => entry.trim())
+				.filter(Boolean);
+
+			for (const entry of entries) {
+				const separatorIndex = entry.indexOf(":");
+				if (separatorIndex === -1) continue;
+				const key = entry.slice(0, separatorIndex).trim();
+				const value = entry.slice(separatorIndex + 1).trim();
+				if (key) {
+					result[key] = value;
+				}
+			}
+
+			return Object.keys(result).length > 0 ? result : undefined;
+		},
+		[],
+	);
+
+	const buildLegacyToolStep = useCallback(
+		(
+			messageId: string,
+			index: number,
+			name: string,
+			params: string | undefined,
+			status: ToolCallStep["status"],
+		): ToolCallStep => ({
+			id: `${messageId}-legacy-${index}`,
+			toolName: name || "tool",
+			toolArgs: parseToolArgs(params),
+			status,
+			startTime: 0,
+			endTime: status === "completed" ? 0 : undefined,
+		}),
+		[parseToolArgs],
+	);
+
+	const buildAnchorFallbackStep = useCallback(
+		(
+			anchor: ToolCallAnchor,
+			status: ToolCallStep["status"],
+		): ToolCallStep => ({
+			id: anchor.stepId,
+			toolName: anchor.toolName,
+			toolArgs: anchor.toolArgs,
+			status,
+			startTime: 0,
+			endTime: status === "completed" ? 0 : undefined,
+		}),
+		[],
+	);
+
+	const buildAssistantBlocks = useCallback(
+		(message: ChatMessage, isLastMessage: boolean): RenderBlock[] => {
+			const blocks: RenderBlock[] = [];
+			const rawContent = message.content || "";
+			const anchors = (message.toolCallAnchors || [])
+				.filter((anchor) => Number.isFinite(anchor.offset))
+				.slice()
+				.sort((a, b) => a.offset - b.offset);
+
+			const pushMessageBlock = (content: string, allowEmpty: boolean) => {
+				if (!content && !allowEmpty) return;
+				if (!content.trim() && !allowEmpty) return;
+				blocks.push({
+					type: "message",
+					key: `${message.id}-segment-${blocks.length}`,
+					message,
+					content,
+					isLastBlock: false,
+					showMenu: false,
+					showExtraction: false,
+				});
+			};
+
+			if (anchors.length > 0) {
+				let cursor = 0;
+				for (const anchor of anchors) {
+					const safeOffset = Math.min(anchor.offset, rawContent.length);
+					const segment = rawContent.slice(cursor, safeOffset);
+					pushMessageBlock(segment, false);
+
+					const step =
+						message.toolCallSteps?.find((item) => item.id === anchor.stepId) ||
+						buildAnchorFallbackStep(
+							anchor,
+							isStreaming && isLastMessage ? "running" : "completed",
+						);
+					blocks.push({
+						type: "tool",
+						key: `${message.id}-tool-${anchor.stepId}`,
+						steps: [step],
+					});
+					cursor = safeOffset;
+				}
+
+				const tail = rawContent.slice(cursor);
+				const allowEmptyTail = isStreaming && isLastMessage;
+				pushMessageBlock(tail, allowEmptyTail);
+
+				const remainingSteps =
+					message.toolCallSteps?.filter(
+						(step) => !anchors.some((anchor) => anchor.stepId === step.id),
+					) || [];
+				for (const step of remainingSteps) {
+					blocks.push({
+						type: "tool",
+						key: `${message.id}-tool-${step.id}`,
+						steps: [step],
+					});
+				}
+
+				return blocks;
+			}
+
+			const sanitizedContent = rawContent
+				? removeToolEvents(rawContent)
+				: "";
+			const segments = splitContentByToolCalls(sanitizedContent);
+			const toolSegments = segments.filter((segment) => segment.type === "tool");
+			let toolIndex = 0;
+			const lastToolIndex = toolSegments.length - 1;
+
+			if (segments.length > 0 && toolSegments.length > 0) {
+				for (const segment of segments) {
+					if (segment.type === "text") {
+						pushMessageBlock(segment.content, false);
+						continue;
+					}
+
+					const status =
+						isStreaming && isLastMessage && toolIndex === lastToolIndex
+							? "running"
+							: "completed";
+					blocks.push({
+						type: "tool",
+						key: `${message.id}-tool-${toolIndex}`,
+						steps: [
+							buildLegacyToolStep(
+								message.id,
+								toolIndex,
+								segment.name,
+								segment.params,
+								status,
+							),
+						],
+					});
+					toolIndex += 1;
+				}
+
+				const endsWithTool =
+					segments.length > 0 &&
+					segments[segments.length - 1].type === "tool";
+				if (endsWithTool && isStreaming && isLastMessage) {
+					pushMessageBlock("", true);
+				}
+
+				return blocks;
+			}
+
+			pushMessageBlock(sanitizedContent, isStreaming && isLastMessage);
+
+			const steps = message.toolCallSteps || [];
+			for (const step of steps) {
+				blocks.push({
+					type: "tool",
+					key: `${message.id}-tool-${step.id}`,
+					steps: [step],
+				});
+			}
+
+			return blocks;
+		},
+		[buildAnchorFallbackStep, buildLegacyToolStep, isStreaming],
+	);
+
+	const renderState = useMemo(() => {
+		const blocks: RenderBlock[] = [];
+
+		messages.forEach((message, index) => {
+			const isLastMessage = index === messages.length - 1;
+			if (message.role === "user") {
+				blocks.push({
+					type: "message",
+					key: `${message.id}-segment-0`,
+					message,
+					content: message.content,
+					isLastBlock: false,
+					showMenu: false,
+					showExtraction: false,
+				});
+				return;
+			}
+
+			blocks.push(...buildAssistantBlocks(message, isLastMessage));
+		});
+
+		let lastMessageBlockIndex = -1;
+		for (let i = blocks.length - 1; i >= 0; i -= 1) {
+			if (blocks[i].type === "message") {
+				lastMessageBlockIndex = i;
+				break;
+			}
+		}
+
+		blocks.forEach((block, index) => {
+			if (block.type === "message") {
+				block.isLastBlock = index === lastMessageBlockIndex;
+			}
+		});
+
+		const lastContentBlockKeyById = new Map<string, string>();
+		blocks.forEach((block) => {
+			if (block.type === "message" && block.content.trim().length > 0) {
+				lastContentBlockKeyById.set(block.message.id, block.key);
+			}
+		});
+
+		return { blocks, lastContentBlockKeyById };
+	}, [messages, buildAssistantBlocks]);
+
 	// 如果应该显示首页，则显示欢迎界面而不是消息列表
 	if (shouldShowSuggestions) {
 		return (
@@ -112,19 +360,33 @@ export function MessageList({
 			ref={messageListRef}
 			onScroll={handleScroll}
 		>
-			{messages.map((msg, index) => {
-				const isLastMessage = index === messages.length - 1;
-				const extractionState = extractionStates.get(msg.id);
+			{renderState.blocks.map((block) => {
+				if (block.type === "tool") {
+					return <ToolCallBlock key={block.key} steps={block.steps} />;
+				}
+
+				const { message, content, isLastBlock } = block;
+				const extractionState = extractionStates.get(message.id);
+				const isAssistantMessage = message.role === "assistant";
+				const shouldShowMenu = isAssistantMessage && content.trim().length > 0;
+				const shouldShowExtraction = shouldShowMenu;
+				const isLastContentBlockForMessage =
+					renderState.lastContentBlockKeyById.get(message.id) === block.key;
 
 				return (
 					<MessageItem
-						key={msg.id}
-						message={msg}
-						isLastMessage={isLastMessage}
+						key={block.key}
+						message={message}
+						contentOverride={content}
+						isLastMessage={isLastBlock}
 						isStreaming={isStreaming}
 						typingText={typingText}
 						extractionState={extractionState}
-						onRemoveExtractionState={() => removeExtractionState(msg.id)}
+						showMenu={shouldShowMenu && isLastContentBlockForMessage}
+						showExtractionPanel={
+							shouldShowExtraction && isLastContentBlockForMessage
+						}
+						onRemoveExtractionState={() => removeExtractionState(message.id)}
 						onMenuButtonClick={handleMenuButtonClick}
 						onMessageBoxRef={(messageId, ref) => {
 							if (ref) {
