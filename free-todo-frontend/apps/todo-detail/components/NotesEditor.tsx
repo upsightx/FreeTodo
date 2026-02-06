@@ -1,13 +1,8 @@
 "use client";
 
-import type { Editor } from "@tiptap/core";
-import Placeholder from "@tiptap/extension-placeholder";
-import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import MarkdownIt from "markdown-it";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
-import TurndownService from "turndown";
+import { useState } from "react";
 import { SectionHeader } from "@/components/common/layout/SectionHeader";
 
 interface NotesEditorProps {
@@ -18,6 +13,21 @@ interface NotesEditorProps {
 	onBlur?: () => void;
 }
 
+const NotesEditorBody = dynamic(
+	() =>
+		import("./NotesEditorBody").then((mod) => ({
+			default: mod.NotesEditorBody,
+		})),
+	{
+		ssr: false,
+		loading: () => (
+			<div className="px-2 py-2 text-xs text-muted-foreground">
+				Loading editor...
+			</div>
+		),
+	},
+);
+
 export function NotesEditor({
 	value,
 	show,
@@ -27,56 +37,6 @@ export function NotesEditor({
 }: NotesEditorProps) {
 	const t = useTranslations("todoDetail");
 	const [isHovered, setIsHovered] = useState(false);
-	const lastValueRef = useRef(value);
-
-	const markdownParser = useMemo(
-		() => new MarkdownIt({ breaks: true, linkify: true }),
-		[],
-	);
-	const turndown = useMemo(() => {
-		const service = new TurndownService({
-			codeBlockStyle: "fenced",
-			emDelimiter: "*",
-		});
-		service.keep(["del"]);
-		return service;
-	}, []);
-
-	const editor = useEditor({
-		immediatelyRender: false,
-		extensions: [
-			StarterKit,
-			Placeholder.configure({
-				placeholder: t("notesPlaceholder"),
-				emptyEditorClass: "text-muted-foreground",
-			}),
-		],
-		content: value ? markdownParser.render(value) : "",
-		onUpdate: ({ editor }: { editor: Editor }) => {
-			const html = editor.getHTML();
-			const markdown = turndown.turndown(html);
-			lastValueRef.current = markdown;
-			onChange(markdown);
-		},
-		onBlur: () => {
-			onBlur?.();
-		},
-		editorProps: {
-			attributes: {
-				class:
-					"min-h-[140px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary",
-			},
-		},
-	});
-
-	useEffect(() => {
-		if (!editor) return;
-		if (value === lastValueRef.current) return;
-		editor.commands.setContent(value ? markdownParser.render(value) : "", {
-			emitUpdate: false,
-		});
-		lastValueRef.current = value;
-	}, [editor, markdownParser, value]);
 
 	return (
 		<div
@@ -94,7 +54,12 @@ export function NotesEditor({
 			/>
 			{show && (
 				<div className="prose prose-sm max-w-none">
-					<EditorContent editor={editor} />
+					<NotesEditorBody
+						value={value}
+						placeholder={t("notesPlaceholder")}
+						onChange={onChange}
+						onBlur={onBlur}
+					/>
 				</div>
 			)}
 		</div>
