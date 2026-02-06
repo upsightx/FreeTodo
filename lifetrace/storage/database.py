@@ -3,6 +3,7 @@
 """
 
 from lifetrace.storage.activity_manager import ActivityManager
+from lifetrace.storage.agent_plan_manager import AgentPlanManager
 from lifetrace.storage.automation_task_manager import AutomationTaskManager
 from lifetrace.storage.chat_manager import ChatManager
 from lifetrace.storage.database_base import DatabaseBase
@@ -29,6 +30,7 @@ stats_mgr = StatsManager(db_base)
 journal_mgr = JournalManager(db_base)
 activity_mgr = ActivityManager(db_base)
 automation_task_mgr = AutomationTaskManager(db_base)
+agent_plan_mgr = AgentPlanManager(db_base)
 
 # ===== 向后兼容：保留原有的接口 =====
 engine = db_base.engine
