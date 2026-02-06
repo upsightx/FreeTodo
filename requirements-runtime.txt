@@ -21,6 +21,7 @@ hdbscan>=0.8.0
 apscheduler>=3.10.0
 psutil>=5.9.0
 openai>=1.0.0
+litellm>=1.57.7
 dashscope>=1.17.0
 agno>=2.4.1
 ddgs>=8.0.0

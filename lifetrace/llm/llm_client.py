@@ -1,17 +1,15 @@
 """
 LLM客户端模块
-提供与OpenAI兼容API的交互
+提供与LiteLLM的交互（OpenAI兼容格式）
 """
 
 import contextlib
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
 
-from openai import OpenAI
-
-if TYPE_CHECKING:
-    from openai.types.chat import ChatCompletionMessageParam
-else:
-    ChatCompletionMessageParam = Any
+try:
+    import litellm
+except Exception:  # pragma: no cover - 仅在依赖缺失时触发
+    litellm = None
 
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.settings import settings
@@ -29,9 +27,89 @@ from .llm_client_vision import vision_chat
 
 logger = get_logger()
 
+INVALID_LLM_VALUES = [
+    "",
+    "xxx",
+    "YOUR_API_KEY_HERE",
+    "YOUR_BASE_URL_HERE",
+    "YOUR_LLM_KEY_HERE",
+]
+
+
+def _is_valid_value(value: str | None) -> bool:
+    return bool(value) and value not in INVALID_LLM_VALUES
+
+
+def resolve_litellm_model(model: str | None, base_url: str | None) -> str:
+    """将模型名转换为 LiteLLM 可识别的格式。"""
+    if not model:
+        return ""
+    if "/" in model:
+        return model
+    if _is_valid_value(base_url):
+        return f"openai/{model}"
+    return model
+
+
+def build_litellm_params(
+    api_key: str | None,
+    base_url: str | None,
+    model: str | None = None,
+) -> dict[str, Any]:
+    """构建 LiteLLM 调用参数（兼容 OpenAI-compatible endpoint）。"""
+    params: dict[str, Any] = {}
+    if _is_valid_value(api_key):
+        params["api_key"] = api_key
+    provider = (model or "").split("/", 1)[0].lower() if model else ""
+    if _is_valid_value(base_url) and provider in ("", "openai"):
+        params["api_base"] = base_url
+    return params
+
+
+def test_litellm_connection(
+    api_key: str | None,
+    base_url: str | None,
+    model: str | None,
+    *,
+    timeout: int = 10,
+) -> str:
+    """发送最小化请求验证 LiteLLM 连接，返回解析后的模型名称。"""
+    if litellm is None:
+        raise RuntimeError("litellm 依赖未安装")
+    resolved_model = resolve_litellm_model(model, base_url)
+    if not resolved_model:
+        raise ValueError("模型名称不能为空")
+    params = build_litellm_params(api_key, base_url, resolved_model)
+    litellm.completion(
+        model=resolved_model,
+        messages=[{"role": "user", "content": "test"}],
+        max_tokens=5,
+        timeout=timeout,
+        **params,
+    )
+    return resolved_model
+
+
+class _LiteLLMChatCompletions:
+    def __init__(self, client: "LLMClient") -> None:
+        self._client = client
+
+    def create(self, **kwargs: Any):
+        return self._client._completion(**kwargs)
+
+
+class _LiteLLMChat:
+    def __init__(self, client: "LLMClient") -> None:
+        self.completions = _LiteLLMChatCompletions(client)
+
+
+class _LiteLLMClient:
+    def __init__(self, client: "LLMClient") -> None:
+        self.chat = _LiteLLMChat(client)
+
 
 class LLMClient:
-    """LLM客户端，用于与OpenAI兼容的API进行交互（单例模式）"""
+    """LLM客户端，用于与OpenAI兼容的API进行交互（LiteLLM，单例模式）"""
 
     _instance = None
     _initialized = False
@@ -56,15 +134,9 @@ class LLMClient:
             self.base_url = settings.llm.base_url
             self.model = settings.llm.model
 
-            invalid_values = [
-                "xxx",
-                "YOUR_API_KEY_HERE",
-                "YOUR_BASE_URL_HERE",
-                "YOUR_LLM_KEY_HERE",
-            ]
-            if not self.api_key or self.api_key in invalid_values:
+            if not _is_valid_value(self.api_key):
                 logger.warning("LLM Key未配置或为默认占位符，LLM功能可能不可用")
-            if not self.base_url or self.base_url in invalid_values:
+            if not _is_valid_value(self.base_url):
                 logger.warning("Base URL未配置或为默认占位符，LLM功能可能不可用")
         except Exception as e:
             logger.error(f"无法从配置文件读取LLM配置: {e}")
@@ -74,11 +146,13 @@ class LLMClient:
             logger.warning("使用硬编码默认值初始化LLM客户端")
 
         try:
-            if OpenAI is None:
-                raise ImportError("openai 依赖未安装")
-            self.client = OpenAI(base_url=self.base_url, api_key=self.api_key)
-            logger.info(f"LLM客户端初始化成功，使用模型: {self.model}")
-            logger.info(f"API Base URL: {self.base_url}")
+            if litellm is None:
+                raise ImportError("litellm 依赖未安装")
+            self.client = _LiteLLMClient(self)
+            resolved_model = resolve_litellm_model(self.model, self.base_url)
+            logger.info(f"LiteLLM客户端初始化成功，使用模型: {resolved_model or self.model}")
+            if _is_valid_value(self.base_url):
+                logger.info(f"API Base URL: {self.base_url}")
         except Exception as e:
             logger.error(f"LLM客户端初始化失败: {e}")
             self.client = None
@@ -104,10 +178,24 @@ class LLMClient:
         """检查LLM客户端是否可用"""
         return self.client is not None
 
-    def _get_client(self) -> OpenAI:
+    def _get_client(self):
         if self.client is None:
             raise RuntimeError("LLM客户端不可用，无法进行请求")
         return self.client
+
+    def _completion(self, **kwargs: Any):
+        if litellm is None:
+            raise RuntimeError("litellm 依赖未安装")
+        model = kwargs.pop("model", None) or self.model
+        messages = kwargs.pop("messages", [])
+        resolved_model = resolve_litellm_model(model, self.base_url)
+        params = build_litellm_params(self.api_key, self.base_url, resolved_model)
+        params.update(kwargs)
+        return litellm.completion(
+            model=resolved_model,
+            messages=messages,
+            **params,
+        )
 
     def classify_intent(self, user_query: str) -> dict[str, Any]:
         """分类用户意图"""
@@ -145,10 +233,9 @@ class LLMClient:
             raise RuntimeError("LLM客户端不可用，无法进行文本聊天")
 
         try:
-            client = self._get_client()
-            response = client.chat.completions.create(
+            response = self._completion(
                 model=model or self.model,
-                messages=cast("list[ChatCompletionMessageParam]", messages),
+                messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
@@ -170,10 +257,9 @@ class LLMClient:
         try:
             # 关闭 enable_thinking 以提升性能（方案 B）
             # 如果未来需要思考模式，可以通过参数控制
-            client = self._get_client()
-            stream = client.chat.completions.create(
+            stream = self._completion(
                 model=model or self.model,
-                messages=cast("list[ChatCompletionMessageParam]", messages),
+                messages=messages,
                 temperature=temperature,
                 # extra_body={"enable_thinking": True},  # 已移除以提升性能
                 stream=True,
@@ -226,3 +312,38 @@ class LLMClient:
     def _fallback_summary(self, query: str, context_data: list[dict[str, Any]]) -> str:
         """备用总结（向后兼容）"""
         return fallback_summary(query, context_data)
+
+    def get_model_info(self, model: str | None = None) -> dict[str, Any]:
+        """获取模型信息（价格/上下文窗口/模态支持等）。"""
+        if litellm is None:
+            raise RuntimeError("litellm 依赖未安装")
+        resolved_model = resolve_litellm_model(model or self.model, self.base_url)
+        info: dict[str, Any] = {"model": resolved_model or (model or self.model)}
+
+        cost_map = getattr(litellm, "model_cost", {}) or {}
+        model_keys = [resolved_model]
+        if resolved_model and "/" in resolved_model:
+            model_keys.append(resolved_model.split("/", 1)[1])
+        if model and model not in model_keys:
+            model_keys.append(model)
+
+        for key in model_keys:
+            if key in cost_map:
+                info.update(cost_map[key])
+                break
+
+        with contextlib.suppress(Exception):
+            info.setdefault("max_tokens", litellm.get_max_tokens(resolved_model))
+
+        modalities = ["text"]
+        if info.get("supports_vision") or info.get("max_images_per_prompt"):
+            modalities.append("vision")
+        if info.get("supports_audio") or info.get("max_audio_per_prompt"):
+            modalities.append("audio")
+        if info.get("supports_pdf_input"):
+            modalities.append("pdf")
+        if info.get("max_video_length") or info.get("max_videos_per_prompt"):
+            modalities.append("video")
+        info["supported_modalities"] = modalities
+
+        return info

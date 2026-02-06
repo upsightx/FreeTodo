@@ -19,7 +19,7 @@ def parse_query_with_llm(client, model: str, user_query: str) -> dict[str, Any]:
     """使用LLM解析用户查询
 
     Args:
-        client: OpenAI客户端
+        client: OpenAI兼容客户端
         model: 模型名称
         user_query: 用户查询
 
@@ -193,7 +193,7 @@ def generate_summary_with_llm(
     """使用LLM生成摘要
 
     Args:
-        client: OpenAI客户端
+        client: OpenAI兼容客户端
         model: 模型名称
         query: 用户查询
         context_data: 上下文数据

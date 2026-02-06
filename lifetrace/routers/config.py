@@ -7,6 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+from lifetrace.llm.llm_client import test_litellm_connection
 from lifetrace.services.config_service import ConfigService, is_llm_configured
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.prompt_loader import get_prompt
@@ -48,23 +49,12 @@ def verify_llm_connection_on_startup():
         return
 
     try:
-        from openai import OpenAI  # noqa: PLC0415
-    except Exception as exc:
-        logger.warning(f"OpenAI 依赖未安装，跳过启动时验证: {exc}")
-        return
-
-    try:
         api_key = settings.llm.api_key
         base_url = settings.llm.base_url
         model = settings.llm.model
 
-        # 创建临时客户端进行测试
-        client = OpenAI(api_key=api_key, base_url=base_url)
-
         # 发送最小化测试请求验证认证
-        client.chat.completions.create(
-            model=model, messages=[{"role": "user", "content": "test"}], max_tokens=5
-        )
+        test_litellm_connection(api_key, base_url, model, timeout=10)
 
         _llm_connection_state["verified"] = True
         logger.info("LLM 启动时连接验证成功")
@@ -124,18 +114,16 @@ async def test_llm_config(config_data: dict[str, str]):
     """测试LLM配置是否可用（仅验证认证）"""
     model = ""
     try:
-        try:
-            from openai import OpenAI  # noqa: PLC0415
-        except Exception as exc:
-            return {"success": False, "error": f"OpenAI 依赖未安装: {exc}"}
-
         # 同时支持 camelCase 和 snake_case 格式（前端 fetcher 会自动转换为 snake_case）
         llm_key = _get_config_value(config_data, "llmApiKey", "llm_api_key")
         base_url = _get_config_value(config_data, "llmBaseUrl", "llm_base_url")
         model = _get_config_value(config_data, "llmModel", "llm_model")
 
-        if not llm_key or not base_url:
-            return {"success": False, "error": "LLM Key 和 Base URL 不能为空"}
+        if not llm_key:
+            return {"success": False, "error": "LLM Key 不能为空"}
+        requires_base_url = not model or "/" not in model
+        if requires_base_url and not base_url:
+            return {"success": False, "error": "Base URL 不能为空（模型未指定提供商前缀）"}
 
         # 验证 API Key 格式（针对阿里云）
         if base_url and "aliyun" in base_url.lower():
@@ -145,15 +133,10 @@ async def test_llm_config(config_data: dict[str, str]):
 
         logger.info(f"开始测试 LLM 配置 - 模型: {model}, Key前缀: {llm_key[:10]}...")
 
-        # 创建临时客户端进行测试
-        client = OpenAI(api_key=llm_key, base_url=base_url)
-
         # 发送最小化测试请求验证认证
         try:
-            client.chat.completions.create(
-                model=model, messages=[{"role": "user", "content": "test"}], max_tokens=5
-            )
-            logger.info(f"LLM配置测试成功 - 模型: {model}")
+            resolved_model = test_litellm_connection(llm_key, base_url, model, timeout=10)
+            logger.info(f"LLM配置测试成功 - 模型: {resolved_model}")
             return {"success": True, "message": "配置验证成功"}
         except Exception as e:
             logger.error(f"LLM配置测试失败: {e} - 模型: {model}, Key前缀: {llm_key[:10]}...")
@@ -450,10 +433,11 @@ def _validate_config_fields(config_data: dict[str, str]) -> dict[str, Any] | Non
     missing_fields = []
     if not llm_key:
         missing_fields.append("llmApiKey")
-    if not base_url:
-        missing_fields.append("llmBaseUrl")
     if not model:
         missing_fields.append("llmModel")
+    requires_base_url = not model or "/" not in model
+    if requires_base_url and not base_url:
+        missing_fields.append("llmBaseUrl")
 
     if missing_fields:
         return {
@@ -465,7 +449,7 @@ def _validate_config_fields(config_data: dict[str, str]) -> dict[str, Any] | Non
     if not isinstance(llm_key, str) or not llm_key.strip():
         return {"success": False, "error": "LLM Key必须是非空字符串"}
 
-    if not isinstance(base_url, str) or not base_url.strip():
+    if requires_base_url and (not isinstance(base_url, str) or not base_url.strip()):
         return {"success": False, "error": "Base URL必须是非空字符串"}
 
     if not isinstance(model, str) or not model.strip():
