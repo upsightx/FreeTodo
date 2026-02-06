@@ -13,12 +13,14 @@ import {
 
 type MessageContentProps = {
 	message: ChatMessage;
+	contentOverride?: string;
 };
 
-export function MessageContent({ message }: MessageContentProps) {
+export function MessageContent({ message, contentOverride }: MessageContentProps) {
 	// 移除工具调用标记后的内容
-	const contentWithoutToolCalls = message.content
-		? removeToolCalls(removeToolEvents(message.content))
+	const rawContent = contentOverride ?? message.content;
+	const contentWithoutToolCalls = rawContent
+		? removeToolCalls(removeToolEvents(rawContent))
 		: "";
 
 	// 无论是否启用联网搜索，只要消息内容包含 Sources 标记就解析
