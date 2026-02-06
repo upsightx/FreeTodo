@@ -157,13 +157,21 @@ def main() -> int:
     )
     parser.add_argument(
         "--link-deps",
+        dest="link_deps",
         action="store_true",
-        help="Link worktree deps (.venv, node_modules) from the main worktree.",
+        default=True,
+        help="Link worktree deps (.venv, node_modules) from the main worktree (default).",
+    )
+    parser.add_argument(
+        "--no-link-deps",
+        dest="link_deps",
+        action="store_false",
+        help="Skip linking worktree deps from the main worktree.",
     )
     parser.add_argument(
         "--force-link",
         action="store_true",
-        help="Force replace existing linked deps when used with --link-deps.",
+        help="Force replace existing linked deps.",
     )
     args = parser.parse_args()
 
