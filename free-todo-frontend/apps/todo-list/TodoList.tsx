@@ -19,6 +19,7 @@ import { useTodoStore } from "@/lib/store/todo-store";
 import type { CreateTodoInput, Todo } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { TodoFilterState } from "./components/TodoFilter";
+import { TodoSidebar } from "./components/TodoSidebar";
 import { useOrderedTodos } from "./hooks/useOrderedTodos";
 import { NewTodoInlineForm } from "./NewTodoInlineForm";
 import { TodoToolbar } from "./TodoToolbar";
@@ -46,8 +47,11 @@ export function TodoList() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [newTodoName, setNewTodoName] = useState("");
 	const [isCompletedCollapsed, setIsCompletedCollapsed] = useState(true);
+	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+	const [isSidebarPinned, setIsSidebarPinned] = useState(false);
 	const [filter, setFilter] = useState<TodoFilterState>({
 		status: "all",
+		folder: "all",
 		tag: "all",
 		dueTime: "all",
 	});
@@ -332,6 +336,16 @@ export function TodoList() {
 		);
 	}
 
+	const handleToggleSidebar = () => {
+		setIsSidebarOpen((prev) => {
+			const next = !prev;
+			if (next && !prev) {
+				setIsSidebarPinned(false);
+			}
+			return next;
+		});
+	};
+
 	return (
 		<div className="relative flex h-full flex-col overflow-hidden bg-background dark:bg-background">
 			<TodoToolbar
@@ -340,68 +354,94 @@ export function TodoList() {
 				todos={todos}
 				filter={filter}
 				onFilterChange={setFilter}
+				isSidebarOpen={isSidebarOpen}
+				onToggleSidebar={handleToggleSidebar}
 			/>
 
-			<MultiTodoContextMenu selectedTodoIds={selectedTodoIds}>
-				<div className="flex-1 overflow-y-auto">
-					<div className="px-6 py-4 pb-4">
-						<NewTodoInlineForm
-							value={newTodoName}
-							onChange={setNewTodoName}
-							onSubmit={handleCreateTodo}
-							onCancel={() => setNewTodoName("")}
-						/>
-					</div>
+			<div className="relative flex flex-1 overflow-hidden">
+				{isSidebarOpen && isSidebarPinned && (
+					<TodoSidebar
+						mode="pinned"
+						isOpen={isSidebarOpen}
+						todos={todos}
+						filter={filter}
+						onFilterChange={setFilter}
+						isPinned={isSidebarPinned}
+						onTogglePinned={() => setIsSidebarPinned((prev) => !prev)}
+					/>
+				)}
 
-					{filteredTodos.length === 0 ? (
-						<div className="flex h-[200px] items-center justify-center px-4 text-sm text-muted-foreground">
-							{tTodoList("noTodos")}
+				<MultiTodoContextMenu selectedTodoIds={selectedTodoIds}>
+					<div className="flex-1 overflow-y-auto">
+						<div className="px-6 py-4 pb-4">
+							<NewTodoInlineForm
+								value={newTodoName}
+								onChange={setNewTodoName}
+								onSubmit={handleCreateTodo}
+								onCancel={() => setNewTodoName("")}
+							/>
 						</div>
-					) : (
-						<>
-							{orderedTodos.length > 0 && (
-								<TodoTreeList
-									orderedTodos={orderedTodos}
-									selectedTodoIds={selectedTodoIds}
-									onSelect={handleSelect}
-									onSelectSingle={(id) => setSelectedTodoId(id)}
-								/>
-							)}
-							{filter.status === "all" && completedRootCount > 0 && (
-								<div className="px-6 pb-6">
-									<button
-										type="button"
-										onClick={() => setIsCompletedCollapsed((prev) => !prev)}
-										className="flex w-full items-center justify-between rounded-lg border border-dashed border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground hover:bg-muted/30"
-									>
-										<span className="flex items-center gap-2 font-medium">
-											<ChevronRight
-												className={cn(
-													"h-4 w-4 transition-transform",
-													!isCompletedCollapsed && "rotate-90",
-												)}
-											/>
-											{tTodoList("statusCompleted")}
-										</span>
-										<span className="text-xs text-muted-foreground">
-											{completedRootCount}
-										</span>
-									</button>
-									{!isCompletedCollapsed &&
-										completedOrderedTodos.length > 0 && (
-											<TodoTreeList
-												orderedTodos={completedOrderedTodos}
-												selectedTodoIds={selectedTodoIds}
-												onSelect={handleSelect}
-												onSelectSingle={(id) => setSelectedTodoId(id)}
-											/>
-										)}
-								</div>
-							)}
-						</>
-					)}
-				</div>
-			</MultiTodoContextMenu>
+
+						{filteredTodos.length === 0 ? (
+							<div className="flex h-[200px] items-center justify-center px-4 text-sm text-muted-foreground">
+								{tTodoList("noTodos")}
+							</div>
+						) : (
+							<>
+								{orderedTodos.length > 0 && (
+									<TodoTreeList
+										orderedTodos={orderedTodos}
+										selectedTodoIds={selectedTodoIds}
+										onSelect={handleSelect}
+										onSelectSingle={(id) => setSelectedTodoId(id)}
+									/>
+								)}
+								{filter.status === "all" && completedRootCount > 0 && (
+									<div className="px-6 pb-6">
+										<button
+											type="button"
+											onClick={() => setIsCompletedCollapsed((prev) => !prev)}
+											className="flex w-full items-center justify-between rounded-lg border border-dashed border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground hover:bg-muted/30"
+										>
+											<span className="flex items-center gap-2 font-medium">
+												<ChevronRight
+													className={cn(
+														"h-4 w-4 transition-transform",
+														!isCompletedCollapsed && "rotate-90",
+													)}
+												/>
+												{tTodoList("statusCompleted")}
+											</span>
+											<span className="text-xs text-muted-foreground">
+												{completedRootCount}
+											</span>
+										</button>
+										{!isCompletedCollapsed &&
+											completedOrderedTodos.length > 0 && (
+												<TodoTreeList
+													orderedTodos={completedOrderedTodos}
+													selectedTodoIds={selectedTodoIds}
+													onSelect={handleSelect}
+													onSelectSingle={(id) => setSelectedTodoId(id)}
+												/>
+											)}
+									</div>
+								)}
+							</>
+						)}
+					</div>
+				</MultiTodoContextMenu>
+
+				<TodoSidebar
+					mode="floating"
+					isOpen={isSidebarOpen && !isSidebarPinned}
+					todos={todos}
+					filter={filter}
+					onFilterChange={setFilter}
+					isPinned={isSidebarPinned}
+					onTogglePinned={() => setIsSidebarPinned((prev) => !prev)}
+				/>
+			</div>
 		</div>
 	);
 }

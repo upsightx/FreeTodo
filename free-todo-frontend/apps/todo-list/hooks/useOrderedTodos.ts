@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Todo } from "@/lib/types";
 import { sortTodosByOrder, sortTodosByOriginalOrder } from "@/lib/utils";
+import { getTodoFolder, TODO_FOLDER_NONE } from "@/lib/utils/todoFolder";
 import type { DueTimeFilter, TodoFilterState } from "../components/TodoFilter";
 
 export type OrderedTodo = {
@@ -81,6 +82,17 @@ export function useOrderedTodos(
 				result = result.filter((todo) => todo.status === filter.status);
 			}
 
+			// Folder filter
+			if (filter.folder !== "all") {
+				result = result.filter((todo) => {
+					const folder = getTodoFolder(todo);
+					if (filter.folder === TODO_FOLDER_NONE) {
+						return !folder;
+					}
+					return folder === filter.folder;
+				});
+			}
+
 			// Tag filter
 			if (filter.tag !== "all") {
 				result = result.filter((todo) => todo.tags?.includes(filter.tag));
@@ -99,6 +111,7 @@ export function useOrderedTodos(
 				(todo) =>
 					todo.name.toLowerCase().includes(query) ||
 					todo.description?.toLowerCase().includes(query) ||
+					todo.categories?.toLowerCase().includes(query) ||
 					todo.tags?.some((tag) => tag.toLowerCase().includes(query)),
 			);
 		}
