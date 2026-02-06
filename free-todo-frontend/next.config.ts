@@ -19,8 +19,8 @@ try {
 // 判断是 build 版还是 dev 版
 const BUILD_TYPE = process.env.NODE_ENV === "production" ? "build" : "dev";
 
-// 从环境变量读取 API 地址，如果读不到就使用 localhost:8100（Build 模式默认端口）
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+// 从环境变量读取 API 地址，如果读不到就使用 127.0.0.1:8100（Build 模式默认端口）
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 const apiUrl = new URL(API_BASE_URL);
 
 const nextConfig: NextConfig = {

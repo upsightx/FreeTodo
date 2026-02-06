@@ -136,7 +136,7 @@ function getApiBaseUrl(): string {
 		process.env.NEXT_PUBLIC_API_URL ||
 		(typeof window !== "undefined" &&
 			(window as Window & { __BACKEND_URL__?: string }).__BACKEND_URL__) ||
-		"http://localhost:8100"
+		"http://127.0.0.1:8100"
 	);
 }
 

@@ -8,7 +8,7 @@ export const MAX_ATTACHMENT_SIZE_BYTES = 50 * 1024 * 1024;
 function getApiBaseUrl(): string {
 	return typeof window !== "undefined"
 		? ""
-		: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+		: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 }
 
 export function getAttachmentFileUrl(attachmentId: number): string {

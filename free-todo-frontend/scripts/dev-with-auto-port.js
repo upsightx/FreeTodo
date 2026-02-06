@@ -223,7 +223,7 @@ async function main() {
 			);
 		}
 
-		const backendUrl = `http://localhost:${backendPort}`;
+		const backendUrl = `http://127.0.0.1:${backendPort}`;
 		console.log(`\nBackend API: ${backendUrl}`);
 		console.log(`Frontend URL: http://localhost:${frontendPort}\n`);
 

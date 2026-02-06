@@ -60,7 +60,7 @@ export function useStopRecordingConfirm({
 		const checkNewRecording = async () => {
 			pollCount++;
 			try {
-				const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+				const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 				const dateStr = selectedDate.toISOString().split("T")[0];
 				const response = await fetch(`${apiBaseUrl}/api/audio/recordings?date=${dateStr}`);
 				const data = await response.json();

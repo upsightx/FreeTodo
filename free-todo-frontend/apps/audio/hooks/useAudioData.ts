@@ -130,7 +130,7 @@ export function useAudioData(
 
 	const loadRecordings = useCallback(async (opts?: { forceSelectLatest?: boolean }) => {
 		try {
-			const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+			const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 			const dateStr = getDateString(selectedDate);
 			const response = await fetch(`${apiBaseUrl}/api/audio/recordings?date=${dateStr}`);
 			const data = await response.json();
@@ -171,7 +171,7 @@ export function useAudioData(
 			// 通知开始加载
 			if (onLoadingChange) onLoadingChange(true);
 
-			const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+			const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 			const response = await fetch(
 				`${apiBaseUrl}/api/audio/timeline?date=${dateStr}&optimized=${activeTab === "optimized"}`
 			);
@@ -314,7 +314,7 @@ export function useAudioData(
 	useEffect(() => {
 		const uniqueIds = Array.from(new Set(segmentRecordingIds.filter((id) => id && id > 0)));
 		if (uniqueIds.length === 0) return;
-		const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+		const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 		const controller = new AbortController();
 		const isOptimized = activeTab === "optimized";
 
@@ -360,7 +360,7 @@ export function useAudioData(
 	useEffect(() => {
 		const uniqueIds = Array.from(new Set(segmentRecordingIds.filter((id) => id && id > 0)));
 		if (uniqueIds.length === 0) return;
-		const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
+		const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 		const controller = new AbortController();
 		const missingIds = uniqueIds.filter((id) => !optimizedExtractionsByRecordingId[id]);
 		if (missingIds.length === 0) return;
