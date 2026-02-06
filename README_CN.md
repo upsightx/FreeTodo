@@ -63,7 +63,7 @@ FreeTodo 采用**前后端分离**架构：
 
 - Node.js 20+
 - pnpm 包管理器
-
+<!--
 ### 一键安装并启动
 
 > 需要安装 Python 3.12+、Node.js 20+、Git；Tauri/Electron 构建还需要 Rust。
@@ -80,7 +80,7 @@ curl -fsSL https://raw.githubusercontent.com/FreeU-group/FreeTodo/main/scripts/i
 iwr -useb https://raw.githubusercontent.com/FreeU-group/FreeTodo/main/scripts/install.ps1 | iex
 ```
 
-完整选项、环境变量和示例请见：[.github/INSTALL_CN.md](.github/INSTALL_CN.md)
+完整选项、环境变量和示例请见：[.github/INSTALL_CN.md](.github/INSTALL_CN.md) -->
 
 ### 安装依赖
 
