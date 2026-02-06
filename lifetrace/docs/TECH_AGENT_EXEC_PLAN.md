@@ -70,9 +70,21 @@ Plan Spec JSON，字段如下：
 
 ## Persistence 设计
 新增表（示例）：
-- `agent_plans`: plan_id, title, spec_json, created_at
-- `agent_plan_runs`: run_id, plan_id, status, started_at, ended_at, session_id
-- `agent_plan_steps`: run_id, step_id, status, retry_count, output_json, error
+- `agent_plans`
+  - plan_id (pk), title, spec_json, created_at, updated_at
+- `agent_plan_runs`
+  - run_id (pk), plan_id (fk), status, started_at, ended_at, session_id
+  - error, rollback_status, rollback_error
+- `agent_plan_steps`
+  - run_id (fk), step_id, step_name, status, retry_count
+  - input_json, output_json, error, started_at, ended_at
+  - is_side_effect, rollback_required
+- `agent_plan_journals` (回滚日志)
+  - journal_id (pk), run_id (fk), step_id
+  - op_type (write/delete/move)
+  - target_path, backup_path, trash_path, from_path, to_path
+  - created_paths_json
+  - status (applied/rolled_back/failed), error, created_at, updated_at
 
 恢复逻辑：
 - run 状态为 `running` 且中断 -> 从最后成功步骤继续
@@ -104,8 +116,19 @@ Plan Spec JSON，字段如下：
 - 现有流式入口: `lifetrace/routers/chat/modes/agno.py`
 - 新增计划执行入口可与 `mode="agno"` 并存或新增 `mode="agno_plan"`
 
-## 回滚策略（占位）
-仅在 Plan Spec 中保留 `rollback` 字段，暂不执行。后续再讨论哪些工具具备可回滚能力。
+## 回滚策略（文件操作优先）
+### 约束
+- 有副作用的 step 必须写 journal
+- `shell` 默认不可回滚，除非显式提供 rollback 脚本
+
+### 文件操作回滚
+- 写入/修改：执行前备份原文件到 `workspace/.agno/rollback/<run_id>/files/`，回滚时恢复
+- 删除：改为移动到 `workspace/.agno/rollback/<run_id>/trash/`，回滚时移回
+- 移动/重命名：记录 from/to，回滚时反向移动
+
+### 执行顺序
+- 失败时，按已完成步骤的**逆拓扑顺序**执行回滚
+- 并行步骤按完成时间倒序回滚
 
 ## 实施步骤（建议）
 1) 定义 Plan Spec + Prompt
@@ -113,3 +136,34 @@ Plan Spec JSON，字段如下：
 3) 实现 Plan Runner（Agno Workflow 映射 + 执行）
 4) 接入 API + Streaming 事件
 5) 增加持久化与恢复
+6) 增加回滚日志与回滚执行
+
+## Runner 伪代码（含回滚）
+```python
+def run_plan(plan, run_id):
+    journal = []
+    completed_steps = []
+    for step in topo_sort(plan.steps):
+        try:
+            if step.is_side_effect:
+                j = prepare_journal(step, run_id)
+                journal.append(j)
+            output = execute_step(step)
+            record_step_success(step, output)
+            completed_steps.append(step)
+        except Exception as exc:
+            record_step_error(step, exc)
+            rollback(completed_steps, journal)
+            raise
+
+def rollback(completed_steps, journal):
+    for step in reversed(completed_steps):
+        j = find_journal_for_step(step, journal)
+        if not j:
+            continue
+        try:
+            execute_rollback(j)
+            mark_journal_rolled_back(j)
+        except Exception as exc:
+            mark_journal_failed(j, exc)
+```
