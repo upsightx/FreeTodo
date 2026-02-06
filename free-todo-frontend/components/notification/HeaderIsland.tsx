@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Check, Clock, Settings, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { deleteNotificationApiNotificationsNotificationIdDelete } from "@/lib/generated/notifications/notifications";
 import { useOpenSettings } from "@/lib/hooks/useOpenSettings";
 import { useUpdateTodo } from "@/lib/query";
@@ -77,6 +77,25 @@ export function HeaderIsland() {
 
 	// 使用共享的打开设置 hook
 	const { openSettings } = useOpenSettings();
+	const openLlmSettings = useCallback(() => {
+		openSettings();
+		setTimeout(() => {
+			window.dispatchEvent(
+				new CustomEvent("settings:set-category", {
+					detail: { category: "ai" },
+				}),
+			);
+			const apiKeyInput = document.getElementById("llm-api-key");
+			if (apiKeyInput) {
+				apiKeyInput.scrollIntoView({ behavior: "smooth", block: "center" });
+			} else {
+				const settingsContent = document.querySelector(
+					'[data-tour="settings-content"]',
+				);
+				settingsContent?.scrollTo({ top: 0, behavior: "smooth" });
+			}
+		}, 200);
+	}, [openSettings]);
 
 	// 检查是否是 LLM 配置通知
 	const isLlmConfigNotification = currentNotification?.source === "llm-config";
@@ -220,7 +239,7 @@ export function HeaderIsland() {
 					<motion.div
 						onClick={() => {
 							if (!isExpanded && isLlmConfigNotification) {
-								openSettings();
+								openLlmSettings();
 								return;
 							}
 							toggleExpanded();
@@ -235,14 +254,14 @@ export function HeaderIsland() {
 						role="button"
 						tabIndex={0}
 						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") {
-								e.preventDefault();
-								if (!isExpanded && isLlmConfigNotification) {
-									openSettings();
-									return;
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									if (!isExpanded && isLlmConfigNotification) {
+										openLlmSettings();
+										return;
+									}
+									toggleExpanded();
 								}
-								toggleExpanded();
-							}
 						}}
 						className={`
 						relative flex items-center gap-2 overflow-hidden rounded-full
@@ -356,10 +375,10 @@ export function HeaderIsland() {
 												{isLlmConfig && (
 													<motion.button
 														type="button"
-														onClick={(e) => {
-															e.stopPropagation();
-															openSettings();
-														}}
+													onClick={(e) => {
+														e.stopPropagation();
+														openLlmSettings();
+													}}
 														whileHover={{ scale: 1.05 }}
 														whileTap={{ scale: 0.95 }}
 														className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600"
