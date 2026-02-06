@@ -310,6 +310,24 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 					if (typeof event.data === "string") {
 						const data = JSON.parse(event.data);
 
+						if (data.header?.name === "TaskFailed") {
+							const errorText =
+								typeof data.payload?.error === "string"
+									? data.payload.error
+									: "ASR 服务发生错误，请检查音频识别配置";
+							if (currentOnError) {
+								currentOnError(new Error(errorText));
+							}
+							cleanupRecordingResources();
+							set({
+								isRecording: false,
+								recordingStartedAt: null,
+								recordingStartedDate: null,
+								lastFinalEndMs: null,
+							});
+							return;
+						}
+
 						// 转录结果
 						if (data.header?.name === "TranscriptionResultChanged") {
 							const text = data.payload?.result;
