@@ -8,6 +8,7 @@ import { useTodos } from "@/lib/query";
 import type { Todo } from "@/lib/types";
 import { MessageContextMenu } from "./MessageContextMenu";
 import { MessageItem } from "./MessageItem";
+import { ToolCallBlock } from "./ToolCallBlock";
 
 type MessageListProps = {
 	messages: ChatMessage[];
@@ -112,13 +113,13 @@ export function MessageList({
 			ref={messageListRef}
 			onScroll={handleScroll}
 		>
-			{messages.map((msg, index) => {
+			{messages.flatMap((msg, index) => {
 				const isLastMessage = index === messages.length - 1;
 				const extractionState = extractionStates.get(msg.id);
 
-				return (
+				return [
 					<MessageItem
-						key={msg.id}
+						key={`${msg.id}-message`}
 						message={msg}
 						isLastMessage={isLastMessage}
 						isStreaming={isStreaming}
@@ -133,8 +134,14 @@ export function MessageList({
 								messageMenuRefs.current.delete(messageId);
 							}
 						}}
-					/>
-				);
+					/>,
+					<ToolCallBlock
+						key={`${msg.id}-tools`}
+						message={msg}
+						isStreaming={isStreaming}
+						isLastMessage={isLastMessage}
+					/>,
+				];
 			})}
 			{/* 消息菜单 */}
 			<MessageContextMenu

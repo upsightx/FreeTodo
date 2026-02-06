@@ -6,10 +6,7 @@ import type { ChatMessage } from "@/apps/chat/types";
 import { cn } from "@/lib/utils";
 import { MessageContent } from "./MessageContent";
 import { MessageTodoExtractionPanel } from "./MessageTodoExtractionPanel";
-import { ToolCallLoading } from "./ToolCallLoading";
-import { ToolCallSteps } from "./ToolCallSteps";
 import {
-	extractToolCalls,
 	removeToolCalls,
 	removeToolEvents,
 } from "./utils/messageContentUtils";
@@ -41,30 +38,11 @@ export function MessageItem({
 	const sanitizedContent = message.content
 		? removeToolEvents(message.content)
 		: "";
-	// 检测工具调用标记（在消息渲染前）
-	const toolCalls = sanitizedContent ? extractToolCalls(sanitizedContent) : [];
 	// 移除工具调用标记后的内容
 	const contentWithoutToolCalls = sanitizedContent
 		? removeToolCalls(sanitizedContent)
 		: "";
 	const trimmedContent = contentWithoutToolCalls.trim();
-
-	// 获取新的工具调用步骤（来自 toolCallSteps 属性）
-	const toolCallSteps = message.toolCallSteps || [];
-	const hasToolCallSteps = toolCallSteps.length > 0;
-	const hasLegacyToolCalls = toolCalls.length > 0;
-	const hasToolCallBlock =
-		message.role === "assistant" && (hasToolCallSteps || hasLegacyToolCalls);
-	const lastToolCall = hasLegacyToolCalls
-		? toolCalls[toolCalls.length - 1]
-		: undefined;
-	let legacySearchQuery: string | undefined;
-	if (lastToolCall?.params) {
-		const keywordMatch = lastToolCall.params.match(/关键词:\s*(.+)/);
-		if (keywordMatch) {
-			legacySearchQuery = keywordMatch[1].trim();
-		}
-	}
 
 	// 判断是否是正在等待首次回复的空 assistant 消息
 	const isEmptyStreamingMessage =
@@ -78,8 +56,7 @@ export function MessageItem({
 	if (
 		!trimmedContent &&
 		message.role === "assistant" &&
-		!isEmptyStreamingMessage &&
-		!hasToolCallBlock
+		!isEmptyStreamingMessage
 	) {
 		return null;
 	}
@@ -152,20 +129,6 @@ export function MessageItem({
 							)}
 							<MessageContent message={message} />
 						</div>
-					</div>
-				)}
-
-				{/* 工具调用步骤（显示在消息内容之后） */}
-				{hasToolCallBlock && (
-					<div className="mt-2">
-						{hasToolCallSteps ? (
-							<ToolCallSteps steps={toolCallSteps} />
-						) : (
-							<ToolCallLoading
-								toolName={lastToolCall?.name ?? ""}
-								searchQuery={legacySearchQuery}
-							/>
-						)}
 					</div>
 				)}
 			</div>
