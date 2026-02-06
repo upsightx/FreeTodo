@@ -142,6 +142,9 @@ By recording personal databases (**LifeLog**, personal life logging), we are com
 - **Context Construction**
   - Form personal context organization
   - Lay the foundation for proactive services
+- **Personal Profile & Memory (Agno Learning)**
+  - Build user profiles and long-term memory across sessions
+  - Use memories to personalize responses and planning
 
 #### Output Layer: Psychological Security + Warm, Reliable, and Trustworthy Secretary Partner
 

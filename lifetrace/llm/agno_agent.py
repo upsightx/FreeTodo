@@ -17,12 +17,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from agno.agent import Agent, Message, RunEvent
+from agno.db.sqlite import SqliteDb
+from agno.learn import LearningMachine, LearningMode, UserMemoryConfig, UserProfileConfig
 from agno.models.openai.like import OpenAILike
 
 from lifetrace.llm.agno_tools import FreeTodoToolkit
 from lifetrace.llm.agno_tools.base import get_message
 from lifetrace.observability import setup_observability
 from lifetrace.util.logging_config import get_logger
+from lifetrace.util.path_utils import get_agno_learning_db_path
 from lifetrace.util.settings import settings
 
 if TYPE_CHECKING:
@@ -52,6 +55,31 @@ RESULT_PREVIEW_MAX_LENGTH = 500
 
 # 可用的外部工具映射
 EXTERNAL_TOOLS_REGISTRY: dict[str, type[Toolkit]] = {}
+
+
+def _build_learning_config() -> tuple[
+    SqliteDb | None, bool | LearningMachine | None, bool, str | None
+]:
+    """构建 Agno Learning 配置"""
+    learning_enabled = bool(settings.get("agno.learning.enabled", False))
+    if not learning_enabled:
+        return None, None, False, None
+
+    db_path = get_agno_learning_db_path()
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    db = SqliteDb(db_file=str(db_path))
+
+    learning_mode = str(settings.get("agno.learning.mode", "always")).lower()
+    if learning_mode == "agentic":
+        learning = LearningMachine(
+            user_profile=UserProfileConfig(mode=LearningMode.AGENTIC),
+            user_memory=UserMemoryConfig(mode=LearningMode.AGENTIC),
+        )
+    else:
+        learning = True
+
+    add_history_to_context = bool(settings.get("agno.learning.add_history_to_context", False))
+    return db, learning, add_history_to_context, str(db_path)
 
 
 def _try_register_tool(name: str, module_path: str, class_name: str, warning: str = ""):
@@ -273,6 +301,8 @@ class AgnoAgentService:
                 self.lang, bool(tools_to_use), use_all_freetodo_tools, has_external_tools
             )
 
+            db, learning, add_history_to_context, db_path = _build_learning_config()
+
             self.agent = Agent(
                 model=OpenAILike(
                     id=settings.llm.model,
@@ -281,8 +311,17 @@ class AgnoAgentService:
                 ),
                 tools=tools_to_use if tools_to_use else None,
                 instructions=instructions_list,
+                db=db,
+                learning=learning,
+                add_history_to_context=add_history_to_context,
                 markdown=True,
             )
+            if learning:
+                logger.info(
+                    "Agno Learning 已启用: mode=%s, db=%s",
+                    settings.get("agno.learning.mode", "always"),
+                    db_path,
+                )
             logger.info(
                 f"Agno Agent 初始化成功，模型: {settings.llm.model}, "
                 f"Base URL: {settings.llm.base_url}, lang: {self.lang}, "
@@ -435,6 +474,7 @@ class AgnoAgentService:
         conversation_history: list[dict[str, str]] | None = None,
         include_tool_events: bool = True,
         session_id: str | None = None,
+        user_id: str | None = None,
     ) -> Generator[str]:
         """
         流式生成 Agent 回复
@@ -444,6 +484,7 @@ class AgnoAgentService:
             conversation_history: 对话历史，格式为 [{"role": "user|assistant", "content": "..."}]
             include_tool_events: 是否包含工具调用事件（默认 True）
             session_id: 会话 ID，用于 trace 文件按会话聚合和 Phoenix session 追踪
+            user_id: 用户 ID，用于 Agno Learning 的跨会话记忆
 
         Yields:
             回复内容片段（字符串），如果 include_tool_events=True，
@@ -456,12 +497,15 @@ class AgnoAgentService:
             input_data = self._build_input_data(message, conversation_history)
             # 直接将 session_id 传递给 agent.run()
             # Agno Instrumentor 会从参数中读取 session_id 并设置为 span 属性
-            stream = self.agent.run(
-                input_data,
-                stream=True,
-                stream_events=include_tool_events,
-                session_id=session_id,  # 传递给 Agno，用于 Phoenix session 追踪
-            )
+            run_kwargs = {
+                "stream": True,
+                "stream_events": include_tool_events,
+                "session_id": session_id,
+            }
+            if user_id:
+                run_kwargs["user_id"] = user_id
+
+            stream = self.agent.run(input_data, **run_kwargs)
 
             for chunk in stream:
                 output = self._process_stream_chunk(chunk, include_tool_events)

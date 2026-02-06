@@ -115,6 +115,12 @@ settings = Dynaconf(
         # 聊天配置
         Validator("chat.enable_history", default=True, is_type_of=bool),
         Validator("chat.history_limit", default=10, is_type_of=int),
+        # Agno Learning 配置
+        Validator("agno.learning.enabled", default=True, is_type_of=bool),
+        Validator("agno.learning.mode", default="always"),
+        Validator("agno.learning.db_path", default="agno/learning.db"),
+        Validator("agno.learning.add_history_to_context", default=False, is_type_of=bool),
+        Validator("agno.user_id", default="local-user"),
         # LLM 配置（关键配置，启动时不强制要求，运行时检查）
         Validator("llm.api_key", default="YOUR_LLM_KEY_HERE"),
         Validator("llm.base_url", default="https://dashscope.aliyuncs.com/compatible-mode/v1"),

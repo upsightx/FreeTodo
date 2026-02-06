@@ -14,6 +14,7 @@ from lifetrace.llm.agno_agent import (
 from lifetrace.schemas.chat import ChatMessage
 from lifetrace.services.chat_service import ChatService
 from lifetrace.util.logging_config import get_logger
+from lifetrace.util.settings import settings
 
 from ..helpers import (
     get_conversation_history,
@@ -91,83 +92,55 @@ def _build_external_tools_config(
     return config
 
 
-def create_agno_streaming_response(
-    message: ChatMessage,
-    chat_service: ChatService,
-    session_id: str,
-    lang: str = "en",
-) -> StreamingResponse:
-    """处理 Agno 模式，使用 Agno 框架的 Agent 进行对话
-
-    支持的外部工具：
-        搜索类（无需配置）：
-        - websearch: 通用网页搜索（自动选择后端）
-        - hackernews: Hacker News 新闻
-
-        本地类（需要 workspace_path）：
-        - file: 文件操作（读写、搜索）
-        - local_fs: 简化文件写入
-        - shell: 命令行执行
-        - sleep: 暂停执行
-    """
-    logger.info(f"[stream] 进入 Agno 模式, lang={lang}")
-
-    external_tools = message.external_tools or []
-    workspace_path = message.workspace_path
-
-    # 本地类工具需要 workspace_path，如果未提供则使用用户 home 目录
+def _resolve_workspace_path(
+    external_tools: list[str],
+    workspace_path: str | None,
+) -> str | None:
     local_tools = {"file", "local_fs", "shell"}
     needs_workspace = bool(local_tools & set(external_tools))
+    if not needs_workspace or workspace_path:
+        return workspace_path
 
-    if needs_workspace and not workspace_path:
-        # 使用用户 home 目录作为默认工作区
-        workspace_path = str(Path.home())
-        logger.info(f"[stream][agno] 未指定 workspace_path，使用默认值: {workspace_path}")
+    default_workspace = str(Path.home())
+    logger.info(f"[stream][agno] 未指定 workspace_path，使用默认值: {default_workspace}")
+    return default_workspace
 
-    # 如果提供了 workspace_path，验证其有效性
-    if workspace_path:
-        is_valid, validation_error = validate_workspace_path(workspace_path)
-        if not is_valid:
-            err = (
-                f"工作区验证失败: {validation_error}"
-                if lang == "zh"
-                else f"Workspace validation failed: {validation_error}"
-            )
-            return make_error_streaming_response(err, session_id)
 
-    # 构建外部工具配置
-    external_tools_config = _build_external_tools_config(
-        external_tools, workspace_path, message.enable_file_delete
+def _validate_workspace_or_error(
+    workspace_path: str | None,
+    lang: str,
+    session_id: str,
+) -> StreamingResponse | None:
+    if not workspace_path:
+        return None
+
+    is_valid, validation_error = validate_workspace_path(workspace_path)
+    if is_valid:
+        return None
+
+    err = (
+        f"工作区验证失败: {validation_error}"
+        if lang == "zh"
+        else f"Workspace validation failed: {validation_error}"
     )
+    return make_error_streaming_response(err, session_id)
 
-    logger.info(
-        f"[stream][agno] selected_tools={message.selected_tools}, external_tools={external_tools}, "
-        f"workspace_path={workspace_path}"
-    )
 
-    # 获取用户真正的输入（用于保存和过滤对话历史）
-    user_input_for_storage = message.get_user_input_for_storage()
+def _resolve_user_id(message_user_id: str | None, session_id: str) -> str:
+    user_id = message_user_id or settings.get("agno.user_id") or session_id
+    if not message_user_id and not settings.get("agno.user_id"):
+        logger.info("[stream][agno] user_id 未提供，使用 session_id 作为 user_id: %s", session_id)
+    return user_id
 
-    # 保存用户消息
-    chat_service.add_message(
-        session_id=session_id,
-        role="user",
-        content=user_input_for_storage,
-    )
 
-    # 创建 Agno Agent 服务
-    agno_service = AgnoAgentService(
-        lang=lang,
-        selected_tools=message.selected_tools,
-        external_tools=external_tools if external_tools else None,
-        external_tools_config=external_tools_config if external_tools_config else None,
-    )
-
-    # 获取对话历史
-    conversation_history = get_conversation_history(
-        chat_service, session_id, user_input_for_storage
-    )
-
+def _build_agno_token_generator(
+    agno_service: AgnoAgentService,
+    message: ChatMessage,
+    conversation_history: list[dict[str, Any]] | None,
+    session_id: str,
+    user_id: str,
+    chat_service: ChatService,
+):
     def agno_token_generator():
         storage_chunks: list[str] = []
         tool_events: list[dict[str, Any]] = []
@@ -177,6 +150,7 @@ def create_agno_streaming_response(
                 message=message.message,
                 conversation_history=conversation_history,
                 session_id=session_id,
+                user_id=user_id,
             ):
                 yield chunk
                 cleaned, pending_tool_chunk, parsed_events = _strip_tool_events(
@@ -207,11 +181,79 @@ def create_agno_streaming_response(
             logger.error(f"[stream][agno] 生成失败: {e}")
             yield f"Agno Agent 处理失败: {e!s}"
 
+    return agno_token_generator()
+
+
+def create_agno_streaming_response(
+    message: ChatMessage,
+    chat_service: ChatService,
+    session_id: str,
+    lang: str = "en",
+) -> StreamingResponse:
+    """处理 Agno 模式，使用 Agno 框架的 Agent 进行对话
+
+    支持的外部工具：
+        搜索类（无需配置）：
+        - websearch: 通用网页搜索（自动选择后端）
+        - hackernews: Hacker News 新闻
+
+        本地类（需要 workspace_path）：
+        - file: 文件操作（读写、搜索）
+        - local_fs: 简化文件写入
+        - shell: 命令行执行
+        - sleep: 暂停执行
+    """
+    logger.info(f"[stream] 进入 Agno 模式, lang={lang}")
+
+    external_tools = message.external_tools or []
+    workspace_path = _resolve_workspace_path(external_tools, message.workspace_path)
+    validation_error_response = _validate_workspace_or_error(workspace_path, lang, session_id)
+    if validation_error_response:
+        return validation_error_response
+
+    # 构建外部工具配置
+    external_tools_config = _build_external_tools_config(
+        external_tools, workspace_path, message.enable_file_delete
+    )
+
+    logger.info(
+        f"[stream][agno] selected_tools={message.selected_tools}, external_tools={external_tools}, "
+        f"workspace_path={workspace_path}"
+    )
+
+    user_id = _resolve_user_id(message.user_id, session_id)
+    # 获取用户真正的输入（用于保存和过滤对话历史）
+    user_input_for_storage = message.get_user_input_for_storage()
+
+    # 保存用户消息
+    chat_service.add_message(
+        session_id=session_id,
+        role="user",
+        content=user_input_for_storage,
+    )
+
+    # 创建 Agno Agent 服务
+    agno_service = AgnoAgentService(
+        lang=lang,
+        selected_tools=message.selected_tools,
+        external_tools=external_tools if external_tools else None,
+        external_tools_config=external_tools_config if external_tools_config else None,
+    )
+
+    # 获取对话历史
+    conversation_history = get_conversation_history(
+        chat_service, session_id, user_input_for_storage
+    )
+
     headers = {
         "Cache-Control": "no-cache",
         "X-Accel-Buffering": "no",
         "X-Session-Id": session_id,
     }
     return StreamingResponse(
-        agno_token_generator(), media_type="text/plain; charset=utf-8", headers=headers
+        _build_agno_token_generator(
+            agno_service, message, conversation_history, session_id, user_id, chat_service
+        ),
+        media_type="text/plain; charset=utf-8",
+        headers=headers,
     )

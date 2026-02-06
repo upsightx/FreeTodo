@@ -18,6 +18,7 @@
 - **Intelligent Task Breakdown**: AI automatically decomposes complex tasks into manageable subtasks with a guided questionnaire flow
 - **Smart Task Extraction**: Extract actionable todos from AI conversation responses
 - **Context-Aware Suggestions**: AI provides task recommendations based on your current todo context
+- **Personal Profile Memory**: Agno learning builds user profiles and long-term memory across sessions
 
 ### ✅ Comprehensive Task Management
 - **Hierarchical Tasks**: Support for parent-child task relationships with unlimited nesting
@@ -203,6 +204,7 @@ For more details, see: [free-todo-frontend/README.md](free-todo-frontend/README.
 - ☐ Automatic classification and organization
 - ☐ Intelligent task priority planning
 - ☑ Todo context construction
+- ☑ Personal profile & memory (Agno Learning)
 
 #### Output Layer: Psychological Security + Warm, Reliable Secretary Partner
 - ☐ AI secretary personification
@@ -228,6 +230,7 @@ Free Todo's panel switch bar contains some panels that are currently under devel
 - ☑ **AI Task Breakdown** - Intelligent task decomposition with questionnaire flow
 - ☑ **Multi-Panel Interface** - Flexible layout with customizable panels
 - ☑ **Calendar Integration** - Day/Week/Month views with drag-and-drop
+- ☑ **Agno Learning Memory** - Personal profile and long-term memory across sessions
 
 ---
 
