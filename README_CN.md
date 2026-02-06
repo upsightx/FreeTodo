@@ -63,8 +63,8 @@ FreeTodo 采用**前后端分离**架构：
 
 - Node.js 20+
 - pnpm 包管理器
-
-<!-- ### 一键安装并启动
+<!--
+### 一键安装并启动
 
 > 需要安装 Python 3.12+、Node.js 20+、Git；Tauri/Electron 构建还需要 Rust。
 
