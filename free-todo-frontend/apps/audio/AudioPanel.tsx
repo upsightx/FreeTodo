@@ -1,11 +1,11 @@
 "use client";
 
+import { AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PanelHeader } from "@/components/common/layout/PanelHeader";
 import { FEATURE_ICON_MAP } from "@/lib/config/panel-config";
 import { useAudioRecordingStore } from "@/lib/store/audio-recording-store";
-import { toastError } from "@/lib/toast";
 import { AudioExtractionPanel } from "./components/AudioExtractionPanel";
 import { AudioHeader } from "./components/AudioHeader";
 import { AudioPlayer } from "./components/AudioPlayer";
@@ -54,6 +54,8 @@ export function AudioPanel() {
 	// 本地状态：用于回看模式（从后端加载的历史数据）
 	const [localTranscriptionText, setLocalTranscriptionText] = useState("");
 	const [localOptimizedText, setLocalOptimizedText] = useState("");
+	const [panelError, setPanelError] = useState<string | null>(null);
+	const panelErrorTimeoutRef = useRef<number | null>(null);
 
 	// 根据录音状态选择数据源：录音中使用 store 数据，回看使用本地数据
 	const transcriptionText = isRecording ? storeTranscriptionText : localTranscriptionText;
@@ -145,6 +147,32 @@ export function AudioPanel() {
 	// 用于手动启动录音的 ref（防止重复启动）
 	const isStartingRef = useRef(false);
 
+	const showPanelError = useCallback((message: string) => {
+		setPanelError(message);
+		if (panelErrorTimeoutRef.current) {
+			window.clearTimeout(panelErrorTimeoutRef.current);
+		}
+		panelErrorTimeoutRef.current = window.setTimeout(() => {
+			setPanelError(null);
+			panelErrorTimeoutRef.current = null;
+		}, 5000);
+	}, []);
+
+	useEffect(() => () => {
+		if (panelErrorTimeoutRef.current) {
+			window.clearTimeout(panelErrorTimeoutRef.current);
+		}
+	}, []);
+
+	const formatAudioError = useCallback((rawMessage: string) => {
+		const normalized = rawMessage.trim();
+		const lower = normalized.toLowerCase();
+		if (lower.includes("401") || lower.includes("unauthorized") || lower.includes("api key")) {
+			return "ASR API Key 未配置或无效，请在设置中填写后再开始录音。";
+		}
+		return normalized || "录音过程中发生错误";
+	}, []);
+
 	// 计算是否正在查看当前日期
 	const isViewingCurrentDate = useMemo(() => {
 		const now = new Date();
@@ -191,13 +219,13 @@ export function AudioPanel() {
 				},
 				(error) => {
 					const errorMessage = error instanceof Error ? error.message : "录音过程中发生错误";
-					toastError(errorMessage, { duration: 5000 });
+					showPanelError(formatAudioError(errorMessage));
 				},
 				true
 			);
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : "启动录音失败";
-			toastError(errorMessage, { duration: 5000 });
+			showPanelError(formatAudioError(errorMessage));
 		} finally {
 			isStartingRef.current = false;
 		}
@@ -205,6 +233,7 @@ export function AudioPanel() {
 		isRecording, clearSessionData, startRecording, updateLastFinalEnd,
 		appendTranscriptionText, appendSegmentData, setStorePartialText,
 		setStoreOptimizedText, setStoreLiveTodos, setStoreLiveSchedules, selectedDate, setSelectedSegmentIndex,
+		showPanelError, formatAudioError,
 	]);
 
 	// 手动停止录音（显示确认弹窗）
@@ -310,8 +339,20 @@ export function AudioPanel() {
 	);
 
 	return (
-		<div className="flex h-full flex-col bg-[oklch(var(--background))] overflow-hidden">
+		<div className="relative flex h-full flex-col bg-[oklch(var(--background))] overflow-hidden">
 			<PanelHeader icon={Icon} title={t("audioLabel")} />
+
+			{panelError && (
+				<div className="pointer-events-none absolute inset-x-0 top-14 z-20 flex justify-center px-4">
+					<div
+						className="pointer-events-auto flex w-full max-w-[520px] items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 shadow-lg animate-in slide-in-from-top-2"
+						role="alert"
+					>
+						<AlertCircle className="mt-0.5 h-4 w-4" />
+						<span className="leading-5">{panelError}</span>
+					</div>
+				</div>
+			)}
 
 			<AudioHeader
 				isRecording={isRecording}
