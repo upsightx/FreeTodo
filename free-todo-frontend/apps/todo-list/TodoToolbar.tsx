@@ -1,6 +1,6 @@
 "use client";
 
-import { ListTodo, Menu, Search, X } from "lucide-react";
+import { ListTodo, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -8,28 +8,19 @@ import {
 	PanelHeader,
 	usePanelIconStyle,
 } from "@/components/common/layout/PanelHeader";
-import type { Todo } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import type { TodoFilterState } from "./components/TodoFilter";
-import { TodoFilter } from "./components/TodoFilter";
 
 interface TodoToolbarProps {
 	searchQuery: string;
 	onSearch: (value: string) => void;
-	todos: Todo[];
-	filter: TodoFilterState;
-	onFilterChange: (filter: TodoFilterState) => void;
 	isSidebarOpen: boolean;
 	onToggleSidebar: () => void;
-	sidebarToggleRef?: React.RefObject<HTMLButtonElement>;
+	sidebarToggleRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export function TodoToolbar({
 	searchQuery,
 	onSearch,
-	todos,
-	filter,
-	onFilterChange,
 	isSidebarOpen,
 	onToggleSidebar,
 	sidebarToggleRef,
@@ -81,9 +72,9 @@ export function TodoToolbar({
 			className="ml-1 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
 		>
 			{isSidebarOpen ? (
-				<X className={headerIconStyle} />
+				<PanelLeftClose className={headerIconStyle} />
 			) : (
-				<Menu className={headerIconStyle} />
+				<PanelLeftOpen className={headerIconStyle} />
 			)}
 		</button>
 	);
@@ -95,11 +86,6 @@ export function TodoToolbar({
 			titleAddon={sidebarToggle}
 			actions={
 				<div className="flex items-center gap-2">
-					<TodoFilter
-						todos={todos}
-						filter={filter}
-						onFilterChange={onFilterChange}
-					/>
 					<div ref={searchContainerRef} className="relative">
 						{isSearchOpen ? (
 							<div className="relative">

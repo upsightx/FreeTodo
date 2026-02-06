@@ -25,7 +25,7 @@ interface TodoSidebarProps {
 	onFilterChange: (filter: TodoFilterState) => void;
 	isPinned: boolean;
 	onTogglePinned: () => void;
-	sidebarRef?: React.RefObject<HTMLElement>;
+	sidebarRef?: React.RefObject<HTMLElement | null>;
 }
 
 const statusOptions: { value: TodoStatus | "all"; labelKey: string }[] = [

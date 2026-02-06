@@ -369,9 +369,6 @@ export function TodoList() {
 			<TodoToolbar
 				searchQuery={searchQuery}
 				onSearch={setSearchQuery}
-				todos={todos}
-				filter={filter}
-				onFilterChange={setFilter}
 				isSidebarOpen={isSidebarOpen}
 				onToggleSidebar={handleToggleSidebar}
 				sidebarToggleRef={sidebarToggleRef}
