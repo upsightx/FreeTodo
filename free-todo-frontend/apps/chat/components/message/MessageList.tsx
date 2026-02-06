@@ -1,3 +1,5 @@
+import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { WelcomeGreetings } from "@/apps/chat/components/layout/WelcomeGreetings";
 import { useMessageExtraction } from "@/apps/chat/hooks/useMessageExtraction";
@@ -43,6 +45,7 @@ export function MessageList({
 	typingText,
 	effectiveTodos = [],
 }: MessageListProps) {
+	const tChat = useTranslations("chat");
 	const { data: allTodos = [] } = useTodos();
 
 	// 使用滚动管理 hook
@@ -345,6 +348,8 @@ export function MessageList({
 		return { blocks, lastContentBlockKeyById };
 	}, [messages, buildAssistantBlocks]);
 
+	const respondingText = useMemo(() => tChat("aiResponding"), [tChat]);
+
 	// 如果应该显示首页，则显示欢迎界面而不是消息列表
 	if (shouldShowSuggestions) {
 		return (
@@ -398,6 +403,16 @@ export function MessageList({
 					/>
 				);
 			})}
+			{isStreaming && (
+				<div
+					className="flex items-center gap-2 text-xs text-muted-foreground"
+					role="status"
+					aria-live="polite"
+				>
+					<Loader2 className="h-3.5 w-3.5 animate-spin" />
+					<span>{respondingText}</span>
+				</div>
+			)}
 			{/* 消息菜单 */}
 			<MessageContextMenu
 				menuOpenForMessageId={menuOpenForMessageId}

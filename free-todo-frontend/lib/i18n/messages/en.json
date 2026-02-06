@@ -400,6 +400,7 @@
 			"inputPlaceholder": "Prompt for Dify test channel..."
 		},
 		"aiThinking": "AI is thinking...",
+		"aiResponding": "Answering......",
 		"generatingQuestions": "AI is generating questions...",
 		"generateQuestionsFailed": "Failed to generate questions, please try again",
 		"generateSummaryFailed": "Failed to generate summary, please try again",
