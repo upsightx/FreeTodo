@@ -18,6 +18,7 @@ export type DueTimeFilter =
 
 export interface TodoFilterState {
 	status: TodoStatus | "all";
+	folder: string | "all";
 	tag: string | "all";
 	dueTime: DueTimeFilter;
 }
@@ -40,7 +41,10 @@ export function TodoFilter({ todos, filter, onFilterChange }: TodoFilterProps) {
 
 	// Check if any filter is active
 	const isFilterActive =
-		filter.status !== "all" || filter.tag !== "all" || filter.dueTime !== "all";
+		filter.status !== "all" ||
+		filter.folder !== "all" ||
+		filter.tag !== "all" ||
+		filter.dueTime !== "all";
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -75,6 +79,7 @@ export function TodoFilter({ todos, filter, onFilterChange }: TodoFilterProps) {
 	const handleClearFilters = () => {
 		onFilterChange({
 			status: "all",
+			folder: "all",
 			tag: "all",
 			dueTime: "all",
 		});

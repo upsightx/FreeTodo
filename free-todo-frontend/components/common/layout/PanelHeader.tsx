@@ -448,6 +448,8 @@ interface PanelHeaderProps {
 	icon: LucideIcon;
 	/** 标题文本 */
 	title: string;
+	/** 标题后的附加内容 */
+	titleAddon?: ReactNode;
 	/** 右侧操作区域 */
 	actions?: ReactNode;
 	/** 自定义类名 */
@@ -461,6 +463,7 @@ interface PanelHeaderProps {
 export function PanelHeader({
 	icon: Icon,
 	title,
+	titleAddon,
 	actions,
 	className,
 	disableDrag = false,
@@ -521,7 +524,8 @@ export function PanelHeader({
 			>
 				<h2 className="flex items-center gap-2 text-base font-medium text-foreground">
 					<Icon className={cn(headerIconStyle, iconClassName)} />
-					{title}
+					<span>{title}</span>
+					{titleAddon}
 					{isPinned && (
 						<span className="inline-flex items-center gap-1 rounded-full border border-amber-200/70 bg-amber-50/80 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
 							<Pin className="h-3 w-3" />

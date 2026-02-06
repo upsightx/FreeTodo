@@ -1,6 +1,6 @@
 "use client";
 
-import { ListTodo, Search } from "lucide-react";
+import { ListTodo, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -8,25 +8,22 @@ import {
 	PanelHeader,
 	usePanelIconStyle,
 } from "@/components/common/layout/PanelHeader";
-import type { Todo } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import type { TodoFilterState } from "./components/TodoFilter";
-import { TodoFilter } from "./components/TodoFilter";
 
 interface TodoToolbarProps {
 	searchQuery: string;
 	onSearch: (value: string) => void;
-	todos: Todo[];
-	filter: TodoFilterState;
-	onFilterChange: (filter: TodoFilterState) => void;
+	isSidebarOpen: boolean;
+	onToggleSidebar: () => void;
+	sidebarToggleRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export function TodoToolbar({
 	searchQuery,
 	onSearch,
-	todos,
-	filter,
-	onFilterChange,
+	isSidebarOpen,
+	onToggleSidebar,
+	sidebarToggleRef,
 }: TodoToolbarProps) {
 	const t = useTranslations("page");
 	const tTodoList = useTranslations("todoList");
@@ -34,6 +31,10 @@ export function TodoToolbar({
 	const searchInputRef = useRef<HTMLInputElement>(null);
 	const searchContainerRef = useRef<HTMLDivElement>(null);
 	const actionIconStyle = usePanelIconStyle("action");
+	const headerIconStyle = usePanelIconStyle("action", {
+		size: "h-4 w-4",
+		strokeWidth: "stroke-[2.4]",
+	});
 
 	useEffect(() => {
 		if (isSearchOpen && searchInputRef.current) {
@@ -60,17 +61,31 @@ export function TodoToolbar({
 		}
 	}, [isSearchOpen, searchQuery]);
 
+	const sidebarToggle = (
+		<button
+			type="button"
+			ref={sidebarToggleRef}
+			onClick={onToggleSidebar}
+			onPointerDown={(event) => event.stopPropagation()}
+			aria-label={tTodoList("toggleSidebar")}
+			title={tTodoList("toggleSidebar")}
+			className="ml-1 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+		>
+			{isSidebarOpen ? (
+				<PanelLeftClose className={headerIconStyle} />
+			) : (
+				<PanelLeftOpen className={headerIconStyle} />
+			)}
+		</button>
+	);
+
 	return (
 		<PanelHeader
 			icon={ListTodo}
 			title={t("todoListTitle")}
+			titleAddon={sidebarToggle}
 			actions={
 				<div className="flex items-center gap-2">
-					<TodoFilter
-						todos={todos}
-						filter={filter}
-						onFilterChange={onFilterChange}
-					/>
 					<div ref={searchContainerRef} className="relative">
 						{isSearchOpen ? (
 							<div className="relative">
