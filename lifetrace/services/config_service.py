@@ -194,8 +194,13 @@ def is_llm_configured() -> bool:
         bool: 如果 llm_key 和 base_url 都已配置（不是占位符或空），返回 True
     """
     invalid_values = ["", "xxx", "YOUR_API_KEY_HERE", "YOUR_BASE_URL_HERE", "YOUR_LLM_KEY_HERE"]
+    api_key = settings.get("llm.api_key")
+    base_url = settings.get("llm.base_url")
     return (
-        settings.llm.api_key not in invalid_values and settings.llm.base_url not in invalid_values
+        api_key is not None
+        and base_url is not None
+        and api_key not in invalid_values
+        and base_url not in invalid_values
     )
 
 
@@ -252,9 +257,9 @@ class ConfigService:
             LLM 配置字典
         """
         return {
-            "api_key": settings.llm.api_key,
-            "base_url": settings.llm.base_url,
-            "model": settings.llm.model,
+            "api_key": settings.get("llm.api_key"),
+            "base_url": settings.get("llm.base_url"),
+            "model": settings.get("llm.model"),
         }
 
     def get_asr_config(self) -> dict[str, Any]:
