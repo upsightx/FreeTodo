@@ -96,11 +96,6 @@ export function ChatPanel() {
 		};
 	}, [historyOpen, historyPinned, setHistoryOpen]);
 
-	const formatMessageCount = useCallback(
-		(count?: number) => tPage("messagesCount", { count: count ?? 0 }),
-		[tPage],
-	);
-
 	// 判断是否显示首页（用于在输入框上方显示建议按钮）
 	const shouldShowSuggestions = useMemo(() => {
 		const messages = chatController.messages;
@@ -160,9 +155,7 @@ export function ChatPanel() {
 						historyError={chatController.historyError}
 						sessions={chatController.sessions}
 						conversationId={chatController.conversationId}
-						formatMessageCount={formatMessageCount}
 						labels={{
-							recentSessions: tPage("recentSessions"),
 							noHistory: tPage("noHistory"),
 							loading: tChat("loading"),
 							chatHistory: tPage("chatHistory"),
