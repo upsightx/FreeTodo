@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class StatisticsResponse(BaseModel):
@@ -23,5 +23,4 @@ class TimeAllocationResponse(BaseModel):
         dict[str, Any]
     ]  # 应用详情，格式: [{"app_name": "xxx.exe", "total_time": seconds, "category": "社交"}, ...]
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)

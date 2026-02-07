@@ -20,6 +20,7 @@ backend_modules:
     - system
     - logs
     - chat
+    - agent_plan
     - activity
     - search
     - screenshot

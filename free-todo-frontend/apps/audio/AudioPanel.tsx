@@ -1,11 +1,14 @@
 "use client";
 
+import { AlertCircle, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PanelHeader } from "@/components/common/layout/PanelHeader";
 import { FEATURE_ICON_MAP } from "@/lib/config/panel-config";
+import { useTestAsrConfigApiTestAsrConfigPost } from "@/lib/generated/config/config";
+import { useOpenSettings } from "@/lib/hooks/useOpenSettings";
+import { useConfig } from "@/lib/query";
 import { useAudioRecordingStore } from "@/lib/store/audio-recording-store";
-import { toastError } from "@/lib/toast";
 import { AudioExtractionPanel } from "./components/AudioExtractionPanel";
 import { AudioHeader } from "./components/AudioHeader";
 import { AudioPlayer } from "./components/AudioPlayer";
@@ -54,6 +57,10 @@ export function AudioPanel() {
 	// 本地状态：用于回看模式（从后端加载的历史数据）
 	const [localTranscriptionText, setLocalTranscriptionText] = useState("");
 	const [localOptimizedText, setLocalOptimizedText] = useState("");
+	const [panelNotice, setPanelNotice] = useState<{
+		message: string;
+		source: "asr" | "recording";
+	} | null>(null);
 
 	// 根据录音状态选择数据源：录音中使用 store 数据，回看使用本地数据
 	const transcriptionText = isRecording ? storeTranscriptionText : localTranscriptionText;
@@ -145,6 +152,148 @@ export function AudioPanel() {
 	// 用于手动启动录音的 ref（防止重复启动）
 	const isStartingRef = useRef(false);
 
+	const formatAudioError = useCallback((rawMessage: string) => {
+		const normalized = rawMessage.trim();
+		const lower = normalized.toLowerCase();
+		if (lower.includes("401") || lower.includes("unauthorized") || lower.includes("api key")) {
+			return "ASR API Key 未配置或无效，请在设置中填写后再开始录音。";
+		}
+		return normalized || "录音过程中发生错误";
+	}, []);
+
+	const showRecordingNotice = useCallback((message: string) => {
+		setPanelNotice({ message, source: "recording" });
+	}, []);
+
+	const setAsrNotice = useCallback((message: string) => {
+		setPanelNotice({ message, source: "asr" });
+	}, []);
+
+	const clearAsrNotice = useCallback(() => {
+		setPanelNotice((prev) => (prev?.source === "asr" ? null : prev));
+	}, []);
+
+	const { openSettings } = useOpenSettings();
+	const openAudioAsrSettings = useCallback(() => {
+		openSettings();
+		setTimeout(() => {
+			window.dispatchEvent(
+				new CustomEvent("settings:set-category", {
+					detail: { category: "developer" },
+				}),
+			);
+			const apiKeyInput = document.getElementById("asr-api-key");
+			if (apiKeyInput) {
+				apiKeyInput.scrollIntoView({ behavior: "smooth", block: "center" });
+			} else {
+				const settingsContent = document.querySelector('[data-tour="settings-content"]');
+				settingsContent?.scrollTo({ top: 0, behavior: "smooth" });
+			}
+		}, 200);
+	}, [openSettings]);
+
+	const { data: config, isLoading: configLoading } = useConfig();
+	const testAsrMutation = useTestAsrConfigApiTestAsrConfigPost();
+	const is24x7Enabled = (config?.audioIs24x7 as boolean | undefined) ?? false;
+
+	const asrApiKey = (config?.audioAsrApiKey as string | undefined) ?? "";
+	const asrBaseUrl = (config?.audioAsrBaseUrl as string | undefined) ?? "";
+	const asrModel = (config?.audioAsrModel as string | undefined) ?? "fun-asr-realtime";
+	const asrSampleRate = (config?.audioAsrSampleRate as number | undefined) ?? 16000;
+	const asrFormat = (config?.audioAsrFormat as string | undefined) ?? "pcm";
+	const asrSemanticPunc =
+		(config?.audioAsrSemanticPunctuationEnabled as boolean | undefined) ?? false;
+	const asrMaxSilence = (config?.audioAsrMaxSentenceSilence as number | undefined) ?? 1300;
+	const asrHeartbeat = (config?.audioAsrHeartbeat as boolean | undefined) ?? false;
+
+	const lastAsrCheckRef = useRef<string | null>(null);
+	const asrCheckInFlightRef = useRef(false);
+
+	useEffect(() => {
+		if (configLoading) return;
+
+		const trimmedKey = asrApiKey.trim();
+		const trimmedBaseUrl = asrBaseUrl.trim();
+		const invalidKeys = new Set(["", "YOUR_ASR_KEY_HERE", "YOUR_API_KEY_HERE", "xxx"]);
+
+		if (invalidKeys.has(trimmedKey) || !trimmedBaseUrl) {
+			setAsrNotice("音频识别未配置或无效，请先填写 ASR 配置。");
+			lastAsrCheckRef.current = JSON.stringify({
+				key: trimmedKey,
+				baseUrl: trimmedBaseUrl,
+				model: asrModel,
+				sampleRate: asrSampleRate,
+				format: asrFormat,
+				semanticPunc: asrSemanticPunc,
+				maxSilence: asrMaxSilence,
+				heartbeat: asrHeartbeat,
+			});
+			return;
+		}
+
+		const signature = JSON.stringify({
+			key: trimmedKey,
+			baseUrl: trimmedBaseUrl,
+			model: asrModel,
+			sampleRate: asrSampleRate,
+			format: asrFormat,
+			semanticPunc: asrSemanticPunc,
+			maxSilence: asrMaxSilence,
+			heartbeat: asrHeartbeat,
+		});
+
+		if (lastAsrCheckRef.current === signature || asrCheckInFlightRef.current) {
+			return;
+		}
+
+		lastAsrCheckRef.current = signature;
+		asrCheckInFlightRef.current = true;
+
+		testAsrMutation
+			.mutateAsync({
+				data: {
+					audioAsrApiKey: trimmedKey,
+					audioAsrBaseUrl: trimmedBaseUrl,
+					audioAsrModel: asrModel,
+					audioAsrSampleRate: asrSampleRate,
+					audioAsrFormat: asrFormat,
+					audioAsrSemanticPunctuationEnabled: asrSemanticPunc,
+					audioAsrMaxSentenceSilence: asrMaxSilence,
+					audioAsrHeartbeat: asrHeartbeat,
+				},
+			})
+			.then((response) => {
+				const result = response as { success?: boolean; error?: string };
+				if (result.success) {
+					clearAsrNotice();
+					return;
+				}
+				setAsrNotice(result.error || "音频识别配置不可用，请检查 ASR 配置。");
+			})
+			.catch((error) => {
+				const errorMsg = error instanceof Error ? error.message : String(error);
+				setAsrNotice(`音频识别配置不可用：${errorMsg}`);
+			})
+			.finally(() => {
+				asrCheckInFlightRef.current = false;
+			});
+
+		return;
+	}, [
+		configLoading,
+		asrApiKey,
+		asrBaseUrl,
+		asrModel,
+		asrSampleRate,
+		asrFormat,
+		asrSemanticPunc,
+		asrMaxSilence,
+		asrHeartbeat,
+		clearAsrNotice,
+		setAsrNotice,
+		testAsrMutation,
+	]);
+
 	// 计算是否正在查看当前日期
 	const isViewingCurrentDate = useMemo(() => {
 		const now = new Date();
@@ -191,13 +340,13 @@ export function AudioPanel() {
 				},
 				(error) => {
 					const errorMessage = error instanceof Error ? error.message : "录音过程中发生错误";
-					toastError(errorMessage, { duration: 5000 });
+					showRecordingNotice(formatAudioError(errorMessage));
 				},
-				true
+				is24x7Enabled
 			);
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : "启动录音失败";
-			toastError(errorMessage, { duration: 5000 });
+			showRecordingNotice(formatAudioError(errorMessage));
 		} finally {
 			isStartingRef.current = false;
 		}
@@ -205,6 +354,7 @@ export function AudioPanel() {
 		isRecording, clearSessionData, startRecording, updateLastFinalEnd,
 		appendTranscriptionText, appendSegmentData, setStorePartialText,
 		setStoreOptimizedText, setStoreLiveTodos, setStoreLiveSchedules, selectedDate, setSelectedSegmentIndex,
+		showRecordingNotice, formatAudioError, is24x7Enabled,
 	]);
 
 	// 手动停止录音（显示确认弹窗）
@@ -312,6 +462,23 @@ export function AudioPanel() {
 	return (
 		<div className="flex h-full flex-col bg-[oklch(var(--background))] overflow-hidden">
 			<PanelHeader icon={Icon} title={t("audioLabel")} />
+
+			{panelNotice && (
+				<div className="px-4 pt-3" role="alert">
+					<button
+						type="button"
+						onClick={openAudioAsrSettings}
+						className="flex w-full items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-800 shadow-sm transition hover:border-red-300 hover:bg-red-100"
+					>
+						<AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+						<span className="flex-1 leading-5">{panelNotice.message}</span>
+						<span className="inline-flex items-center gap-1 text-xs font-semibold uppercase text-red-700">
+							<Settings className="h-3.5 w-3.5" />
+							设置
+						</span>
+					</button>
+				</div>
+			)}
 
 			<AudioHeader
 				isRecording={isRecording}
