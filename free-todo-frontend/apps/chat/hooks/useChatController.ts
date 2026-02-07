@@ -72,6 +72,7 @@ export const useChatController = ({
 		error: sessionsError,
 	} = useChatSessions({
 		enabled: historyOpen,
+		refetchInterval: historyOpen ? 3000 : false,
 	});
 
 	const {

@@ -1,16 +1,20 @@
 """聊天路由辅助函数：会话管理、消息构建、工作区验证等。"""
 
+import asyncio
 from pathlib import Path
 
 from fastapi.responses import StreamingResponse
 
 from lifetrace.core.dependencies import get_rag_service
+from lifetrace.llm.chat_title_service import generate_chat_title
+from lifetrace.llm.llm_client import LLMClient
 from lifetrace.schemas.chat import ChatMessage
 from lifetrace.services.chat_service import ChatService
 from lifetrace.util.language import get_language_instruction
 from lifetrace.util.logging_config import get_logger
 
 logger = get_logger()
+_background_tasks: set[asyncio.Task] = set()
 
 
 # ============== 会话管理 ==============
@@ -25,15 +29,45 @@ def ensure_stream_session(message: ChatMessage, chat_service: ChatService) -> st
     chat = chat_service.get_chat_by_session_id(session_id)
     if not chat:
         chat_type = "event"
-        title = message.message[:50] if len(message.message) > 50 else message.message  # noqa: PLR2004
         chat_service.create_chat(
             session_id=session_id,
             chat_type=chat_type,
-            title=title,
         )
         logger.info(f"[stream] 在数据库中创建会话: {session_id}, 类型: {chat_type}")
 
     return session_id
+
+
+def schedule_chat_title_update(
+    *,
+    chat_service: ChatService,
+    session_id: str,
+    user_input: str,
+    context: str | None = None,
+    system_prompt: str | None = None,
+) -> None:
+    """后台生成并更新聊天标题，避免阻塞主请求。"""
+    if not session_id or not user_input:
+        return
+
+    async def _run():
+        try:
+            llm_client = LLMClient()
+            title = await asyncio.to_thread(
+                generate_chat_title,
+                llm_client=llm_client,
+                user_input=user_input,
+                context=context,
+                system_prompt=system_prompt,
+            )
+            if title:
+                chat_service.update_chat_title(session_id, title)
+        except Exception as exc:  # pragma: no cover - best-effort background task
+            logger.warning(f"聊天标题生成任务失败: {exc}")
+
+    task = asyncio.create_task(_run())
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
 
 
 # ============== 对话历史 ==============

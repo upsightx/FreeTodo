@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { useTranslations } from "next-intl";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
 import type { SessionCacheReturn } from "@/apps/chat/hooks/useSessionCache";
 import type { StreamControllerReturn } from "@/apps/chat/hooks/useStreamController";
@@ -23,7 +23,15 @@ import type { ToolCallEvent } from "@/lib/api";
 import { sendChatMessageStream } from "@/lib/api";
 import { queryKeys } from "@/lib/query/keys";
 import { useChatStore } from "@/lib/store/chat-store";
+import { toastInfo } from "@/lib/toast";
 import type { Todo } from "@/lib/types";
+
+const TODO_MUTATION_TOOLS = new Set([
+	"create_todo",
+	"update_todo",
+	"delete_todo",
+	"complete_todo",
+]);
 
 /**
  * useSendMessage 参数
@@ -94,6 +102,29 @@ export const useSendMessage = ({
 	setIsStreaming,
 	setError,
 }: UseSendMessageParams): SendMessageReturn => {
+	const todoRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
+
+	const scheduleTodosRefresh = useCallback(() => {
+		if (todoRefreshTimeoutRef.current) {
+			clearTimeout(todoRefreshTimeoutRef.current);
+		}
+
+		todoRefreshTimeoutRef.current = setTimeout(() => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.todos.all });
+			todoRefreshTimeoutRef.current = null;
+		}, 300);
+	}, [queryClient]);
+
+	useEffect(() => {
+		return () => {
+			if (todoRefreshTimeoutRef.current) {
+				clearTimeout(todoRefreshTimeoutRef.current);
+			}
+		};
+	}, []);
+
 	/**
 	 * 发送消息
 	 * @param text - 要发送的文本
@@ -204,6 +235,43 @@ export const useSendMessage = ({
 				}
 			};
 
+			const buildMemoryToastMessage = (event: ToolCallEvent) => {
+				const items: string[] = [];
+
+				if (Array.isArray(event.profile_updates)) {
+					for (const update of event.profile_updates) {
+						const field = update.field.replace(/_/g, " ");
+						items.push(
+							t("memorySavedFieldFormat", {
+								field,
+								value: String(update.value),
+							}),
+						);
+					}
+				}
+
+				if (Array.isArray(event.memories)) {
+					for (const memory of event.memories) {
+						if (memory) {
+							items.push(memory);
+						}
+					}
+				}
+
+				if (items.length === 0) {
+					return t("memorySavedFallback");
+				}
+
+				const separator = t("memorySavedSeparator");
+				const content = items.join(separator);
+				const more =
+					typeof event.more_count === "number" && event.more_count > 0
+						? t("memorySavedMore", { count: event.more_count })
+						: "";
+
+				return t("memorySavedToast", { content, more });
+			};
+
 			try {
 				const modeForBackend = getModeForBackend();
 
@@ -266,6 +334,17 @@ export const useSendMessage = ({
 					// onToolEvent 回调
 					(event: ToolCallEvent) => {
 						if (abortController.signal.aborted) return;
+
+						if (event.type === "memory_saved") {
+							toastInfo(buildMemoryToastMessage(event), { duration: 3500 });
+							return;
+						}
+
+						if (event.type === "tool_call_end" && event.tool_name) {
+							if (TODO_MUTATION_TOOLS.has(event.tool_name)) {
+								scheduleTodosRefresh();
+							}
+						}
 
 						const updatedSteps = toolCallTracker.handleToolEvent(event);
 						if (updatedSteps) {
@@ -337,13 +416,15 @@ export const useSendMessage = ({
 				}
 
 				// 检查是否应该更新 isStreaming
-				const currentDisplayedSessionId =
-					useChatStore.getState().conversationId;
-				if (
-					requestSessionId &&
-					currentDisplayedSessionId === requestSessionId
-				) {
-					setIsStreaming(false);
+				if (streamController.isActiveRequest(requestId)) {
+					const currentDisplayedSessionId =
+						useChatStore.getState().conversationId;
+					if (
+						!requestSessionId ||
+						currentDisplayedSessionId === requestSessionId
+					) {
+						setIsStreaming(false);
+					}
 				}
 
 				// 清理 abortController
@@ -352,15 +433,16 @@ export const useSendMessage = ({
 				}
 			}
 		},
-		[
-			effectiveTodos,
-			hasSelection,
-			locale,
-			queryClient,
-			selectedAgnoTools,
-			selectedExternalTools,
-			sessionCache,
-			setConversationId,
+	[
+		effectiveTodos,
+		hasSelection,
+		locale,
+		queryClient,
+		scheduleTodosRefresh,
+		selectedAgnoTools,
+		selectedExternalTools,
+		sessionCache,
+		setConversationId,
 			setError,
 			setInputValue,
 			setIsStreaming,

@@ -43,8 +43,15 @@ export function useChatSessions(options?: {
 	limit?: number;
 	chatType?: string;
 	enabled?: boolean;
+	refetchInterval?: number | false;
+	staleTime?: number;
 }) {
-	const { chatType, enabled = true } = options ?? {};
+	const {
+		chatType,
+		enabled = true,
+		refetchInterval,
+		staleTime = 30 * 1000,
+	} = options ?? {};
 
 	return useGetChatHistoryApiChatHistoryGet(
 		{
@@ -55,7 +62,8 @@ export function useChatSessions(options?: {
 			query: {
 				queryKey: queryKeys.chatHistory.sessions(chatType),
 				enabled,
-				staleTime: 30 * 1000,
+				staleTime,
+				refetchInterval,
 				select: (data: unknown) => {
 					// 返回会话列表，转换为 ChatSessionSummary[]
 					const response = data as ChatHistoryResponse;

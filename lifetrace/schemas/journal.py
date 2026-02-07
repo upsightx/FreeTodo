@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class JournalTag(BaseModel):
@@ -72,8 +72,7 @@ class JournalResponse(BaseModel):
     related_todo_ids: list[int] = Field(default_factory=list, description="关联待办ID列表")
     related_activity_ids: list[int] = Field(default_factory=list, description="关联活动ID列表")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class JournalListResponse(BaseModel):

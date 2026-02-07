@@ -1,3 +1,5 @@
+import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { WelcomeGreetings } from "@/apps/chat/components/layout/WelcomeGreetings";
 import { useMessageExtraction } from "@/apps/chat/hooks/useMessageExtraction";
@@ -17,7 +19,6 @@ import {
 type MessageListProps = {
 	messages: ChatMessage[];
 	isStreaming: boolean;
-	typingText: string;
 	effectiveTodos?: Todo[];
 };
 
@@ -27,7 +28,6 @@ type RenderBlock =
 			key: string;
 			message: ChatMessage;
 			content: string;
-			isLastBlock: boolean;
 			showMenu: boolean;
 			showExtraction: boolean;
 		}
@@ -40,9 +40,9 @@ type RenderBlock =
 export function MessageList({
 	messages,
 	isStreaming,
-	typingText,
 	effectiveTodos = [],
 }: MessageListProps) {
+	const tChat = useTranslations("chat");
 	const { data: allTodos = [] } = useTodos();
 
 	// 使用滚动管理 hook
@@ -193,7 +193,6 @@ export function MessageList({
 					key: `${message.id}-segment-${blocks.length}`,
 					message,
 					content,
-					isLastBlock: false,
 					showMenu: false,
 					showExtraction: false,
 				});
@@ -311,7 +310,6 @@ export function MessageList({
 					key: `${message.id}-segment-0`,
 					message,
 					content: message.content,
-					isLastBlock: false,
 					showMenu: false,
 					showExtraction: false,
 				});
@@ -319,20 +317,6 @@ export function MessageList({
 			}
 
 			blocks.push(...buildAssistantBlocks(message, isLastMessage));
-		});
-
-		let lastMessageBlockIndex = -1;
-		for (let i = blocks.length - 1; i >= 0; i -= 1) {
-			if (blocks[i].type === "message") {
-				lastMessageBlockIndex = i;
-				break;
-			}
-		}
-
-		blocks.forEach((block, index) => {
-			if (block.type === "message") {
-				block.isLastBlock = index === lastMessageBlockIndex;
-			}
 		});
 
 		const lastContentBlockKeyById = new Map<string, string>();
@@ -344,6 +328,8 @@ export function MessageList({
 
 		return { blocks, lastContentBlockKeyById };
 	}, [messages, buildAssistantBlocks]);
+
+	const respondingText = useMemo(() => tChat("aiResponding"), [tChat]);
 
 	// 如果应该显示首页，则显示欢迎界面而不是消息列表
 	if (shouldShowSuggestions) {
@@ -365,7 +351,7 @@ export function MessageList({
 					return <ToolCallBlock key={block.key} steps={block.steps} />;
 				}
 
-				const { message, content, isLastBlock } = block;
+				const { message, content } = block;
 				const extractionState = extractionStates.get(message.id);
 				const isAssistantMessage = message.role === "assistant";
 				const shouldShowMenu = isAssistantMessage && content.trim().length > 0;
@@ -378,9 +364,6 @@ export function MessageList({
 						key={block.key}
 						message={message}
 						contentOverride={content}
-						isLastMessage={isLastBlock}
-						isStreaming={isStreaming}
-						typingText={typingText}
 						extractionState={extractionState}
 						showMenu={shouldShowMenu && isLastContentBlockForMessage}
 						showExtractionPanel={
@@ -398,6 +381,16 @@ export function MessageList({
 					/>
 				);
 			})}
+			{isStreaming && (
+				<div
+					className="flex items-center gap-2 text-xs text-muted-foreground"
+					role="status"
+					aria-live="polite"
+				>
+					<Loader2 className="h-3.5 w-3.5 animate-spin" />
+					<span>{respondingText}</span>
+				</div>
+			)}
 			{/* 消息菜单 */}
 			<MessageContextMenu
 				menuOpenForMessageId={menuOpenForMessageId}

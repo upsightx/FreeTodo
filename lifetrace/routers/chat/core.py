@@ -10,7 +10,11 @@ from lifetrace.util.language import get_request_language
 from lifetrace.util.time_utils import get_utc_now
 
 from .base import _create_llm_stream_generator, logger, router
-from .helpers import build_stream_messages_and_temperature, ensure_stream_session
+from .helpers import (
+    build_stream_messages_and_temperature,
+    ensure_stream_session,
+    schedule_chat_title_update,
+)
 from .modes import (
     create_agent_streaming_response,
     create_agno_streaming_response,
@@ -89,6 +93,13 @@ async def chat_with_llm_stream(
 
         # 1. 会话初始化与聊天会话创建
         session_id = ensure_stream_session(message, chat_service)
+        schedule_chat_title_update(
+            chat_service=chat_service,
+            session_id=session_id,
+            user_input=message.get_user_input_for_storage(),
+            context=message.context,
+            system_prompt=message.system_prompt,
+        )
 
         # 2. Dify 测试模式（直接返回）
         if getattr(message, "mode", None) == "dify_test":

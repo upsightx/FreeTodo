@@ -8,7 +8,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TodoStatus(str, Enum):
@@ -46,8 +46,7 @@ class TodoAttachmentResponse(BaseModel):
     mime_type: str | None = Field(None, description="MIME 类型")
     source: str | None = Field(None, description="来源(user/ai)")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TodoCreate(BaseModel):
@@ -200,8 +199,7 @@ class TodoResponse(BaseModel):
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TodoListResponse(BaseModel):
