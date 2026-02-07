@@ -162,8 +162,8 @@ async def create_plan(request: PlanCreateRequest):
 
         return PlanCreateResponse(plan=plan)
     except Exception as exc:
-        logger.error("Failed to build plan: %s", exc)
-        raise HTTPException(status_code=500, detail="failed to build plan") from exc
+        logger.exception("Failed to build plan")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.post("/run")

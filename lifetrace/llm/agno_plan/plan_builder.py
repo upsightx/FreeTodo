@@ -62,9 +62,14 @@ class PlanBuilder:
         ]
 
         response = self.llm_client.chat(messages=messages, temperature=0.2)
-        plan_data = self._parse_json(response)
-        plan_data = self._normalize_plan(plan_data)
-        return PlanSpec.model_validate(plan_data)
+        try:
+            plan_data = self._parse_json(response)
+            plan_data = self._normalize_plan(plan_data)
+            return PlanSpec.model_validate(plan_data)
+        except Exception:
+            snippet = response.strip().replace("\n", " ")
+            logger.exception("Plan build failed. LLM response: %s", snippet[:800])
+            raise
 
     def _parse_json(self, text: str) -> dict[str, Any]:
         clean = text.strip()
