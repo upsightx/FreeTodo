@@ -9,8 +9,8 @@ import path from "node:path";
 import { app, BrowserWindow, screen } from "electron";
 import { logger } from "./logger";
 
-/** 通知间隔（毫秒）- 每 10 秒 */
-const NOTIFICATION_INTERVAL_MS = 10_000;
+/** 默认通知间隔（秒） */
+const DEFAULT_INTERVAL_SECONDS = 10;
 /** 通知显示持续时间（毫秒）- 3 秒 */
 const NOTIFICATION_DURATION_MS = 3_000;
 /** 弹窗窗口尺寸 */
@@ -18,6 +18,12 @@ const POPUP_WIDTH = 360;
 const POPUP_HEIGHT = 120;
 /** 距屏幕边缘的间距 */
 const MARGIN = 16;
+
+/** 配置文件接口 */
+interface PopupConfig {
+	enabled: boolean;
+	intervalSeconds: number;
+}
 
 /**
  * 系统级通知弹窗管理器
@@ -28,6 +34,32 @@ export class NotificationPopupManager {
 	private hideTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	private fadeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	private avatarBase64 = "";
+	private currentIntervalMs = DEFAULT_INTERVAL_SECONDS * 1000;
+
+	/**
+	 * 读取配置文件
+	 */
+	private readConfig(): PopupConfig {
+		try {
+			const configPath = path.join(__dirname, "..", ".notification-popup.json");
+			if (fs.existsSync(configPath)) {
+				const raw = fs.readFileSync(configPath, "utf-8");
+				const cfg = JSON.parse(raw) as Partial<PopupConfig>;
+				return {
+					enabled: typeof cfg.enabled === "boolean" ? cfg.enabled : true,
+					intervalSeconds:
+						typeof cfg.intervalSeconds === "number" &&
+						cfg.intervalSeconds >= 3 &&
+						cfg.intervalSeconds <= 3600
+							? cfg.intervalSeconds
+							: DEFAULT_INTERVAL_SECONDS,
+				};
+			}
+		} catch {
+			// 配置文件不存在或解析失败，使用默认值
+		}
+		return { enabled: true, intervalSeconds: DEFAULT_INTERVAL_SECONDS };
+	}
 
 	/**
 	 * 加载头像图片并转为 base64 数据 URI
@@ -297,6 +329,27 @@ export class NotificationPopupManager {
 	}
 
 	/**
+	 * 每次 tick 检查配置后决定是否弹窗
+	 */
+	private tick(): void {
+		const cfg = this.readConfig();
+
+		// 如果关闭了弹窗，跳过本次
+		if (!cfg.enabled) return;
+
+		// 如果间隔变了，重新设置定时器
+		const newIntervalMs = cfg.intervalSeconds * 1000;
+		if (newIntervalMs !== this.currentIntervalMs) {
+			this.currentIntervalMs = newIntervalMs;
+			if (this.intervalId) clearInterval(this.intervalId);
+			this.intervalId = setInterval(() => this.tick(), this.currentIntervalMs);
+			logger.info(`Notification popup interval changed to ${cfg.intervalSeconds}s`);
+		}
+
+		this.showNotification();
+	}
+
+	/**
 	 * 启动定时通知
 	 * 每隔指定间隔弹出一次通知
 	 */
@@ -304,13 +357,15 @@ export class NotificationPopupManager {
 		this.loadAvatar();
 		this.createWindow();
 
-		// 每 10 秒弹出一次通知
+		const cfg = this.readConfig();
+		this.currentIntervalMs = cfg.intervalSeconds * 1000;
+
 		this.intervalId = setInterval(() => {
-			this.showNotification();
-		}, NOTIFICATION_INTERVAL_MS);
+			this.tick();
+		}, this.currentIntervalMs);
 
 		logger.info(
-			`Notification popup manager started (interval: ${NOTIFICATION_INTERVAL_MS}ms, duration: ${NOTIFICATION_DURATION_MS}ms)`,
+			`Notification popup manager started (interval: ${cfg.intervalSeconds}s, duration: ${NOTIFICATION_DURATION_MS}ms, enabled: ${cfg.enabled})`,
 		);
 	}
 

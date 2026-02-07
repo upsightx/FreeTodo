@@ -7,6 +7,7 @@ export { DockDisplayModeSection } from "./DockDisplayModeSection";
 export { JournalSettingsSection } from "./JournalSettingsSection";
 export { LlmConfigSection } from "./LlmConfigSection";
 export { NotificationPermissionSection } from "./NotificationPermissionSection";
+export { NotificationPopupSection } from "./NotificationPopupSection";
 export { OnboardingSection } from "./OnboardingSection";
 export { PanelSwitchesSection } from "./PanelSwitchesSection";
 export { RecorderConfigSection } from "./RecorderConfigSection";

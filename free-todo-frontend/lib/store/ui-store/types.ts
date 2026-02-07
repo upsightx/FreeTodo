@@ -95,4 +95,9 @@ export interface UiStoreState {
 	setSelectedAgnoTools: (tools: string[]) => void;
 	// 设置 Agno 模式下选中的外部工具
 	setSelectedExternalTools: (tools: string[]) => void;
+	// 通知弹窗设置
+	notificationPopupEnabled: boolean;
+	notificationPopupIntervalSeconds: number;
+	setNotificationPopupEnabled: (enabled: boolean) => void;
+	setNotificationPopupIntervalSeconds: (seconds: number) => void;
 }
