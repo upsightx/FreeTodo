@@ -11,6 +11,24 @@ import {
 	getPositionByFeature,
 } from "./utils";
 
+/**
+ * 同步通知弹窗配置到文件，供独立 Electron 弹窗进程读取
+ */
+async function syncNotificationPopupConfig(
+	enabled: boolean,
+	intervalSeconds: number,
+): Promise<void> {
+	try {
+		await fetch("/api/notification-popup-config", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ enabled, intervalSeconds }),
+		});
+	} catch {
+		// 静默失败：API 不可用时（如纯静态部署）不影响 UI
+	}
+}
+
 export const useUiStore = create<UiStoreState>()(
 	persist(
 		(set, get) => ({
@@ -434,11 +452,28 @@ export const useUiStore = create<UiStoreState>()(
 					selectedAgnoTools: tools,
 				})),
 
-			// 设置 Agno 模式下选中的外部工具
-			setSelectedExternalTools: (tools) =>
-				set(() => ({
-					selectedExternalTools: tools,
-				})),
+		// 设置 Agno 模式下选中的外部工具
+		setSelectedExternalTools: (tools) =>
+			set(() => ({
+				selectedExternalTools: tools,
+			})),
+
+		// 通知弹窗设置
+		notificationPopupEnabled: DEFAULT_PANEL_STATE.notificationPopupEnabled,
+		notificationPopupIntervalSeconds:
+			DEFAULT_PANEL_STATE.notificationPopupIntervalSeconds,
+
+		setNotificationPopupEnabled: (enabled) => {
+			set(() => ({ notificationPopupEnabled: enabled }));
+			// 同步到配置文件，供独立弹窗进程读取
+			void syncNotificationPopupConfig(enabled, get().notificationPopupIntervalSeconds);
+		},
+
+		setNotificationPopupIntervalSeconds: (seconds) => {
+			const clamped = Math.max(3, Math.min(3600, Math.round(seconds)));
+			set(() => ({ notificationPopupIntervalSeconds: clamped }));
+			void syncNotificationPopupConfig(get().notificationPopupEnabled, clamped);
+		},
 
 			setBackendDisabledFeatures: (features) =>
 				set((state) => {

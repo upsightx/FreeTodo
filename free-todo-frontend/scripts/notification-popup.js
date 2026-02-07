@@ -9,12 +9,15 @@ const { app, BrowserWindow, screen } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 
-// ─── 配置 ───────────────────────────────────────────
-const INTERVAL_MS = 10_000; // 每 10 秒
+// ─── 默认配置 ────────────────────────────────────────
+const DEFAULT_INTERVAL_S = 10;
 const DURATION_MS = 3_000; // 显示 3 秒
 const WIDTH = 360;
 const HEIGHT = 120;
 const MARGIN = 16;
+
+// 配置文件路径（由前端 API 写入）
+const CONFIG_PATH = path.join(__dirname, "..", ".notification-popup.json");
 
 // ─── 初始化 ─────────────────────────────────────────
 // 减少资源占用：关闭 GPU 加速
@@ -28,6 +31,30 @@ let popupWindow = null;
 let avatarBase64 = "";
 let hideTimeout = null;
 let fadeTimeout = null;
+let currentIntervalMs = DEFAULT_INTERVAL_S * 1000;
+let intervalHandle = null;
+
+// ─── 读取配置 ────────────────────────────────────────
+function readConfig() {
+	try {
+		if (fs.existsSync(CONFIG_PATH)) {
+			const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
+			const cfg = JSON.parse(raw);
+			return {
+				enabled: typeof cfg.enabled === "boolean" ? cfg.enabled : true,
+				intervalSeconds:
+					typeof cfg.intervalSeconds === "number" &&
+					cfg.intervalSeconds >= 3 &&
+					cfg.intervalSeconds <= 3600
+						? cfg.intervalSeconds
+						: DEFAULT_INTERVAL_S,
+			};
+		}
+	} catch {
+		// 配置文件不存在或解析失败，使用默认值
+	}
+	return { enabled: true, intervalSeconds: DEFAULT_INTERVAL_S };
+}
 
 // ─── 加载头像 ───────────────────────────────────────
 function loadAvatar() {
@@ -269,15 +296,38 @@ function showNotification() {
 	}, DURATION_MS);
 }
 
+// ─── 每次 tick 检查配置后决定是否弹窗 ─────────────────
+function tick() {
+	const cfg = readConfig();
+
+	// 如果关闭了弹窗，跳过本次
+	if (!cfg.enabled) return;
+
+	// 如果间隔变了，重新设置定时器
+	const newIntervalMs = cfg.intervalSeconds * 1000;
+	if (newIntervalMs !== currentIntervalMs) {
+		currentIntervalMs = newIntervalMs;
+		if (intervalHandle) clearInterval(intervalHandle);
+		intervalHandle = setInterval(tick, currentIntervalMs);
+		console.log(
+			`[notification-popup] Interval changed to ${cfg.intervalSeconds}s`,
+		);
+	}
+
+	showNotification();
+}
+
 // ─── 启动 ───────────────────────────────────────────
 app.whenReady().then(() => {
 	loadAvatar();
 	createWindow();
 
-	// 每 10 秒弹出一次通知
-	setInterval(showNotification, INTERVAL_MS);
+	const cfg = readConfig();
+	currentIntervalMs = cfg.intervalSeconds * 1000;
+
+	intervalHandle = setInterval(tick, currentIntervalMs);
 	console.log(
-		`[notification-popup] Started (interval: ${INTERVAL_MS}ms, duration: ${DURATION_MS}ms)`,
+		`[notification-popup] Started (interval: ${cfg.intervalSeconds}s, duration: ${DURATION_MS}ms, enabled: ${cfg.enabled})`,
 	);
 });
 

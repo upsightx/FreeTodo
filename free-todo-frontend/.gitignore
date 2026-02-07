@@ -54,3 +54,6 @@ next-env.d.ts
 /src-tauri/Cargo.lock
 /src-tauri/WixTools/
 /src-tauri/gen/
+
+# Notification popup runtime config
+.notification-popup.json
