@@ -258,18 +258,52 @@ async function main() {
 			shell: true,
 		});
 
+		// 4. 启动系统级通知弹窗（独立 Electron 进程）
+		let popupProcess = null;
+		try {
+			const electronBinary = require("electron");
+			const popupScript = path.join(__dirname, "notification-popup.js");
+			popupProcess = spawn(String(electronBinary), [popupScript], {
+				stdio: "ignore",
+				env: {
+					...process.env,
+					ELECTRON_DISABLE_SECURITY_WARNINGS: "1",
+				},
+			});
+			popupProcess.on("error", (err) => {
+				console.warn(
+					`[notification-popup] Failed to start: ${err.message}`,
+				);
+			});
+			console.log("[notification-popup] System-level popup started");
+		} catch (err) {
+			console.warn(
+				`[notification-popup] Could not start (electron not available): ${err.message}`,
+			);
+		}
+
+		// 清理函数：同时关闭 Next.js 和通知弹窗
+		const killPopup = () => {
+			if (popupProcess && !popupProcess.killed) {
+				popupProcess.kill();
+			}
+		};
+
 		// 处理进程信号
 		process.on("SIGINT", () => {
+			killPopup();
 			nextProcess.kill("SIGINT");
 			process.exit(0);
 		});
 
 		process.on("SIGTERM", () => {
+			killPopup();
 			nextProcess.kill("SIGTERM");
 			process.exit(0);
 		});
 
 		nextProcess.on("exit", (code) => {
+			killPopup();
 			process.exit(code || 0);
 		});
 	} catch (error) {

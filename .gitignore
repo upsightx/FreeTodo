@@ -76,3 +76,4 @@ dist-backend/
 **/Cargo.lock
 **/WixTools/
 **/gen/
+/pop
