@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from lifetrace.llm.agno_plan.plan_builder import PlanBuilder
-from lifetrace.llm.agno_plan.plan_runner import PlanRunner
+from lifetrace.llm.agno_plan.plan_runner import (
+    PLAN_EVENT_PREFIX,
+    PLAN_EVENT_SUFFIX,
+    PlanRunner,
+)
 from lifetrace.schemas.agent_plan import (
     PlanCreateRequest,
     PlanCreateResponse,
@@ -22,10 +27,29 @@ from lifetrace.schemas.agent_plan import (
 from lifetrace.storage import todo_mgr
 from lifetrace.storage.database import agent_plan_mgr
 from lifetrace.util.logging_config import get_logger
+from lifetrace.util.time_utils import get_utc_now
 
 logger = get_logger()
 
 router = APIRouter(prefix="/api/agent/plan", tags=["agent_plan"])
+
+_STEP_NAME_PATTERN = re.compile(r'"name"\s*:\s*"((?:\\.|[^"\\])*)"')
+
+
+def _format_plan_event(payload: dict[str, Any]) -> str:
+    return f"{PLAN_EVENT_PREFIX}{json.dumps(payload, ensure_ascii=False)}{PLAN_EVENT_SUFFIX}"
+
+
+def _extract_step_names(text: str) -> list[str]:
+    names: list[str] = []
+    for match in _STEP_NAME_PATTERN.finditer(text):
+        raw = match.group(1)
+        try:
+            name = json.loads(f'"{raw}"')
+        except json.JSONDecodeError:
+            name = raw.replace('\\"', '"')
+        names.append(name)
+    return names
 
 
 def _format_todo_context(context: dict[str, Any]) -> str:  # noqa: C901
@@ -90,6 +114,20 @@ def _format_todo_context(context: dict[str, Any]) -> str:  # noqa: C901
     return "\n".join(lines) if lines else ""
 
 
+def _build_context_info(request: PlanCreateRequest) -> str:
+    context_info = ""
+    if request.todo_id is not None:
+        context = todo_mgr.get_todo_context(request.todo_id)
+        if context:
+            context_info = _format_todo_context(context)
+
+    if request.context:
+        extra_context = json.dumps(request.context, ensure_ascii=False, indent=2)
+        context_info = f"{context_info}\n\nextra:\n{extra_context}".strip()
+
+    return context_info or "none"
+
+
 def _build_tools_catalog() -> list[dict[str, Any]]:
     return [
         {
@@ -133,20 +171,10 @@ def _build_tools_catalog() -> list[dict[str, Any]]:
 @router.post("", response_model=PlanCreateResponse)
 async def create_plan(request: PlanCreateRequest):
     try:
-        context_info = ""
-        if request.todo_id is not None:
-            context = todo_mgr.get_todo_context(request.todo_id)
-            if context:
-                context_info = _format_todo_context(context)
-
-        if request.context:
-            extra_context = json.dumps(request.context, ensure_ascii=False, indent=2)
-            context_info = f"{context_info}\n\nextra:\n{extra_context}".strip()
-
         builder = PlanBuilder()
         plan = builder.build_plan(
             message=request.message,
-            context_info=context_info or "none",
+            context_info=_build_context_info(request),
             tools_catalog=_build_tools_catalog(),
         )
 
@@ -164,6 +192,78 @@ async def create_plan(request: PlanCreateRequest):
     except Exception as exc:
         logger.exception("Failed to build plan")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/stream")
+async def create_plan_stream(request: PlanCreateRequest):
+    builder = PlanBuilder()
+    context_info = _build_context_info(request)
+    tools_json = json.dumps(_build_tools_catalog(), ensure_ascii=False, indent=2)
+
+    system_prompt = builder.get_system_prompt()
+    user_prompt = builder.build_user_prompt(
+        message=request.message,
+        context_info=context_info,
+        tools_json=tools_json,
+    )
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    def generator():
+        buffer = ""
+        emitted_count = 0
+        try:
+            yield _format_plan_event(
+                {"type": "plan_build_started", "timestamp": get_utc_now().isoformat()}
+            )
+
+            for chunk in builder.llm_client.stream_chat(messages=messages, temperature=0.2):
+                buffer += chunk
+                names = _extract_step_names(buffer)
+                if len(names) > emitted_count:
+                    for idx in range(emitted_count, len(names)):
+                        yield _format_plan_event(
+                            {
+                                "type": "plan_build_step",
+                                "step_id": f"s{idx + 1}",
+                                "step_name": names[idx],
+                            }
+                        )
+                    emitted_count = len(names)
+
+            plan = builder.parse_plan_response(buffer)
+            plan_record = agent_plan_mgr.create_plan(
+                plan_id=plan.plan_id,
+                title=plan.title,
+                spec=plan.model_dump(),
+                todo_id=request.todo_id,
+                session_id=request.session_id,
+            )
+            if not plan_record:
+                raise RuntimeError("failed to persist plan")
+
+            yield _format_plan_event(
+                {
+                    "type": "plan_build_completed",
+                    "plan_id": plan.plan_id,
+                    "plan": plan.model_dump(),
+                    "timestamp": get_utc_now().isoformat(),
+                }
+            )
+        except Exception as exc:
+            logger.exception("Failed to build plan stream")
+            yield _format_plan_event(
+                {
+                    "type": "plan_build_failed",
+                    "error": str(exc),
+                    "timestamp": get_utc_now().isoformat(),
+                }
+            )
+
+    headers = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+    return StreamingResponse(generator(), media_type="text/plain; charset=utf-8", headers=headers)
 
 
 @router.post("/run")

@@ -191,50 +191,19 @@ export function ArtifactsView({
 		const status =
 			statusConfig[step.status as keyof typeof statusConfig] ||
 			statusConfig.pending;
-		const dependsOn = meta?.dependsOn?.length
-			? meta.dependsOn.join(", ")
-			: null;
-		const parallelGroup = meta?.parallelGroup ?? null;
 
 		return (
 			<div
 				key={step.stepId}
 				className="rounded-lg border border-border bg-background px-3 py-2"
 			>
-				<div className="flex items-start gap-3">
+				<div className="flex items-center gap-3">
 					<span
-						className={`mt-1.5 h-2.5 w-2.5 rounded-full ${status.dot} ${status.motion}`}
+						className={`h-2.5 w-2.5 rounded-full ${status.dot} ${status.motion}`}
 					/>
-					<div className="flex-1 space-y-1">
-						<div className="flex flex-wrap items-center gap-2">
-							<span className="text-sm font-medium text-foreground">
-								{meta?.name ?? step.stepName}
-							</span>
-							<span
-								className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${status.badge}`}
-							>
-								{status.label}
-							</span>
-						</div>
-						{meta?.tool && (
-							<p className="text-xs text-muted-foreground">
-								{t("planToolLabel", { tool: meta.tool })}
-							</p>
-						)}
-						{dependsOn && (
-							<p className="text-xs text-muted-foreground">
-								{t("planDependsOn", { steps: dependsOn })}
-							</p>
-						)}
-						{parallelGroup && (
-							<p className="text-xs text-muted-foreground">
-								{t("planParallelGroup", { group: parallelGroup })}
-							</p>
-						)}
-						{step.error && (
-							<p className="text-xs text-rose-500">{step.error}</p>
-						)}
-					</div>
+					<span className="text-sm font-medium text-foreground">
+						{meta?.name ?? step.stepName}
+					</span>
 				</div>
 			</div>
 		);
@@ -267,28 +236,44 @@ export function ArtifactsView({
 									? planProgress.runPlan(planProgress.plan.planId)
 									: planProgress.createAndRun()
 							}
-							disabled={planProgress.loading || planProgress.running}
+							disabled={
+								planProgress.loading ||
+								planProgress.running ||
+								planProgress.building
+							}
 							className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
 						>
 							<Play className="h-3 w-3" />
 							{planProgress.running
 								? t("planRunning")
-								: planProgress.hasPlan
-									? t("planRun")
-									: t("planGenerate")}
+								: planProgress.building
+									? t("planGenerating")
+									: planProgress.hasPlan
+										? t("planRun")
+										: t("planGenerate")}
 						</button>
 					</div>
 				</div>
-				{planProgress.hasPlan ? (
+				{planProgress.hasPlan ||
+				planProgress.building ||
+				planProgress.steps.length > 0 ? (
 					<div className="mt-4 space-y-3">
 						<div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
 							<span className="font-semibold text-foreground">
-								{planProgress.plan?.title}
+								{planProgress.plan?.title ?? t("planGenerating")}
 							</span>
-							<span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase">
-								{t("planStatusLabel", { status: planProgress.runStatus })}
-							</span>
+							{planProgress.hasPlan && (
+								<span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase">
+									{t("planStatusLabel", { status: planProgress.runStatus })}
+								</span>
+							)}
 						</div>
+						{planProgress.building && !planProgress.hasPlan && (
+							<div className="flex items-center gap-2 text-xs text-muted-foreground">
+								<span className="h-2 w-2 rounded-full bg-primary plan-status-pulse" />
+								<span>{t("planGenerating")}</span>
+							</div>
+						)}
 						{planProgress.error && (
 							<p className="text-xs text-rose-500">
 								{planProgress.error}
@@ -297,7 +282,9 @@ export function ArtifactsView({
 						<div className="space-y-2">
 							{planProgress.steps.length === 0 ? (
 								<div className="rounded-md border border-dashed border-border bg-muted/20 px-4 py-4 text-center text-xs text-muted-foreground">
-									{t("planNoSteps")}
+									{planProgress.building
+										? t("planGenerating")
+										: t("planNoSteps")}
 								</div>
 							) : (
 								planProgress.steps.map(renderPlanStep)

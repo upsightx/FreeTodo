@@ -947,6 +947,7 @@
 		"progressEmptyHint": "生成产物时会在这里显示进度。",
 		"planGenerate": "生成计划",
 		"planRun": "执行计划",
+		"planGenerating": "生成中...",
 		"planRunning": "执行中...",
 		"planRefresh": "刷新",
 		"planNoSteps": "暂无步骤",

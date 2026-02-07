@@ -77,6 +77,10 @@ export type PlanEventType =
 	| "plan_completed"
 	| "plan_failed"
 	| "plan_cancelled"
+	| "plan_build_started"
+	| "plan_build_step"
+	| "plan_build_completed"
+	| "plan_build_failed"
 	| "step_started"
 	| "step_completed"
 	| "step_failed"
@@ -91,6 +95,8 @@ export interface PlanEvent {
 	plan_id?: string;
 	run_id?: string;
 	step_id?: string;
+	step_name?: string;
+	plan?: Record<string, unknown>;
 	status?: string;
 	error?: string;
 	retry_count?: number;

@@ -947,6 +947,7 @@
 		"progressEmptyHint": "Progress will appear here when workbench tasks run.",
 		"planGenerate": "Generate plan",
 		"planRun": "Run plan",
+		"planGenerating": "Generating plan...",
 		"planRunning": "Running...",
 		"planRefresh": "Refresh",
 		"planNoSteps": "No steps generated yet",
