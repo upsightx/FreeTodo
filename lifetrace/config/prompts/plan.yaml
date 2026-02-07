@@ -154,7 +154,7 @@ plan_exec:
     要求:
     1) 只输出一个按时间顺序的任务名称列表（即 steps）
     2) 每个 step 只表达任务名称（name），不要描述来源、依赖、工具
-    3) 所有 step 必须使用 type=condition，inputs={"value": true}，depends_on=[]
+    3) 所有 step 必须使用 type=condition，inputs={{"value": true}}，depends_on=[]
     4) 不要使用任何 tool step，尤其不要使用 create_todo/update_todo/delete_todo
     5) 不需要设置 retry、on_fail、parallel_group
     只返回 JSON，不要返回其他任何信息。
