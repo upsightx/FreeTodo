@@ -1,95 +1,26 @@
-"""Agno 模式处理器（基于 Agno 框架的 Agent）。"""
+"""Agno 模式处理器（基于 Agno AgentOS）。"""
 
 import json
 from pathlib import Path
 from typing import Any
 
+from agno.agent import RunEvent
 from fastapi.responses import StreamingResponse
 
-from lifetrace.llm.agno_agent import (
-    TOOL_EVENT_PREFIX,
-    TOOL_EVENT_SUFFIX,
-    AgnoAgentService,
-)
+from lifetrace.llm.agno_agent import RESULT_PREVIEW_MAX_LENGTH, TOOL_EVENT_PREFIX, TOOL_EVENT_SUFFIX
 from lifetrace.schemas.chat import ChatMessage
+from lifetrace.services.agent_os_client import AgentOSClient
 from lifetrace.services.chat_service import ChatService
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.settings import settings
 
-from ..helpers import (
-    get_conversation_history,
-    make_error_streaming_response,
-    validate_workspace_path,
-)
+from ..helpers import make_error_streaming_response, validate_workspace_path
 
 logger = get_logger()
 
 
-def _strip_tool_events(
-    chunk: str,
-    pending: str,
-) -> tuple[str, str, list[dict[str, Any]]]:
-    """从流式 chunk 中剥离工具事件标记，返回纯内容、剩余未完成标记、解析出的事件列表。"""
-    content = pending + chunk
-    events: list[dict[str, Any]] = []
-
-    while True:
-        start_idx = content.find(TOOL_EVENT_PREFIX)
-        if start_idx == -1:
-            break
-
-        end_idx = content.find(TOOL_EVENT_SUFFIX, start_idx + len(TOOL_EVENT_PREFIX))
-        if end_idx == -1:
-            # 工具事件未完整，保留到下次处理
-            pending_chunk = content[start_idx:]
-            return content[:start_idx], pending_chunk, events
-
-        json_start = start_idx + len(TOOL_EVENT_PREFIX)
-        json_str = content[json_start:end_idx]
-        try:
-            events.append(json.loads(json_str))
-        except json.JSONDecodeError:
-            logger.warning("[stream][agno] 工具事件 JSON 解析失败")
-
-        content = content[:start_idx] + content[end_idx + len(TOOL_EVENT_SUFFIX) :]
-
-    # 处理可能跨 chunk 的前缀残留（例如 '\n[TOO'）
-    max_prefix_len = min(len(TOOL_EVENT_PREFIX) - 1, len(content))
-    for length in range(max_prefix_len, 0, -1):
-        if TOOL_EVENT_PREFIX.startswith(content[-length:]):
-            return content[:-length], content[-length:], events
-
-    return content, "", events
-
-
-def _build_external_tools_config(
-    external_tools: list[str],
-    workspace_path: str | None,
-    enable_file_delete: bool,
-) -> dict[str, dict]:
-    """构建外部工具配置
-
-    Args:
-        external_tools: 外部工具列表
-        workspace_path: 工作区路径
-        enable_file_delete: 是否允许删除文件
-
-    Returns:
-        外部工具配置字典
-    """
-    config: dict[str, dict] = {}
-    if not workspace_path:
-        return config
-
-    # 需要 base_dir 的本地工具
-    if "file" in external_tools:
-        config["file"] = {"base_dir": workspace_path, "enable_delete": enable_file_delete}
-    if "local_fs" in external_tools:
-        config["local_fs"] = {"base_dir": workspace_path}
-    if "shell" in external_tools:
-        config["shell"] = {"base_dir": workspace_path}
-
-    return config
+def _format_tool_event(event_data: dict[str, Any]) -> str:
+    return f"{TOOL_EVENT_PREFIX}{json.dumps(event_data, ensure_ascii=False)}{TOOL_EVENT_SUFFIX}"
 
 
 def _resolve_workspace_path(
@@ -133,35 +64,132 @@ def _resolve_user_id(message_user_id: str | None, session_id: str) -> str:
     return user_id
 
 
-def _build_agno_token_generator(
-    agno_service: AgnoAgentService,
+def _normalize_content(content: Any) -> str | None:
+    if content is None:
+        return None
+    if isinstance(content, str):
+        return content
+    if isinstance(content, dict | list):
+        return json.dumps(content, ensure_ascii=False)
+    return str(content)
+
+
+def _result_preview(value: Any) -> str:
+    result_str = str(value)
+    if len(result_str) > RESULT_PREVIEW_MAX_LENGTH:
+        return f"{result_str[:RESULT_PREVIEW_MAX_LENGTH]}..."
+    return result_str
+
+
+def _build_tool_event(event_type: str, data: dict[str, Any]) -> dict[str, Any] | None:
+    if event_type == RunEvent.run_started.value:
+        return {"type": "run_started"}
+    if event_type == RunEvent.run_completed.value:
+        return {"type": "run_completed"}
+
+    if event_type == RunEvent.memory_update_completed.value:
+        memories = data.get("memories")
+        if not memories:
+            return None
+        normalized = [str(item) for item in memories]
+        return {"type": "memory_saved", "memories": normalized}
+
+    tool_info = data.get("tool")
+    if not isinstance(tool_info, dict):
+        tool_info = {}
+    tool_name = tool_info.get("tool_name") or "unknown"
+
+    event_data: dict[str, Any] | None = None
+    if event_type == RunEvent.tool_call_started.value:
+        event_data = {
+            "type": "tool_call_start",
+            "tool_name": tool_name,
+            "tool_args": tool_info.get("tool_args") or {},
+        }
+    elif event_type == RunEvent.tool_call_completed.value:
+        event_data = {
+            "type": "tool_call_end",
+            "tool_name": tool_name,
+            "result_preview": _result_preview(tool_info.get("result", "")),
+        }
+    elif event_type == RunEvent.tool_call_error.value:
+        error = (
+            data.get("error")
+            or tool_info.get("error")
+            or tool_info.get("result")
+            or "Unknown error"
+        )
+        event_data = {
+            "type": "tool_call_end",
+            "tool_name": tool_name,
+            "result_preview": f"[Error] {_result_preview(error)}",
+            "error": True,
+        }
+
+    return event_data
+
+
+def _build_agent_os_dependencies(
     message: ChatMessage,
-    conversation_history: list[dict[str, Any]] | None,
+    workspace_path: str | None,
+) -> dict[str, Any]:
+    return {
+        "selected_tools": message.selected_tools or [],
+        "external_tools": message.external_tools or [],
+        "workspace_path": workspace_path,
+        "enable_file_delete": bool(message.enable_file_delete),
+    }
+
+
+def _build_agent_os_token_generator(
+    agent_os_client: AgentOSClient,
+    message: ChatMessage,
     session_id: str,
     user_id: str,
+    dependencies: dict[str, Any],
     chat_service: ChatService,
+    add_history_to_context: bool,
 ):
-    def agno_token_generator():
+    def token_generator():
         storage_chunks: list[str] = []
         tool_events: list[dict[str, Any]] = []
-        pending_tool_chunk = ""
+
         try:
-            for chunk in agno_service.stream_response(
+            for event_type, payload in agent_os_client.stream_run_events(
                 message=message.message,
-                conversation_history=conversation_history,
                 session_id=session_id,
                 user_id=user_id,
+                dependencies=dependencies,
+                add_history_to_context=add_history_to_context,
             ):
-                yield chunk
-                cleaned, pending_tool_chunk, parsed_events = _strip_tool_events(
-                    chunk, pending_tool_chunk
-                )
-                if cleaned:
-                    storage_chunks.append(cleaned)
-                if parsed_events:
-                    tool_events.extend(parsed_events)
+                if not event_type or not payload:
+                    continue
 
-            # 丢弃未完成的工具事件残片，避免写入历史
+                payload_dict: dict[str, Any] = payload
+
+                if event_type in (
+                    RunEvent.run_content.value,
+                    RunEvent.run_intermediate_content.value,
+                ):
+                    content = _normalize_content(payload_dict.get("content"))
+                    if content:
+                        storage_chunks.append(content)
+                        yield content
+                    continue
+
+                if event_type == RunEvent.run_error.value:
+                    error_msg = (
+                        payload_dict.get("content") or payload_dict.get("error") or "Unknown error"
+                    )
+                    logger.error("[stream][agno] AgentOS error: %s", error_msg)
+                    yield f"Agno Agent 处理失败: {error_msg}"
+                    return
+
+                tool_event = _build_tool_event(event_type, payload_dict)
+                if tool_event:
+                    tool_events.append(tool_event)
+                    yield _format_tool_event(tool_event)
+
             storage_content = "".join(storage_chunks).strip()
             metadata = (
                 json.dumps({"tool_events": tool_events}, ensure_ascii=False)
@@ -181,7 +209,7 @@ def _build_agno_token_generator(
             logger.error(f"[stream][agno] 生成失败: {e}")
             yield f"Agno Agent 处理失败: {e!s}"
 
-    return agno_token_generator()
+    return token_generator()
 
 
 def create_agno_streaming_response(
@@ -190,20 +218,8 @@ def create_agno_streaming_response(
     session_id: str,
     lang: str = "en",
 ) -> StreamingResponse:
-    """处理 Agno 模式，使用 Agno 框架的 Agent 进行对话
-
-    支持的外部工具：
-        搜索类（无需配置）：
-        - websearch: 通用网页搜索（自动选择后端）
-        - hackernews: Hacker News 新闻
-
-        本地类（需要 workspace_path）：
-        - file: 文件操作（读写、搜索）
-        - local_fs: 简化文件写入
-        - shell: 命令行执行
-        - sleep: 暂停执行
-    """
-    logger.info(f"[stream] 进入 Agno 模式, lang={lang}")
+    """处理 Agno 模式，使用 Agno AgentOS 进行对话"""
+    logger.info(f"[stream] 进入 Agno 模式 (AgentOS), lang={lang}")
 
     external_tools = message.external_tools or []
     workspace_path = _resolve_workspace_path(external_tools, message.workspace_path)
@@ -211,39 +227,18 @@ def create_agno_streaming_response(
     if validation_error_response:
         return validation_error_response
 
-    # 构建外部工具配置
-    external_tools_config = _build_external_tools_config(
-        external_tools, workspace_path, message.enable_file_delete
-    )
-
-    logger.info(
-        f"[stream][agno] selected_tools={message.selected_tools}, external_tools={external_tools}, "
-        f"workspace_path={workspace_path}"
-    )
-
     user_id = _resolve_user_id(message.user_id, session_id)
-    # 获取用户真正的输入（用于保存和过滤对话历史）
     user_input_for_storage = message.get_user_input_for_storage()
 
-    # 保存用户消息
     chat_service.add_message(
         session_id=session_id,
         role="user",
         content=user_input_for_storage,
     )
 
-    # 创建 Agno Agent 服务
-    agno_service = AgnoAgentService(
-        lang=lang,
-        selected_tools=message.selected_tools,
-        external_tools=external_tools if external_tools else None,
-        external_tools_config=external_tools_config if external_tools_config else None,
-    )
-
-    # 获取对话历史
-    conversation_history = get_conversation_history(
-        chat_service, session_id, user_input_for_storage
-    )
+    dependencies = _build_agent_os_dependencies(message, workspace_path)
+    add_history_to_context = bool(settings.chat.enable_history)
+    agent_os_client = AgentOSClient.from_settings()
 
     headers = {
         "Cache-Control": "no-cache",
@@ -251,8 +246,14 @@ def create_agno_streaming_response(
         "X-Session-Id": session_id,
     }
     return StreamingResponse(
-        _build_agno_token_generator(
-            agno_service, message, conversation_history, session_id, user_id, chat_service
+        _build_agent_os_token_generator(
+            agent_os_client,
+            message,
+            session_id,
+            user_id,
+            dependencies,
+            chat_service,
+            add_history_to_context,
         ),
         media_type="text/plain; charset=utf-8",
         headers=headers,

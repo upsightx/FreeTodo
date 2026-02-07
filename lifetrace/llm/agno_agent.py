@@ -37,7 +37,7 @@ from lifetrace.util.path_utils import get_agno_learning_db_path
 from lifetrace.util.settings import settings
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
 
     from agno.tools import Toolkit
 
@@ -148,12 +148,18 @@ class AgnoAgentService:
     - Streaming responses
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         lang: str | None = None,
         selected_tools: list[str] | None = None,
         external_tools: list[str] | None = None,
         external_tools_config: dict[str, dict] | None = None,
+        extra_tools: list[Toolkit] | None = None,
+        tool_hooks: list[Callable[..., Any]] | None = None,
+        pre_hooks: list[Any] | None = None,
+        post_hooks: list[Any] | None = None,
+        agent_id: str | None = None,
+        agent_name: str | None = None,
     ):
         """初始化 Agno Agent 服务
 
@@ -172,13 +178,17 @@ class AgnoAgentService:
             tools_to_use = self._initialize_tools(
                 selected_tools, external_tools, external_tools_config
             )
+            if extra_tools:
+                tools_to_use.extend(extra_tools)
 
             # 判断工具配置
             total_freetodo_tools_count = 14
             use_all_freetodo_tools = bool(
                 selected_tools and len(selected_tools) == total_freetodo_tools_count
             )
-            has_external_tools = bool(external_tools and len(external_tools) > 0)
+            has_external_tools = bool(external_tools and len(external_tools) > 0) or bool(
+                extra_tools
+            )
 
             instructions_list = _build_instructions(
                 self.lang, bool(tools_to_use), use_all_freetodo_tools, has_external_tools
@@ -198,6 +208,11 @@ class AgnoAgentService:
                 learning=learning,
                 add_history_to_context=add_history_to_context,
                 markdown=True,
+                tool_hooks=tool_hooks,
+                pre_hooks=pre_hooks,
+                post_hooks=post_hooks,
+                id=agent_id,
+                name=agent_name,
             )
             if learning:
                 logger.info(
