@@ -42,19 +42,13 @@ class PlanBuilder:
         tools_catalog: list[dict[str, Any]],
     ) -> PlanSpec:
         """Build plan spec via LLM."""
-        system_prompt = get_prompt("plan_exec", "system") or DEFAULT_SYSTEM_PROMPT
+        system_prompt = self.get_system_prompt()
         tools_json = json.dumps(tools_catalog, ensure_ascii=False, indent=2)
-        user_prompt = get_prompt(
-            "plan_exec",
-            "user",
+        user_prompt = self.build_user_prompt(
             message=message,
             context_info=context_info or "none",
             tools_json=tools_json,
         )
-        if not user_prompt:
-            user_prompt = DEFAULT_USER_PROMPT.format(
-                message=message, context_info=context_info or "none", tools_json=tools_json
-            )
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -70,6 +64,36 @@ class PlanBuilder:
             snippet = response.strip().replace("\n", " ")
             logger.exception(f"Plan build failed. LLM response: {snippet[:800]}")
             raise
+
+    def parse_plan_response(self, response: str) -> PlanSpec:
+        plan_data = self._parse_json(response)
+        plan_data = self._normalize_plan(plan_data)
+        return PlanSpec.model_validate(plan_data)
+
+    def get_system_prompt(self) -> str:
+        return get_prompt("plan_exec", "system") or DEFAULT_SYSTEM_PROMPT
+
+    def build_user_prompt(
+        self,
+        *,
+        message: str,
+        context_info: str,
+        tools_json: str,
+    ) -> str:
+        user_prompt = get_prompt(
+            "plan_exec",
+            "user",
+            message=message,
+            context_info=context_info,
+            tools_json=tools_json,
+        )
+        if user_prompt:
+            return user_prompt
+        return DEFAULT_USER_PROMPT.format(
+            message=message,
+            context_info=context_info,
+            tools_json=tools_json,
+        )
 
     def _parse_json(self, text: str) -> dict[str, Any]:
         clean = text.strip()

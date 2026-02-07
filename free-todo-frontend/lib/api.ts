@@ -470,6 +470,80 @@ export async function createAgentPlan(params: {
 	return plan;
 }
 
+export async function createAgentPlanStream(
+	params: {
+		message: string;
+		todoId?: number;
+		context?: Record<string, unknown>;
+	},
+	onEvent: (event: PlanEvent) => void,
+	signal?: AbortSignal,
+): Promise<PlanSpec> {
+	const baseUrl = getStreamApiBaseUrl();
+	const response = await fetch(`${baseUrl}/api/agent/plan/stream`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({
+			message: params.message,
+			todo_id: params.todoId,
+			context: params.context,
+		}),
+		signal,
+	});
+
+	if (!response.ok) {
+		throw new Error(`Request failed with status ${response.status}`);
+	}
+	if (!response.body) {
+		throw new Error("ReadableStream is not supported in this environment");
+	}
+
+	const reader = response.body.getReader();
+	const decoder = new TextDecoder();
+	let pendingChunk = "";
+	let planSpec: PlanSpec | null = null;
+	let buildError: string | null = null;
+
+	while (true) {
+		if (signal?.aborted) {
+			await reader.cancel();
+			break;
+		}
+		const { done, value } = await reader.read();
+		if (done) break;
+		if (!value) continue;
+
+		const rawChunk = decoder.decode(value, { stream: true });
+		const fullChunk = pendingChunk + rawChunk;
+		const [events, content] = parsePlanEvents(fullChunk);
+
+		for (const event of events) {
+			onEvent(event);
+			if (event.type === "plan_build_completed" && event.plan) {
+				planSpec = normalizePlanSpec(event.plan as RawPlan);
+			}
+			if (event.type === "plan_build_failed") {
+				buildError = event.error ?? "Failed to create plan";
+			}
+		}
+
+		const incompleteEventIdx = content.indexOf(PLAN_EVENT_PREFIX);
+		if (incompleteEventIdx !== -1) {
+			pendingChunk = content.substring(incompleteEventIdx);
+		} else {
+			pendingChunk = "";
+		}
+	}
+
+	if (!planSpec) {
+		if (buildError) {
+			throw new Error(buildError);
+		}
+		throw new Error("Plan response missing");
+	}
+	return planSpec;
+}
+
 export async function fetchLatestPlanForTodo(
 	todoId: number,
 ): Promise<PlanRunStatusResponse> {

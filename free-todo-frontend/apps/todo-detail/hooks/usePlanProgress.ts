@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-	createAgentPlan,
+	createAgentPlanStream,
 	fetchLatestPlanForTodo,
 	runAgentPlanStream,
 } from "@/lib/api";
@@ -61,6 +61,7 @@ export function usePlanProgress(todo: Todo | null) {
 	const [steps, setSteps] = useState<PlanRunStepInfo[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [running, setRunning] = useState(false);
+	const [building, setBuilding] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const abortRef = useRef<AbortController | null>(null);
 
@@ -218,19 +219,49 @@ export function usePlanProgress(todo: Todo | null) {
 
 	const createAndRun = useCallback(async () => {
 		if (!todo) return;
+		abortRef.current?.abort();
+		const controller = new AbortController();
+		abortRef.current = controller;
 		setLoading(true);
+		setBuilding(true);
 		setError(null);
+		setPlan(null);
+		setRun(null);
+		setSteps([]);
 		try {
-			const planSpec = await createAgentPlan({
-				message: buildMessageFromTodo(todo),
-				todoId: todo.id,
-			});
+			const planSpec = await createAgentPlanStream(
+				{
+					message: buildMessageFromTodo(todo),
+					todoId: todo.id,
+				},
+				(event) => {
+					if (event.type === "plan_build_step") {
+						setSteps((prev) => {
+							const fallbackId = `s${prev.length + 1}`;
+							const stepId = event.step_id ?? fallbackId;
+							const stepName = event.step_name ?? stepId;
+							if (prev.some((step) => step.stepId === stepId)) {
+								return prev;
+							}
+							return [...prev, buildPendingStep(stepId, stepName)];
+						});
+					}
+					if (event.type === "plan_build_failed") {
+						setError(event.error ?? "Failed to create plan");
+					}
+				},
+				controller.signal,
+			);
 			setPlan(planSpec);
 			setSteps(buildStepsFromSpec(planSpec));
+			setBuilding(false);
 			await runPlan(planSpec.planId);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to create plan");
+			if (!controller.signal.aborted) {
+				setError(err instanceof Error ? err.message : "Failed to create plan");
+			}
 		} finally {
+			setBuilding(false);
 			setLoading(false);
 		}
 	}, [runPlan, todo]);
@@ -253,6 +284,7 @@ export function usePlanProgress(todo: Todo | null) {
 		runStatus,
 		loading,
 		running,
+		building,
 		error,
 		refresh,
 		createAndRun,
