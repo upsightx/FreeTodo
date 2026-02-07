@@ -180,7 +180,6 @@ function main() {
     if (config.files.length > 0) {
       return 0;
     }
-    console.log("No Rust files to check.");
     return 0;
   }
 
@@ -205,12 +204,6 @@ function main() {
     }
     return 1;
   }
-
-  const modeDesc =
-    config.files.length > 0 ? `Checked ${filesToCheck.length} files, ` : "";
-  console.log(
-    `[OK] ${modeDesc}all Rust files are within ${config.maxLines} code lines`
-  );
   return 0;
 }
 
