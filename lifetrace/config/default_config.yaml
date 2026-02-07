@@ -29,6 +29,7 @@ backend_modules:
     - vector
     - rag
     - scheduler
+    - automation
     - cost_tracking
     - time_allocation
     - todo
