@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { useTranslations } from "next-intl";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
 import type { SessionCacheReturn } from "@/apps/chat/hooks/useSessionCache";
 import type { StreamControllerReturn } from "@/apps/chat/hooks/useStreamController";
@@ -25,6 +25,13 @@ import { queryKeys } from "@/lib/query/keys";
 import { useChatStore } from "@/lib/store/chat-store";
 import { toastInfo } from "@/lib/toast";
 import type { Todo } from "@/lib/types";
+
+const TODO_MUTATION_TOOLS = new Set([
+	"create_todo",
+	"update_todo",
+	"delete_todo",
+	"complete_todo",
+]);
 
 /**
  * useSendMessage 参数
@@ -95,6 +102,29 @@ export const useSendMessage = ({
 	setIsStreaming,
 	setError,
 }: UseSendMessageParams): SendMessageReturn => {
+	const todoRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
+
+	const scheduleTodosRefresh = useCallback(() => {
+		if (todoRefreshTimeoutRef.current) {
+			clearTimeout(todoRefreshTimeoutRef.current);
+		}
+
+		todoRefreshTimeoutRef.current = setTimeout(() => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.todos.all });
+			todoRefreshTimeoutRef.current = null;
+		}, 300);
+	}, [queryClient]);
+
+	useEffect(() => {
+		return () => {
+			if (todoRefreshTimeoutRef.current) {
+				clearTimeout(todoRefreshTimeoutRef.current);
+			}
+		};
+	}, []);
+
 	/**
 	 * 发送消息
 	 * @param text - 要发送的文本
@@ -310,6 +340,12 @@ export const useSendMessage = ({
 							return;
 						}
 
+						if (event.type === "tool_call_end" && event.tool_name) {
+							if (TODO_MUTATION_TOOLS.has(event.tool_name)) {
+								scheduleTodosRefresh();
+							}
+						}
+
 						const updatedSteps = toolCallTracker.handleToolEvent(event);
 						if (updatedSteps) {
 							let nextAnchors = cachedToolCallAnchors;
@@ -397,15 +433,16 @@ export const useSendMessage = ({
 				}
 			}
 		},
-		[
-			effectiveTodos,
-			hasSelection,
-			locale,
-			queryClient,
-			selectedAgnoTools,
-			selectedExternalTools,
-			sessionCache,
-			setConversationId,
+	[
+		effectiveTodos,
+		hasSelection,
+		locale,
+		queryClient,
+		scheduleTodosRefresh,
+		selectedAgnoTools,
+		selectedExternalTools,
+		sessionCache,
+		setConversationId,
 			setError,
 			setInputValue,
 			setIsStreaming,
