@@ -264,10 +264,8 @@ function main() {
     if (config.files.length > 0) {
       // No matching files in pre-commit mode
       return 0;
-    } else {
-      console.log("No TS/TSX files to check.");
-      return 0;
     }
+    return 0;
   }
 
   // Collect violations
@@ -292,14 +290,8 @@ function main() {
       console.log(`  ${path} -> ${lines} lines`);
     }
     return 1;
-  } else {
-    const modeDesc =
-      config.files.length > 0 ? `Checked ${filesToCheck.length} files, ` : "";
-    console.log(
-      `[OK] ${modeDesc}all TS/TSX files are within ${config.maxLines} code lines`
-    );
-    return 0;
   }
+  return 0;
 }
 
 process.exit(main());

@@ -188,9 +188,7 @@ def main() -> int:
         if args.files:
             # No matching files in pre-commit mode
             return 0
-        else:
-            print("No Python files to check.")
-            return 0
+        return 0
 
     # Collect violations
     violations: list[tuple[str, int]] = []
@@ -207,10 +205,7 @@ def main() -> int:
         for path, lines in sorted(violations):
             print(f"  {path} -> {lines} lines")
         return 1
-    else:
-        mode_desc = f"Checked {len(files_to_check)} files, " if args.files else ""
-        print(f"[OK] {mode_desc}all Python files are within {max_lines} code lines")
-        return 0
+    return 0
 
 
 if __name__ == "__main__":
