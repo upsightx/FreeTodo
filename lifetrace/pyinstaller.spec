@@ -166,9 +166,10 @@ hiddenimports = [
     "apscheduler.triggers",
     "apscheduler.triggers.cron",
     "apscheduler.triggers.interval",
-    # Utils (psutil, openai, tavily)
+    # Utils (psutil, openai, litellm, tavily)
     "psutil",
     "openai",
+    "litellm",
     "tavily",  # Tavily API for web search
     "dateutil",  # 可能被其他库依赖
     "rich",  # 可能被其他库依赖

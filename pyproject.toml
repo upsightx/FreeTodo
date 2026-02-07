@@ -43,6 +43,8 @@ dependencies = [
     "psutil>=7.2.0",
     # OpenAI API
     "openai>=2.16.0",
+    # LiteLLM (multi-provider)
+    "litellm>=1.57.7",
     # DashScope API (阿里云百炼)
     "dashscope>=1.25.0",
     # Agno Agent Framework

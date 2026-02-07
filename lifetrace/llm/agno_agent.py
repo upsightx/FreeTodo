@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any
 from agno.agent import Agent, Message, RunEvent
 from agno.db.sqlite import SqliteDb
 from agno.learn import LearningMachine, LearningMode, UserMemoryConfig, UserProfileConfig
-from agno.models.openai.like import OpenAILike
+from agno.models.litellm import LiteLLM
 
 from lifetrace.llm.agno_external_tools import (
     create_external_tool,
@@ -31,6 +31,7 @@ from lifetrace.llm.agno_learning import (
 )
 from lifetrace.llm.agno_tools import FreeTodoToolkit
 from lifetrace.llm.agno_tools.base import get_message
+from lifetrace.llm.llm_client import build_litellm_params, resolve_litellm_model
 from lifetrace.observability import setup_observability
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.path_utils import get_agno_learning_db_path
@@ -186,12 +187,22 @@ class AgnoAgentService:
 
             db, learning, add_history_to_context, db_path = _build_learning_config()
 
+            resolved_model = resolve_litellm_model(settings.llm.model, settings.llm.base_url)
+            model_id = resolved_model or settings.llm.model
+            litellm_params = build_litellm_params(
+                settings.llm.api_key,
+                settings.llm.base_url,
+                resolved_model,
+            )
+            temperature = settings.get("llm.temperature")
+            if temperature is not None:
+                litellm_params["temperature"] = temperature
+            max_tokens = settings.get("llm.max_tokens")
+            if max_tokens is not None:
+                litellm_params["max_tokens"] = max_tokens
+
             self.agent = Agent(
-                model=OpenAILike(
-                    id=settings.llm.model,
-                    api_key=settings.llm.api_key,
-                    base_url=settings.llm.base_url,
-                ),
+                model=LiteLLM(id=model_id, **litellm_params),
                 tools=tools_to_use if tools_to_use else None,
                 instructions=instructions_list,
                 db=db,
@@ -206,7 +217,7 @@ class AgnoAgentService:
                     db_path,
                 )
             logger.info(
-                f"Agno Agent 初始化成功，模型: {settings.llm.model}, "
+                f"Agno Agent 初始化成功，模型: {model_id}, "
                 f"Base URL: {settings.llm.base_url}, lang: {self.lang}, "
                 f"工具数量: {len(tools_to_use)}",
             )

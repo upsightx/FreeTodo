@@ -7,6 +7,7 @@ from functools import lru_cache
 
 from fastapi import APIRouter
 
+from lifetrace.llm.llm_client import test_litellm_connection
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.settings import settings
 from lifetrace.util.time_utils import get_utc_now
@@ -90,34 +91,18 @@ async def llm_health_check():
         # 检查配置是否完整
         llm_key = settings.llm.api_key
         base_url = settings.llm.base_url
+        model = settings.llm.model
+        requires_base_url = not model or "/" not in model
 
-        if not llm_key or not base_url:
+        if not llm_key or (requires_base_url and not base_url):
             return {
                 "status": "unconfigured",
-                "message": "LLM配置不完整，请设置API Key和Base URL",
+                "message": "LLM配置不完整，请设置API Key和Base URL（模型未指定提供商时）",
                 "timestamp": get_utc_now().isoformat(),
             }
-
-        try:
-            from openai import OpenAI  # noqa: PLC0415
-        except Exception as exc:
-            logger.error(f"OpenAI 依赖未安装: {exc}")
-            return {
-                "status": "error",
-                "message": f"OpenAI 依赖未安装: {exc}",
-                "timestamp": get_utc_now().isoformat(),
-            }
-
-        client = OpenAI(api_key=llm_key, base_url=base_url)
-        model = settings.llm.model
 
         # 发送最小化测试请求
-        response = client.chat.completions.create(  # noqa: F841
-            model=model,
-            messages=[{"role": "user", "content": "test"}],
-            max_tokens=5,
-            timeout=10,
-        )
+        test_litellm_connection(llm_key, base_url, model, timeout=10)
 
         return {
             "status": "healthy",

@@ -191,16 +191,17 @@ def is_llm_configured() -> bool:
     """检查 LLM 是否已配置
 
     Returns:
-        bool: 如果 llm_key 和 base_url 都已配置（不是占位符或空），返回 True
+        bool: 如果 llm_key 已配置，且在需要时 base_url 已配置，则返回 True
     """
     invalid_values = ["", "xxx", "YOUR_API_KEY_HERE", "YOUR_BASE_URL_HERE", "YOUR_LLM_KEY_HERE"]
     api_key = settings.get("llm.api_key")
     base_url = settings.get("llm.base_url")
+    model = settings.get("llm.model")
+    requires_base_url = not model or "/" not in model
     return (
         api_key is not None
-        and base_url is not None
         and api_key not in invalid_values
-        and base_url not in invalid_values
+        and (not requires_base_url or (base_url is not None and base_url not in invalid_values))
     )
 
 

@@ -17,7 +17,7 @@ def classify_intent_with_llm(client, model: str, user_query: str) -> dict[str, A
     """使用LLM分类用户意图
 
     Args:
-        client: OpenAI客户端
+        client: OpenAI兼容客户端
         model: 模型名称
         user_query: 用户查询
 

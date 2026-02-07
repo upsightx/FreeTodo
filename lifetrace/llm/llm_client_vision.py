@@ -40,7 +40,7 @@ def vision_chat(
     """视觉多模态聊天：使用通义千问视觉模型分析多张图片
 
     Args:
-        client: OpenAI客户端
+        client: OpenAI兼容客户端
         default_model: 默认模型名称
         screenshot_ids: 截图ID列表
         prompt: 文本提示词
