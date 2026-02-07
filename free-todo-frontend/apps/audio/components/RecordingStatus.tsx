@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 interface RecordingStatusProps {
 	isRecording: boolean;
-	recordingStartedAt?: number; // 录音开始时间（performance.now()，毫秒）
+	recordingStartedAt?: number; // 录音开始时间（Date.now() 毫秒时间戳）
 	duration?: number; // 录音时长（秒，预留用于外部传入）
 }
 
@@ -20,9 +20,9 @@ export function RecordingStatus({ isRecording, recordingStartedAt }: RecordingSt
 			return;
 		}
 
-		// 立即计算一次当前已录音时长
+		// 使用 Date.now() 计算经过时间（与 store 中 recordingStartedAt 的时间基准一致）
 		const updateElapsedTime = () => {
-			const elapsed = Math.floor((performance.now() - recordingStartedAt) / 1000);
+			const elapsed = Math.floor((Date.now() - recordingStartedAt) / 1000);
 			setElapsedTime(Math.max(0, elapsed));
 		};
 

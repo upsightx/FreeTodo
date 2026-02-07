@@ -12,6 +12,7 @@ import { MessageList } from "@/apps/chat/components/message/MessageList";
 import { useBreakdownQuestionnaire } from "@/apps/chat/hooks/useBreakdownQuestionnaire";
 import { useChatController } from "@/apps/chat/hooks/useChatController";
 import { PanelActionButton } from "@/components/common/layout/PanelHeader";
+import { useCrawlerStore } from "@/apps/crawler/store";
 import { useChatStore } from "@/lib/store/chat-store";
 import { useLocaleStore } from "@/lib/store/locale";
 import { useTodoStore } from "@/lib/store/todo-store";
@@ -27,6 +28,10 @@ export function ChatPanel() {
 	const { selectedTodoIds, clearTodoSelection, toggleTodoSelection } =
 		useTodoStore();
 
+	// 获取爬虫 store 的 setSelectedResult 方法用于清除关联
+	const setSelectedCrawlerResult = useCrawlerStore(
+		(state) => state.setSelectedResult,
+	);
 	// 获取 pendingPrompt（其他组件触发的待发送消息）
 	const { pendingPrompt, pendingNewChat, setPendingPrompt } = useChatStore();
 
@@ -200,36 +205,38 @@ export function ChatPanel() {
 						/>
 					)}
 
-					{/* 首页时在输入框上方显示建议按钮 */}
-					{shouldShowSuggestions &&
-						(breakdownQuestionnaire.stage === "idle" ||
-							breakdownQuestionnaire.stage === "completed") && (
-							<PromptSuggestions
-								onSelect={handleSelectPrompt}
-								className="pb-4"
-							/>
-						)}
+				{/* 首页时在输入框上方显示建议按钮 */}
+				{shouldShowSuggestions &&
+					(breakdownQuestionnaire.stage === "idle" ||
+						breakdownQuestionnaire.stage === "completed") && (
+						<PromptSuggestions
+							onSelect={handleSelectPrompt}
+							className="pb-4"
+						/>
+					)}
 
-					<ChatInputSection
-						locale={locale}
-						inputValue={chatController.inputValue}
-						isStreaming={chatController.isStreaming}
-						error={chatController.error}
-						effectiveTodos={chatController.effectiveTodos}
-						hasSelection={chatController.hasSelection}
-						showTodosExpanded={showTodosExpanded}
-						onInputChange={chatController.setInputValue}
-						onSend={chatController.handleSend}
-						onStop={chatController.handleStop}
-						onKeyDown={chatController.handleKeyDown}
-						onCompositionStart={() => chatController.setIsComposing(true)}
-						onCompositionEnd={() => chatController.setIsComposing(false)}
-						onToggleExpand={() => setShowTodosExpanded((prev) => !prev)}
-						onClearSelection={clearTodoSelection}
-						onToggleTodo={toggleTodoSelection}
-					/>
-				</div>
+				<ChatInputSection
+					locale={locale}
+					inputValue={chatController.inputValue}
+					isStreaming={chatController.isStreaming}
+					error={chatController.error}
+					effectiveTodos={chatController.effectiveTodos}
+					hasSelection={chatController.hasSelection}
+					showTodosExpanded={showTodosExpanded}
+					crawlerResult={chatController.selectedCrawlerResult}
+					onInputChange={chatController.setInputValue}
+					onSend={chatController.handleSend}
+					onStop={chatController.handleStop}
+					onKeyDown={chatController.handleKeyDown}
+					onCompositionStart={() => chatController.setIsComposing(true)}
+					onCompositionEnd={() => chatController.setIsComposing(false)}
+					onToggleExpand={() => setShowTodosExpanded((prev) => !prev)}
+					onClearSelection={clearTodoSelection}
+					onToggleTodo={toggleTodoSelection}
+					onClearCrawlerSelection={() => setSelectedCrawlerResult(null)}
+				/>
 			</div>
+		</div>
 		</div>
 	);
 }

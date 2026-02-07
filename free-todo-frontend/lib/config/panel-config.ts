@@ -8,6 +8,7 @@ import {
 	Activity,
 	Award,
 	BookOpen,
+	Bug,
 	CalendarDays,
 	Camera,
 	DollarSign,
@@ -15,6 +16,7 @@ import {
 	ListTodo,
 	type LucideIcon,
 	MessageSquare,
+	Network,
 	Mic,
 	Settings,
 } from "lucide-react";
@@ -31,6 +33,8 @@ export type PanelFeature =
 	| "costTracking"
 	| "achievements"
 	| "debugShots"
+	| "crawler"
+	| "crawlerDetail"
 	| "audio";
 
 /**
@@ -60,6 +64,8 @@ export const ALL_PANEL_FEATURES: PanelFeature[] = [
 	"costTracking",
 	"achievements",
 	"debugShots",
+	"crawler",
+	"crawlerDetail",
 	"audio",
 ];
 
@@ -77,5 +83,7 @@ export const FEATURE_ICON_MAP: Record<PanelFeature, LucideIcon> = {
 	costTracking: DollarSign,
 	achievements: Award,
 	debugShots: Camera,
+	crawler: Bug,
+	crawlerDetail: Network,
 	audio: Mic,
 };

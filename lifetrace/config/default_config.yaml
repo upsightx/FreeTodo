@@ -37,6 +37,7 @@ backend_modules:
     - vision
     - notification
     - floating_capture
+    - crawler
     - audio
     - proactive_ocr
 
@@ -242,7 +243,7 @@ audio:
 # 可观测性配置（Phoenix + OpenInference）
 observability:
   enabled: true # 是否启用观测功能（默认关闭，需用户手动开启）
-  mode: both # 导出模式：local（本地JSON文件）| phoenix（Phoenix UI）| both（两者都启用）
+  mode: local # 导出模式：local（本地JSON文件）| phoenix（Phoenix UI）| both（两者都启用）
   local:
     traces_dir: traces/ # trace 文件存储目录（相对于 base_dir）
     max_files: 100 # 最大保留文件数（超出后自动清理旧文件）

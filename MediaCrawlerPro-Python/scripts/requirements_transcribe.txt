@@ -1,0 +1,14 @@
+# 视频音频提取与语音识别脚本的依赖
+# 使用方法: pip install -r requirements_transcribe.txt
+
+# HTTP 客户端 (异步下载)
+httpx>=0.28.0
+
+# 日志
+loguru>=0.7.0
+
+# 音视频处理
+av>=12.0.0
+
+# 语音识别 (Whisper)
+faster-whisper>=1.0.0

@@ -62,6 +62,8 @@ const FEATURE_LABEL_MAP: Partial<Record<PanelFeature, string>> = {
 	costTracking: "costTracking",
 	achievements: "achievements",
 	debugShots: "debugShots",
+	crawler: "crawler",
+	crawlerDetail: "crawlerDetail",
 	audio: "audio",
 };
 

@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "types": [
+            "electron",
+            "node"
+        ], // 确保包含这行        
+        "typeRoots": [
+            "./node_modules/@types",
+            "./src/renderer/typings"
+        ]
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.d.ts",
+        "src/**/*.tsx",
+        "src/**/*.vue"
+    ]
+}

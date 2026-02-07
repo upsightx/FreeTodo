@@ -122,6 +122,28 @@ const panelRegistry: Record<PanelFeature, PanelPlugin> = {
 				default: mod.DebugCapturePanel,
 			})),
 	},
+	crawler: {
+		id: "crawler",
+		labelKey: "crawlerLabel",
+		placeholderKey: "crawlerPlaceholder",
+		icon: FEATURE_ICON_MAP.crawler,
+		backendModules: ["crawler"],
+		loader: () =>
+			import("@/apps/crawler").then((mod) => ({
+				default: mod.CrawlerPanel,
+			})),
+	},
+	crawlerDetail: {
+		id: "crawlerDetail",
+		labelKey: "crawlerDetailLabel",
+		placeholderKey: "crawlerDetailPlaceholder",
+		icon: FEATURE_ICON_MAP.crawlerDetail,
+		backendModules: ["crawler"],
+		loader: () =>
+			import("@/apps/crawler").then((mod) => ({
+				default: mod.CrawlerDetailPanel,
+			})),
+	},
 	audio: {
 		id: "audio",
 		labelKey: "audioLabel",

@@ -125,6 +125,7 @@ const maxReconnectAttempts = 5;
 const reconnectDelayMs = 3000; // 3秒后重连
 let shouldReconnectRef = false; // 标记是否应该重连
 let currentIs24x7 = false; // 当前是否为 7×24 模式
+let isReconnectingInternally = false; // 标记是否正在内部重连（绕过 isRecording 检查）
 
 // ========== 内部辅助函数 ==========
 
@@ -226,8 +227,8 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 	// ===== Actions =====
 
 	startRecording: async (onTranscription, onRealtimeNlp, onError, is24x7 = false) => {
-		// 如果已经在录音，直接返回
-		if (get().isRecording) {
+		// 如果已经在录音且不是内部重连，直接返回
+		if (get().isRecording && !isReconnectingInternally) {
 			console.warn("[AudioRecordingStore] Already recording, ignoring start request");
 			return;
 		}
@@ -383,30 +384,34 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 						? error.message
 						: "WebSocket连接错误，请检查后端服务是否运行";
 				console.error("WebSocket error:", errorMessage, error);
-				set({ isRecording: false });
-				if (currentOnError) {
-					currentOnError(new Error(errorMessage));
-				}
+				// 注意：不在 onerror 中设置 isRecording = false
+				// 浏览器中 onerror 总是紧接着 onclose，由 onclose 统一处理状态变更
+				// 这样可以避免在自动重连场景下 UI 闪烁
 			};
 
 			ws.onclose = (event) => {
-				set({
-					isRecording: false,
-					recordingStartedAt: null,
-					recordingStartedDate: null,
-					lastFinalEndMs: null,
-				});
-
-				// 正常关闭（用户主动停止或服务器正常关闭）不需要触发错误
+				// 正常关闭（用户主动停止或服务器正常关闭）
 				if (event.wasClean) {
+					set({
+						isRecording: false,
+						recordingStartedAt: null,
+						recordingStartedDate: null,
+						lastFinalEndMs: null,
+					});
 					shouldReconnectRef = false;
 					currentIs24x7 = false;
 					return;
 				}
 
-				// 如果已经被标记为不应该重连（用户主动关闭），直接返回
+				// 如果已经被标记为不应该重连（用户主动关闭），直接设置为停止状态
 				if (!shouldReconnectRef) {
 					console.log("[AudioRecordingStore] 已禁用自动重连，跳过重连");
+					set({
+						isRecording: false,
+						recordingStartedAt: null,
+						recordingStartedDate: null,
+						lastFinalEndMs: null,
+					});
 					return;
 				}
 
@@ -417,28 +422,52 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 						`[AudioRecordingStore] WebSocket 连接断开，${reconnectDelayMs / 1000}秒后尝试重连 (${reconnectAttemptsRef}/${maxReconnectAttempts})`
 					);
 
+					// 重要：自动重连期间保持 isRecording = true，避免 UI 闪烁
+					// 不设置 isRecording = false，让 UI 继续显示"录音中"状态
+
 					// 清理资源但保留回调（用于重连）
 					cleanupRecordingResources(undefined, true);
 
-					reconnectTimeoutRef = setTimeout(() => {
+					reconnectTimeoutRef = setTimeout(async () => {
 						if (currentOnTranscription && shouldReconnectRef) {
 							console.log("[AudioRecordingStore] 尝试重新连接 WebSocket...");
-							// 使用保存的回调重新启动录音
-							get().startRecording(
-								currentOnTranscription,
-								currentOnRealtimeNlp || undefined,
-								currentOnError || undefined,
-								currentIs24x7
-							).catch((error) => {
+							// 设置内部重连标志，绕过 startRecording 中的 isRecording 检查
+							isReconnectingInternally = true;
+							try {
+								// 使用保存的回调重新启动录音
+								await get().startRecording(
+									currentOnTranscription,
+									currentOnRealtimeNlp || undefined,
+									currentOnError || undefined,
+									currentIs24x7
+								);
+							} catch (error) {
 								console.error("[AudioRecordingStore] 重连失败:", error);
+								// 重连失败，才将状态设为停止
+								set({
+									isRecording: false,
+									recordingStartedAt: null,
+									recordingStartedDate: null,
+									lastFinalEndMs: null,
+								});
 								if (currentOnError) {
 									currentOnError(error as Error);
 								}
-							});
+							} finally {
+								isReconnectingInternally = false;
+							}
 						}
 					}, reconnectDelayMs);
 					return;
 				}
+
+				// 超过最大重连次数或非 7×24 模式：彻底停止
+				set({
+					isRecording: false,
+					recordingStartedAt: null,
+					recordingStartedDate: null,
+					lastFinalEndMs: null,
+				});
 
 				// 异常关闭提供详细错误信息
 				let errorMessage = "WebSocket连接异常关闭";

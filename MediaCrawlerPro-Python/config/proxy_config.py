@@ -1,0 +1,45 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2025 relakkes@gmail.com
+#
+# This file is part of MediaCrawlerPro-Python project.
+# Repository: https://github.com/MediaCrawlerPro/MediaCrawlerPro-Python/blob/main/config/proxy_config.py
+# GitHub: https://github.com/NanmiCoder
+# Licensed under NON-COMMERCIAL LEARNING LICENSE 1.1
+#
+
+# 声明：本代码仅供学习和研究目的使用。使用者应遵守以下原则：
+# 1. 不得用于任何商业用途。
+# 2. 使用时应遵守目标平台的使用条款和robots.txt规则。
+# 3. 不得进行大规模爬取或对平台造成运营干扰。
+# 4. 应合理控制请求频率，避免给目标平台带来不必要的负担。
+# 5. 不得用于任何非法或不当的用途。
+#
+# 详细许可条款请参阅项目根目录下的LICENSE文件。
+# 使用本代码即表示您同意遵守上述原则和LICENSE中的所有条款。
+
+
+# -*- coding: utf-8 -*-
+import os
+
+# 是否开启 IP 代理
+ENABLE_IP_PROXY = True
+
+# 代理IP池数量
+IP_PROXY_POOL_COUNT = 2  # 一般情况下设置成2个就够了，程序会自动维护IP可用性
+
+# 代理IP提供商名称
+IP_PROXY_PROVIDER_NAME = "kuaidaili"
+
+# 快代理配置
+#KDL_SECERT_ID = os.getenv("ook7xs8875h4t2yoqop6", "你的快代理secert_id")
+#KDL_SIGNATURE = os.getenv("luiymzc2gfrt6zo6mu69nxy60eswqk1g", "你的快代理签名")
+#KDL_USER_NAME = os.getenv("d4694223131", "你的快代理用户名")
+#KDL_USER_PWD = os.getenv("o00l79oz", "你的快代理密码")
+#KDL_SECERT_ID = "ob3p60rttqi1s74rb0l1"
+#KDL_SIGNATURE = "wuzcfmmhevmdyb4qh7iu4wyzookay55u"
+#KDL_USER_NAME = "d4707921034"
+#KDL_USER_PWD = "o00l79oz"
+KDL_SECERT_ID = "ook7xs8875h4t2yoqop6"
+KDL_SIGNATURE = "luiymzc2gfrt6zo6mu69nxy60eswqk1g"
+KDL_USER_NAME = "d4694223131"
+KDL_USER_PWD = "o00l79oz"

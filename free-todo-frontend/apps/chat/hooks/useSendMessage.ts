@@ -19,6 +19,7 @@ import {
 	buildHierarchicalTodoContext,
 	buildTodoContextBlock,
 } from "@/apps/chat/utils/todoContext";
+import { useCrawlerStore } from "@/apps/crawler/store";
 import type { ToolCallEvent } from "@/lib/api";
 import { sendChatMessageStream } from "@/lib/api";
 import { queryKeys } from "@/lib/query/keys";
@@ -153,12 +154,16 @@ export const useSendMessage = ({
 				: buildTodoContextBlock([], t("noTodoContext"), t);
 			const userLabel = t("userInput");
 
-			// 使用工具函数构建 payload
+			// 获取关联的爬虫帖子内容
+			const crawlerResult = useCrawlerStore.getState().selectedResult;
+
+			// 使用工具函数构建 payload（包含爬虫内容上下文）
 			const { payloadMessage, systemPromptForBackend, contextForBackend } =
 				buildPayloadMessage({
 					trimmedText,
 					userLabel,
 					todoContext,
+					crawlerResult,
 				});
 
 			// 创建消息

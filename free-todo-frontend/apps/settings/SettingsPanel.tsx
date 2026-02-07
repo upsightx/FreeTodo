@@ -12,6 +12,8 @@ import {
 	AudioConfigSection,
 	AutomationTasksSection,
 	AutoTodoDetectionSection,
+	CookiesConfigSection,
+	CrawlerConfigSection,
 	// DifyConfigSection,
 	DockDisplayModeSection,
 	JournalSettingsSection,
@@ -154,12 +156,14 @@ export function SettingsPanel() {
 						<TavilyConfigSection config={config} loading={loading} />
 					</>
 				);
-			case "developer":
-				return (
-					<>
-						{/* <DifyConfigSection config={config} loading={loading} /> */}
-						<SchedulerSection loading={loading} />
-						<RecorderConfigSection config={config} loading={loading} />
+		case "developer":
+			return (
+				<>
+					<CrawlerConfigSection loading={loading} />
+					<CookiesConfigSection loading={loading} />
+					{/* <DifyConfigSection config={config} loading={loading} /> */}
+					<SchedulerSection loading={loading} />
+					<RecorderConfigSection config={config} loading={loading} />
 						{isAudioPanelEnabled && (
 							<>
 								<AudioConfigSection config={config} loading={loading} />
@@ -210,13 +214,13 @@ export function SettingsPanel() {
 				}
 			/>
 
-			{/* 设置内容区域 */}
-			<SettingsSearchProvider query={searchQuery}>
-				<div
-					data-tour="settings-content"
-					ref={contentRef}
-					className="flex-1 overflow-y-auto"
-				>
+		{/* 设置内容区域 */}
+		<SettingsSearchProvider query={searchQuery}>
+			<div
+				data-tour="settings-content"
+				ref={contentRef}
+				className="flex-1 overflow-y-auto"
+			>
 					{!isSearchActive && (
 						<div className="sticky top-0 z-10 border-b border-border/70 bg-background/90 px-4 py-4 backdrop-blur">
 							<div

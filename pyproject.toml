@@ -33,6 +33,7 @@ dependencies = [
     # "funasr>=1.0.0",  # 注释掉，作为可选依赖
     # Data processing
     "pyyaml>=6.0",
+    "openpyxl>=3.1.0",           # Excel 文件读写（用于 cookies 配置）
     "sentence-transformers>=2.2.0", # 文本嵌入模型
     "chromadb>=1.4.1",              # 向量数据库
     "scipy>=1.9.0",                 # 科学计算（用于余弦距离）

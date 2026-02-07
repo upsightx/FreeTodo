@@ -3,8 +3,10 @@
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import { InputBox } from "@/apps/chat/components/input/InputBox";
+import { LinkedCrawlerContent } from "@/apps/chat/components/input/LinkedCrawlerContent";
 import { LinkedTodos } from "@/apps/chat/components/input/LinkedTodos";
 import { ToolSelector } from "@/apps/chat/components/input/ToolSelector";
+import type { CrawlResultItem } from "@/apps/crawler/types";
 import type { Todo } from "@/lib/types";
 
 type ChatInputSectionProps = {
@@ -15,6 +17,7 @@ type ChatInputSectionProps = {
 	effectiveTodos: Todo[];
 	hasSelection: boolean;
 	showTodosExpanded: boolean;
+	crawlerResult?: CrawlResultItem | null;
 	onInputChange: (value: string) => void;
 	onSend: () => void;
 	onStop?: () => void;
@@ -24,6 +27,7 @@ type ChatInputSectionProps = {
 	onToggleExpand: () => void;
 	onClearSelection: () => void;
 	onToggleTodo: (todoId: number) => void;
+	onClearCrawlerSelection?: () => void;
 };
 
 export function ChatInputSection({
@@ -34,6 +38,7 @@ export function ChatInputSection({
 	effectiveTodos,
 	hasSelection,
 	showTodosExpanded,
+	crawlerResult,
 	onInputChange,
 	onSend,
 	onStop,
@@ -43,6 +48,7 @@ export function ChatInputSection({
 	onToggleExpand,
 	onClearSelection,
 	onToggleTodo,
+	onClearCrawlerSelection,
 }: ChatInputSectionProps) {
 	const tPage = useTranslations("page");
 	const modeMenuRef = useRef<HTMLDivElement | null>(null);
@@ -52,15 +58,21 @@ export function ChatInputSection({
 		<div className="bg-background p-4">
 			<InputBox
 				linkedTodos={
-					<LinkedTodos
-						effectiveTodos={effectiveTodos}
-						hasSelection={hasSelection}
-						locale={locale}
-						showTodosExpanded={showTodosExpanded}
-						onToggleExpand={onToggleExpand}
-						onClearSelection={onClearSelection}
-						onToggleTodo={onToggleTodo}
-					/>
+					<>
+						<LinkedCrawlerContent
+							crawlerResult={crawlerResult ?? null}
+							onClear={onClearCrawlerSelection ?? (() => {})}
+						/>
+						<LinkedTodos
+							effectiveTodos={effectiveTodos}
+							hasSelection={hasSelection}
+							locale={locale}
+							showTodosExpanded={showTodosExpanded}
+							onToggleExpand={onToggleExpand}
+							onClearSelection={onClearSelection}
+							onToggleTodo={onToggleTodo}
+						/>
+					</>
 				}
 				modeSwitcher={
 					<div className="flex items-center gap-2" ref={modeMenuRef}>

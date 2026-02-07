@@ -8,6 +8,7 @@ import { useSessionManager } from "@/apps/chat/hooks/useSessionManager";
 import { useStreamController } from "@/apps/chat/hooks/useStreamController";
 import { useToolCallTracker } from "@/apps/chat/hooks/useToolCallTracker";
 import type { ChatMessage } from "@/apps/chat/types";
+import { useCrawlerStore } from "@/apps/crawler/store";
 import { useChatHistory, useChatSessions, useTodos } from "@/lib/query";
 import { useBreakdownStore } from "@/lib/store/breakdown-store";
 import { useChatStore } from "@/lib/store/chat-store";
@@ -37,6 +38,10 @@ export const useChatController = ({
 
 	const { data: todos = [] } = useTodos();
 
+	// 获取爬虫 store 中选中的爬取结果
+	const selectedCrawlerResult = useCrawlerStore((state) => state.selectedResult);
+
+	// 使用 chat-store 管理持久化状态
 	const {
 		conversationId,
 		historyOpen,
@@ -202,5 +207,9 @@ export const useChatController = ({
 		effectiveTodos,
 		hasSelection,
 		todos,
+		// 暴露 streamController，供其他 hooks 使用（如 usePromptHandlers）
+		streamController,
+		// 爬取内容上下文
+		selectedCrawlerResult,
 	};
 };
