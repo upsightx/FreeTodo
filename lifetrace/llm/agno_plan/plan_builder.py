@@ -68,7 +68,7 @@ class PlanBuilder:
             return PlanSpec.model_validate(plan_data)
         except Exception:
             snippet = response.strip().replace("\n", " ")
-            logger.exception("Plan build failed. LLM response: %s", snippet[:800])
+            logger.exception(f"Plan build failed. LLM response: {snippet[:800]}")
             raise
 
     def _parse_json(self, text: str) -> dict[str, Any]:
@@ -94,12 +94,22 @@ class PlanBuilder:
         steps = plan.get("steps") or []
         normalized_steps: list[dict[str, Any]] = []
         for idx, step in enumerate(steps, start=1):
-            if not step.get("step_id"):
-                step["step_id"] = f"s{idx}"
-            if "depends_on" not in step or step["depends_on"] is None:
-                step["depends_on"] = []
+            step_id = step.get("step_id")
+            if not step_id:
+                step_id = f"s{idx}"
+            step["step_id"] = str(step_id)
+
+            depends_on = step.get("depends_on")
+            if depends_on is None:
+                depends_on = []
+            if not isinstance(depends_on, list):
+                depends_on = [depends_on]
+            step["depends_on"] = [str(dep) for dep in depends_on]
+
             if "inputs" not in step or step["inputs"] is None:
                 step["inputs"] = {}
+            if step.get("type") not in {"tool", "llm", "condition"}:
+                step["type"] = "condition"
             if "on_fail" not in step or not step["on_fail"]:
                 step["on_fail"] = "stop"
             normalized_steps.append(step)
