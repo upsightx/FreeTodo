@@ -86,6 +86,7 @@ async def get_cost_stats(days: int = Query(30, description="统计天数")):
                 "output_token_price": output_price,
                 "price_currency": "USD",
                 "price_source": "litellm",
+                "generated_at": now.isoformat(),
                 "feature_costs": feature_costs,
                 "model_costs": model_costs,
                 "daily_costs": daily_costs,

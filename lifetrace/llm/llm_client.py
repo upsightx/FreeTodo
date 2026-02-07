@@ -4,7 +4,7 @@ LLM客户端模块
 """
 
 import contextlib
-from typing import Any
+from typing import Any, cast
 
 try:
     import litellm
@@ -13,7 +13,7 @@ except Exception:  # pragma: no cover - 仅在依赖缺失时触发
 
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.settings import settings
-from lifetrace.util.token_usage_logger import setup_token_logger
+from lifetrace.util.token_usage_logger import log_token_usage, setup_token_logger
 
 from .llm_client_intent import classify_intent_with_llm, rule_based_intent_classification
 from .llm_client_query import (
@@ -227,19 +227,46 @@ class LLMClient:
         temperature: float = 0.7,
         model: str | None = None,
         max_tokens: int | None = None,
+        *,
+        log_usage: bool = True,
+        log_meta: dict[str, Any] | None = None,
     ) -> str:
         """通用非流式聊天方法，返回完整文本结果。"""
         if not self.is_available():
             raise RuntimeError("LLM客户端不可用，无法进行文本聊天")
 
         try:
-            response = self._completion(
-                model=model or self.model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
+            response = cast(
+                "Any",
+                self._completion(
+                    model=model or self.model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                ),
             )
             content = response.choices[0].message.content or ""
+
+            if log_usage:
+                usage = getattr(response, "usage", None)
+                if usage:
+                    meta = dict(log_meta or {})
+                    endpoint = meta.pop("endpoint", "llm_chat")
+                    feature_type = meta.pop("feature_type", "")
+                    user_query = meta.pop("user_query", "")
+                    response_type = meta.pop("response_type", "chat")
+                    meta["response_length"] = len(content)
+                    log_token_usage(
+                        model=model or self.model,
+                        input_tokens=usage.prompt_tokens,
+                        output_tokens=usage.completion_tokens,
+                        endpoint=endpoint,
+                        user_query=user_query,
+                        response_type=response_type,
+                        feature_type=feature_type,
+                        additional_info=meta,
+                    )
+
             return content
         except Exception as e:
             logger.error(f"文本聊天失败: {e}")
@@ -250,10 +277,15 @@ class LLMClient:
         messages: list[dict[str, str]],
         temperature: float = 0.7,
         model: str | None = None,
+        *,
+        log_usage: bool = True,
+        log_meta: dict[str, Any] | None = None,
     ):
         """通用流式聊天方法"""
         if not self.is_available():
             raise RuntimeError("LLM客户端不可用，无法进行流式生成")
+        total_chars = 0
+        usage_info = None
         try:
             # 关闭 enable_thinking 以提升性能（方案 B）
             # 如果未来需要思考模式，可以通过参数控制
@@ -263,16 +295,42 @@ class LLMClient:
                 temperature=temperature,
                 # extra_body={"enable_thinking": True},  # 已移除以提升性能
                 stream=True,
+                stream_options={"include_usage": True},
             )
             for chunk in stream:
-                with contextlib.suppress(Exception):
-                    delta = chunk.choices[0].delta
+                chunk_any = cast("Any", chunk)
+                usage = getattr(chunk_any, "usage", None)
+                if usage:
+                    usage_info = usage
+
+                choices = getattr(chunk_any, "choices", None)
+                if choices:
+                    delta = getattr(choices[0], "delta", None)
                     text = getattr(delta, "content", None)
                     if text:
+                        total_chars += len(text)
                         yield text
         except Exception as e:
             logger.error(f"流式聊天失败: {e}")
             raise
+        finally:
+            if log_usage and usage_info:
+                meta = dict(log_meta or {})
+                endpoint = meta.pop("endpoint", "llm_stream_chat")
+                feature_type = meta.pop("feature_type", "")
+                user_query = meta.pop("user_query", "")
+                response_type = meta.pop("response_type", "stream")
+                meta["response_length"] = total_chars
+                log_token_usage(
+                    model=model or self.model,
+                    input_tokens=usage_info.prompt_tokens,
+                    output_tokens=usage_info.completion_tokens,
+                    endpoint=endpoint,
+                    user_query=user_query,
+                    response_type=response_type,
+                    feature_type=feature_type,
+                    additional_info=meta,
+                )
 
     def vision_chat(
         self,

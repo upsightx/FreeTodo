@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from lifetrace.llm.llm_client import LLMClient
 from lifetrace.util.logging_config import get_logger
@@ -75,21 +75,25 @@ class JournalGenerationService:
 
     def _call_llm(self, system_prompt: str, user_prompt: str, response_type: str) -> str:
         client = self.llm_client._get_client()
-        response = client.chat.completions.create(
-            model=self.llm_client.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.4,
-            max_tokens=800,
+        response = cast(
+            "Any",
+            client.chat.completions.create(
+                model=self.llm_client.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.4,
+                max_tokens=800,
+            ),
         )
 
-        if hasattr(response, "usage") and response.usage:
+        usage = getattr(response, "usage", None)
+        if usage:
             log_token_usage(
                 model=self.llm_client.model,
-                input_tokens=response.usage.prompt_tokens,
-                output_tokens=response.usage.completion_tokens,
+                input_tokens=usage.prompt_tokens,
+                output_tokens=usage.completion_tokens,
                 endpoint="journal_generation",
                 response_type=response_type,
                 feature_type="journal_generation",

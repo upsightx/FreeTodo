@@ -17,6 +17,7 @@ from lifetrace.llm.tools.registry import ToolRegistry
 from lifetrace.util.language import get_language_instruction
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.prompt_loader import get_prompt
+from lifetrace.util.token_usage_logger import log_token_usage
 
 logger = get_logger()
 
@@ -252,14 +253,28 @@ class AgentService:
     def _call_llm_for_tool_selection(self, decision_messages: list[dict]) -> dict[str, Any] | None:
         """调用 LLM 进行工具选择并解析响应"""
         client = self.llm_client._get_client()
-        response = client.chat.completions.create(
-            model=self.llm_client.model,
-            messages=cast("list[ChatCompletionMessageParam]", decision_messages),
-            temperature=0.1,  # 低温度确保稳定决策
-            max_tokens=200,
+        response = cast(
+            "Any",
+            client.chat.completions.create(
+                model=self.llm_client.model,
+                messages=cast("list[ChatCompletionMessageParam]", decision_messages),
+                temperature=0.1,  # 低温度确保稳定决策
+                max_tokens=200,
+            ),
         )
 
         decision_text = (response.choices[0].message.content or "").strip()
+        usage = getattr(response, "usage", None)
+        if usage:
+            log_token_usage(
+                model=self.llm_client.model,
+                input_tokens=usage.prompt_tokens,
+                output_tokens=usage.completion_tokens,
+                endpoint="agent_tool_selection",
+                user_query="",
+                response_type="tool_selection",
+                feature_type="agent",
+            )
 
         # 解析 JSON 响应
         try:
@@ -353,14 +368,28 @@ class AgentService:
             ]
 
             client = self.llm_client._get_client()
-            response = client.chat.completions.create(
-                model=self.llm_client.model,
-                messages=cast("list[ChatCompletionMessageParam]", eval_messages),
-                temperature=0.1,
-                max_tokens=100,
+            response = cast(
+                "Any",
+                client.chat.completions.create(
+                    model=self.llm_client.model,
+                    messages=cast("list[ChatCompletionMessageParam]", eval_messages),
+                    temperature=0.1,
+                    max_tokens=100,
+                ),
             )
 
             eval_text = (response.choices[0].message.content or "").strip().lower()
+            usage = getattr(response, "usage", None)
+            if usage:
+                log_token_usage(
+                    model=self.llm_client.model,
+                    input_tokens=usage.prompt_tokens,
+                    output_tokens=usage.completion_tokens,
+                    endpoint="agent_task_evaluation",
+                    user_query=user_query[:200],
+                    response_type="task_evaluation",
+                    feature_type="agent",
+                )
 
             # 简单判断：如果包含"完成"、"足够"等关键词，认为可以生成回答
             completion_keywords = ["完成", "足够", "可以", "complete", "sufficient"]
@@ -445,6 +474,11 @@ class AgentService:
             yield from self.llm_client.stream_chat(
                 messages=final_messages,
                 temperature=0.7,
+                log_meta={
+                    "endpoint": "agent_final_response",
+                    "feature_type": "agent",
+                    "user_query": user_query,
+                },
             )
         except Exception as e:
             logger.error(f"[Agent] 生成最终回答失败: {e}")
