@@ -82,8 +82,7 @@ class PlanBuilder:
             raise
 
     def _normalize_plan(self, plan: dict[str, Any]) -> dict[str, Any]:
-        if not plan.get("plan_id"):
-            plan["plan_id"] = f"pln_{uuid.uuid4().hex[:12]}"
+        plan["plan_id"] = f"pln_{uuid.uuid4().hex[:12]}"
         if not plan.get("title"):
             plan["title"] = plan.get("plan_id", "Plan")
 
