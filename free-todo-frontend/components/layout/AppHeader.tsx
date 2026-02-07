@@ -27,24 +27,15 @@ export function AppHeader({ hasNotifications = false }: AppHeaderProps) {
 		<header className="relative flex h-15 shrink-0 items-center bg-primary-foreground dark:bg-accent px-4 text-foreground overflow-visible">
 			{/* 左侧：Logo + 应用名称（复用 MaximizeHeader 的样式） */}
 			<div className="flex items-center gap-2 shrink-0">
-				<div className="relative h-8 w-8 shrink-0">
-					{/* 浅色模式图标 */}
-					<Image
-						src="/free-todo-logos/free_todo_icon_4_dark_with_grid.png"
-						alt="Free Todo Logo"
-						width={32}
-						height={32}
-						className="object-contain block dark:hidden"
-					/>
-					{/* 深色模式图标 */}
-					<Image
-						src="/free-todo-logos/free_todo_icon_4_with_grid.png"
-						alt="Free Todo Logo"
-						width={32}
-						height={32}
-						className="object-contain hidden dark:block"
-					/>
-				</div>
+			<div className="relative h-8 w-8 shrink-0">
+				<Image
+					src="/hi_dog2.png"
+					alt="Free Todo Logo"
+					width={32}
+					height={32}
+					className="object-contain w-full h-full"
+				/>
+			</div>
 				<h1 className="text-lg font-semibold tracking-tight text-foreground hidden md:block">
 					Free Todo: Your AI Secretary
 				</h1>

@@ -79,21 +79,12 @@ export function IslandHeader({ mode, onModeChange, isExpanded = false, onDragSta
       {/* 左侧：Logo + 应用名称 */}
       <div className={`flex items-center gap-2 shrink-0 ${!canDrag ? 'app-region-no-drag' : ''}`}>
         <div className="relative h-8 w-8 shrink-0">
-          {/* 浅色模式图标 */}
           <Image
-            src="/free-todo-logos/free_todo_icon_4_dark_with_grid.png"
+            src="/hi_dog2.png"
             alt="Free Todo Logo"
             width={32}
             height={32}
-            className="object-contain block dark:hidden"
-          />
-          {/* 深色模式图标 */}
-          <Image
-            src="/free-todo-logos/free_todo_icon_4_with_grid.png"
-            alt="Free Todo Logo"
-            width={32}
-            height={32}
-            className="object-contain hidden dark:block"
+            className="object-contain w-full h-full"
           />
         </div>
         <h1 className="text-lg font-semibold tracking-tight text-foreground">

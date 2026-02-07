@@ -78,15 +78,15 @@ export class TrayManager {
 	 */
 	private getTrayIconPath(): string | null {
 		try {
-			// Use the Free Todo icon as tray icon from public/free-todo-logos
+			// Use the notification avatar as tray icon
 			if (app.isPackaged) {
 				// Production: use packaged public folder
 				const resourcesPath = process.resourcesPath;
-				return path.join(resourcesPath, "standalone", "public", "free-todo-logos", "free_todo_icon_4.png");
+				return path.join(resourcesPath, "standalone", "public", "hi_dog2.png");
 			}
 
 			// Development: use public folder icons
-			return path.join(__dirname, "..", "public", "free-todo-logos", "free_todo_icon_4.png");
+			return path.join(__dirname, "..", "public", "hi_dog2.png");
 		} catch (error) {
 			logger.error(`Error getting tray icon path: ${error instanceof Error ? error.message : String(error)}`);
 			return null;

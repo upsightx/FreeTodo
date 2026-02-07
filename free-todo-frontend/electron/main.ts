@@ -39,6 +39,7 @@ import {
 	waitForServerPublic,
 } from "./next-server";
 import { requestNotificationPermission } from "./notification";
+import { NotificationPopupManager } from "./notification-popup-manager";
 import { isRuntimePrepared, setPreferredPythonPath, validatePythonPath } from "./python-runtime";
 import { getInstallRoot, resolveRuntimeRoot } from "./runtime-paths";
 import { TrayManager } from "./tray-manager";
@@ -74,6 +75,8 @@ if (!gotTheLock) {
 	// 初始化 Tray 和 GlobalShortcut 管理器（在 Island 创建后初始化）
 	let trayManager: TrayManager | null = null;
 	let shortcutManager: GlobalShortcutManager | null = null;
+	// 通知弹窗管理器（bootstrap 完成后启动）
+	let notificationPopupManager: NotificationPopupManager | null = null;
 
 	// 设置全局异常处理
 	setupGlobalErrorHandlers();
@@ -200,12 +203,12 @@ if (!gotTheLock) {
 
 	// 应用退出前清理（不等待，快速退出）
 	app.on("before-quit", () => {
-		cleanup(backendServer, trayManager, shortcutManager, false);
+		cleanup(backendServer, trayManager, shortcutManager, notificationPopupManager, false);
 	});
 
 	// 应用退出时确保清理（不等待，快速退出）
 	app.on("quit", () => {
-		cleanup(backendServer, trayManager, shortcutManager, false);
+		cleanup(backendServer, trayManager, shortcutManager, notificationPopupManager, false);
 	});
 
 	// 应用准备就绪后启动
@@ -231,6 +234,10 @@ if (!gotTheLock) {
 		const managers = await bootstrap(backendServer, windowManager, islandWindowManager);
 		trayManager = managers.trayManager;
 		shortcutManager = managers.shortcutManager;
+
+		// 启动系统级通知弹窗（每 10 秒从左下角弹出，3 秒后自动消失）
+		notificationPopupManager = new NotificationPopupManager();
+		notificationPopupManager.start();
 	});
 }
 
@@ -508,9 +515,15 @@ function cleanup(
 	backendServer: BackendServer,
 	trayManager: TrayManager | null,
 	shortcutManager: GlobalShortcutManager | null,
+	notifPopupManager: NotificationPopupManager | null,
 	waitForExit = false,
 ): void {
 	logger.info("Cleaning up resources...");
+
+	// 清理通知弹窗
+	if (notifPopupManager) {
+		notifPopupManager.stop();
+	}
 
 	// 清理 Tray
 	if (trayManager) {
