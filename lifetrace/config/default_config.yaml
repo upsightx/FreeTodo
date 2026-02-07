@@ -182,37 +182,7 @@ llm:
   vision_model: qwen3-vl-plus # 视觉多模态模型名称（用于图片分析）
   temperature: 0.7 # 温度参数
   max_tokens: 2048 # 最大token数
-  # 模型价格配置（单位：人民币/千token）
-  model_prices:
-    default: # 默认价格，用于未配置的模型（qwen-plus）
-      input_price: 0.0008 # 输入token价格
-      output_price: 0.002 # 输出token价格
-    qwen3-max:
-      input_price: 0.0032
-      output_price: 0.0128
-    qwen-plus:
-      input_price: 0.0008
-      output_price: 0.002
-    qwen-turbo:
-      input_price: 0.0003
-      output_price: 0.0006
-    qwen3-vl-plus: # 视觉模型价格（支持非思考/思考模式，按输入token分层计价）
-      # 兼容旧逻辑的基础单价（默认取第一档）
-      input_price: 0.001 # 输入token价格（元/千token）
-      output_price: 0.01 # 输出token价格（元/千token）
-      tiers:
-        # (0, 32,000]
-        - max_input_tokens: 32000
-          input_price: 0.001
-          output_price: 0.01
-        # (32,000, 128,000]
-        - max_input_tokens: 128000
-          input_price: 0.0015
-          output_price: 0.015
-        # (128,000, 256,000]
-        - max_input_tokens: 256000
-          input_price: 0.003
-          output_price: 0.03
+  # 模型价格与上下文信息由 LiteLLM 统一提供
 
 # Tavily 配置（联网搜索）
 tavily:

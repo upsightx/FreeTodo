@@ -84,6 +84,8 @@ async def get_cost_stats(days: int = Query(30, description="统计天数")):
                 "current_model": current_model,
                 "input_token_price": input_price,
                 "output_token_price": output_price,
+                "price_currency": "USD",
+                "price_source": "litellm",
                 "feature_costs": feature_costs,
                 "model_costs": model_costs,
                 "daily_costs": daily_costs,
@@ -116,6 +118,8 @@ async def get_cost_config():
                 "model": current_model,
                 "input_token_price": input_price,
                 "output_token_price": output_price,
+                "price_currency": "USD",
+                "price_source": "litellm",
             },
         }
     except Exception as e:

@@ -7,6 +7,11 @@ from datetime import timedelta
 from functools import lru_cache
 from typing import Any
 
+try:
+    import litellm
+except Exception:  # pragma: no cover - 仅在依赖缺失时触发
+    litellm = None
+
 from lifetrace.storage import get_session
 from lifetrace.storage.models import TokenUsage
 from lifetrace.storage.sql_utils import col
@@ -16,55 +21,65 @@ from lifetrace.util.time_utils import get_utc_now
 
 logger = get_logger()
 
+INVALID_LLM_VALUES = [
+    "",
+    "xxx",
+    "YOUR_API_KEY_HERE",
+    "YOUR_BASE_URL_HERE",
+    "YOUR_LLM_KEY_HERE",
+]
 
-def _resolve_model_price(
-    model: str,
-    price_config: dict,
-    input_tokens: int | None = None,
-) -> tuple[float, float]:
-    """根据价格配置解析模型的单价（元/千token）
 
-    支持分层定价（tiers）和旧版的 input_price/output_price 直配。
+def _is_valid_value(value: str | None) -> bool:
+    return bool(value) and value not in INVALID_LLM_VALUES
 
-    Args:
-        model: 模型名称
-        price_config: 价格配置字典
-        input_tokens: 输入token数量，用于选择分层价格（可选）
 
-    Returns:
-        (input_price, output_price) 元组
-    """
-    # 支持分层定价：tiers 为列表，按 max_input_tokens 升序匹配
-    if "tiers" in price_config:
-        tiers = price_config.get("tiers") or []
-        if not isinstance(tiers, list) or not tiers:
-            raise ValueError(f"模型 '{model}' 的 tiers 配置无效")
+def _resolve_litellm_model(model: str | None, base_url: str | None) -> str:
+    """将模型名转换为 LiteLLM 可识别的格式。"""
+    if not model:
+        return ""
+    if "/" in model:
+        return model
+    if _is_valid_value(base_url):
+        return f"openai/{model}"
+    return model
 
-        sorted_tiers = sorted(
-            tiers,
-            key=lambda tier: tier.get("max_input_tokens", float("inf")),
-        )
-        tokens = input_tokens if input_tokens is not None else 0
-        selected_tier = None
-        for tier in sorted_tiers:
-            max_tokens = tier.get("max_input_tokens")
-            # 如果未设置上限或在上限内，则匹配到该档
-            if max_tokens is None or tokens <= max_tokens:
-                selected_tier = tier
-                break
-        if selected_tier is None:
-            selected_tier = sorted_tiers[-1]
 
-        if "input_price" not in selected_tier or "output_price" not in selected_tier:
-            raise KeyError(f"模型 '{model}' 的 tiers 配置缺少 input_price 或 output_price。")
-        return float(selected_tier["input_price"]), float(selected_tier["output_price"])
+def _get_litellm_model_cost_entry(model: str) -> dict[str, Any] | None:
+    if litellm is None:
+        return None
+    cost_map = getattr(litellm, "model_cost", {}) or {}
+    if not cost_map:
+        return None
 
-    # 兼容旧配置：直接使用 input_price/output_price
-    if "input_price" not in price_config or "output_price" not in price_config:
-        raise KeyError(
-            f"模型 '{model}' 的价格配置不完整。请确保配置了 input_price 和 output_price。"
-        )
-    return float(price_config["input_price"]), float(price_config["output_price"])
+    base_url = settings.get("llm.base_url")
+    resolved_model = _resolve_litellm_model(model, base_url)
+    model_keys = []
+    if resolved_model:
+        model_keys.append(resolved_model)
+        if "/" in resolved_model:
+            model_keys.append(resolved_model.split("/", 1)[1])
+    if model and model not in model_keys:
+        model_keys.append(model)
+
+    for key in model_keys:
+        if key in cost_map:
+            return cost_map[key]
+    return None
+
+
+def _normalize_price_per_1k(cost_entry: dict[str, Any]) -> tuple[float, float]:
+    input_per_token = cost_entry.get("input_cost_per_token")
+    output_per_token = cost_entry.get("output_cost_per_token")
+    if input_per_token is not None and output_per_token is not None:
+        return float(input_per_token) * 1000, float(output_per_token) * 1000
+
+    input_per_1k = cost_entry.get("input_cost_per_1k_tokens")
+    output_per_1k = cost_entry.get("output_cost_per_1k_tokens")
+    if input_per_1k is not None and output_per_1k is not None:
+        return float(input_per_1k), float(output_per_1k)
+
+    return 0.0, 0.0
 
 
 class TokenUsageLogger:
@@ -74,7 +89,7 @@ class TokenUsageLogger:
         pass
 
     def _get_model_price(self, model: str, input_tokens: int | None = None) -> tuple[float, float]:
-        """获取模型价格（元/千token）
+        """获取模型价格（USD/千token，来自 LiteLLM 的模型价格表）
 
         Args:
             model: 模型名称
@@ -83,32 +98,14 @@ class TokenUsageLogger:
         Returns:
             (input_price, output_price) 元组
         """
-        model_prices = settings.get("llm.model_prices")
-        if model_prices is None:
+        _ = input_tokens
+        if litellm is None:
             return 0.0, 0.0
 
-        # 将 Dynaconf Box 对象转换为普通字典
-        if hasattr(model_prices, "to_dict"):
-            model_prices = model_prices.to_dict()
-
-        # 先尝试获取指定模型的价格
-        if model in model_prices:
-            price_config = model_prices[model]
-            if hasattr(price_config, "to_dict"):
-                price_config = price_config.to_dict()
-            return _resolve_model_price(model, price_config, input_tokens=input_tokens)
-
-        # 如果没有找到，使用默认价格
-        if "default" not in model_prices:
-            raise KeyError(
-                f"找不到模型 '{model}' 的价格配置，也没有配置默认价格。"
-                f"请在配置文件中添加该模型的价格或配置 default 价格。"
-            )
-
-        default_config = model_prices["default"]
-        if hasattr(default_config, "to_dict"):
-            default_config = default_config.to_dict()
-        return _resolve_model_price(model, default_config, input_tokens=input_tokens)
+        cost_entry = _get_litellm_model_cost_entry(model)
+        if not cost_entry:
+            return 0.0, 0.0
+        return _normalize_price_per_1k(cost_entry)
 
     def log_token_usage(
         self,
@@ -180,8 +177,12 @@ class TokenUsageLogger:
 
             # 记录到标准日志
             logger.info(
-                f"Token usage - Model: {model}, Input: {input_tokens}, Output: {output_tokens}, "
-                f"Total: {input_tokens + output_tokens}, Cost: ¥{total_cost:.4f}"
+                "Token usage - Model: %s, Input: %s, Output: %s, Total: %s, Cost: %.4f USD",
+                model,
+                input_tokens,
+                output_tokens,
+                input_tokens + output_tokens,
+                total_cost,
             )
 
         except Exception as e:
