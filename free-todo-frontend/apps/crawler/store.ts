@@ -177,6 +177,13 @@ interface CrawlerStore {
 	isViewed: (id: string) => boolean;
 }
 
+// ---------------------------------------------------------------------------
+// 启动宽限期保护：防止 fetchCrawlerStatus 轮询在爬虫刚启动时
+// 将状态从 running 覆盖回 idle（后端需要几秒才能真正启动进程）
+// ---------------------------------------------------------------------------
+let _lastCrawlerStartTime = 0;
+const CRAWLER_START_GRACE_PERIOD_MS = 15_000; // 启动后 15 秒内不允许降级
+
 // 加载缓存的 AI 总结
 const cachedSummary = loadDailySummaryCache();
 
@@ -467,6 +474,25 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 				// 只要循环任务还在运行（loop_mode=true），就认为是 running 状态
 				const newStatus = (data.crawler_running || data.loop_mode) ? "running" : "idle";
 
+				// 宽限期保护：如果爬虫刚刚启动，后端可能还没来得及拉起进程，
+				// 此时不要把前端已设置的 running 状态覆盖回 idle
+				const currentStatus = get().status;
+				const isInGracePeriod =
+					Date.now() - _lastCrawlerStartTime < CRAWLER_START_GRACE_PERIOD_MS;
+				if (isInGracePeriod && currentStatus === "running" && newStatus === "idle") {
+					console.log("[Crawler] 启动宽限期内，跳过 idle 状态降级");
+					// 仍然同步插件状态，但跳过 status 字段
+					if (data.plugin_installed !== undefined) {
+						set({
+							pluginInstalled: data.plugin_installed,
+							pluginAvailable: data.plugin_available ?? false,
+							pluginMode: data.plugin_mode ?? "none",
+							pluginChecked: true,
+						} as Partial<CrawlerStore> as CrawlerStore);
+					}
+					return;
+				}
+
 				// 同步插件状态（后端 /api/crawler/status 现在也会返回插件字段）
 				const pluginUpdate: Partial<CrawlerStore> = { status: newStatus };
 				if (data.plugin_installed !== undefined) {
@@ -520,6 +546,8 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			startTime: new Date().toISOString(),
 		};
 		
+		// 记录启动时间，防止轮询在宽限期内将状态降级
+		_lastCrawlerStartTime = Date.now();
 		set({ status: "running", currentTask: task, results: [], totalCount: 0 });
 		
 		try {
@@ -615,6 +643,8 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 	
 	// 停止爬虫
 	stopCrawler: async () => {
+		// 清除启动宽限期，允许状态立即降级为 idle
+		_lastCrawlerStartTime = 0;
 		try {
 			const response = await fetch(`${API_BASE_URL}/api/crawler/stop`, {
 				method: "POST",
