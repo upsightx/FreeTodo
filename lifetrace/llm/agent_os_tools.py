@@ -16,6 +16,12 @@ from lifetrace.llm.agno_external_tools import create_external_tool
 
 if TYPE_CHECKING:
     from agno.run import RunContext
+else:
+
+    class RunContext:  # pragma: no cover - runtime typing stub
+        session_id: str | None
+        dependencies: dict[str, Any] | None
+
 
 FREETODO_TOOL_NAMES = [
     "create_todo",
