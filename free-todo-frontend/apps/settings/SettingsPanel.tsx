@@ -156,22 +156,22 @@ export function SettingsPanel() {
 						<TavilyConfigSection config={config} loading={loading} />
 					</>
 				);
-		case "developer":
-			return (
-				<>
-					<CrawlerConfigSection loading={loading} />
-					<CookiesConfigSection loading={loading} />
-					{/* <DifyConfigSection config={config} loading={loading} /> */}
-					<SchedulerSection loading={loading} />
-					<RecorderConfigSection config={config} loading={loading} />
-						{isAudioPanelEnabled && (
-							<>
-								<AudioConfigSection config={config} loading={loading} />
-								<AudioAsrConfigSection config={config} loading={loading} />
-							</>
-						)}
-					</>
-				);
+	case "developer":
+		return (
+			<>
+				{/* <DifyConfigSection config={config} loading={loading} /> */}
+				<SchedulerSection loading={loading} />
+				<RecorderConfigSection config={config} loading={loading} />
+					{isAudioPanelEnabled && (
+						<>
+							<AudioConfigSection config={config} loading={loading} />
+							<AudioAsrConfigSection config={config} loading={loading} />
+						</>
+					)}
+				<CrawlerConfigSection loading={loading} />
+				<CookiesConfigSection loading={loading} />
+				</>
+			);
 			case "help":
 				return (
 					<>
