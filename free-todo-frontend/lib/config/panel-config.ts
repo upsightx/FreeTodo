@@ -11,6 +11,7 @@ import {
 	CalendarDays,
 	Camera,
 	DollarSign,
+	Eye,
 	FileText,
 	ListTodo,
 	type LucideIcon,
@@ -31,7 +32,8 @@ export type PanelFeature =
 	| "costTracking"
 	| "achievements"
 	| "debugShots"
-	| "audio";
+	| "audio"
+	| "preview";
 
 /**
  * 开发中的面板功能列表
@@ -61,6 +63,7 @@ export const ALL_PANEL_FEATURES: PanelFeature[] = [
 	"achievements",
 	"debugShots",
 	"audio",
+	"preview",
 ];
 
 /**
@@ -78,4 +81,5 @@ export const FEATURE_ICON_MAP: Record<PanelFeature, LucideIcon> = {
 	achievements: Award,
 	debugShots: Camera,
 	audio: Mic,
+	preview: Eye,
 };

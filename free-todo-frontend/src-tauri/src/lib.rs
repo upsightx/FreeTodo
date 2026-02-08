@@ -21,6 +21,9 @@ pub mod shortcut;
 pub mod tray;
 
 use log::info;
+use serde::Serialize;
+use std::fs;
+use std::path::PathBuf;
 use tauri::Manager;
 
 /// Window mode configuration
@@ -87,6 +90,7 @@ pub fn run() {
             toggle_window,
             show_window,
             hide_window,
+            preview_read_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -133,5 +137,125 @@ fn show_window(app: tauri::AppHandle) {
 fn hide_window(app: tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.hide();
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PreviewReadResponse {
+    ok: bool,
+    path: Option<String>,
+    name: Option<String>,
+    size: Option<u64>,
+    modified_at: Option<u64>,
+    text: Option<String>,
+    base64: Option<String>,
+    error: Option<String>,
+}
+
+#[tauri::command]
+fn preview_read_file(path: String, mode: String, max_bytes: Option<u64>) -> PreviewReadResponse {
+    let resolved = PathBuf::from(path.clone());
+    let metadata = match fs::metadata(&resolved) {
+        Ok(meta) => meta,
+        Err(err) => {
+            return PreviewReadResponse {
+                ok: false,
+                path: Some(path),
+                name: resolved.file_name().map(|name| name.to_string_lossy().to_string()),
+                size: None,
+                modified_at: None,
+                text: None,
+                base64: None,
+                error: Some(err.to_string()),
+            }
+        }
+    };
+
+    if !metadata.is_file() {
+        return PreviewReadResponse {
+            ok: false,
+            path: Some(path),
+            name: resolved.file_name().map(|name| name.to_string_lossy().to_string()),
+            size: None,
+            modified_at: None,
+            text: None,
+            base64: None,
+            error: Some("Path is not a file".to_string()),
+        };
+    }
+
+    let size = metadata.len();
+    let modified_at = metadata
+        .modified()
+        .ok()
+        .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|duration| duration.as_millis() as u64);
+
+    let default_limit = if mode == "text" {
+        2 * 1024 * 1024
+    } else {
+        50 * 1024 * 1024
+    };
+    let limit = max_bytes.unwrap_or(default_limit);
+    if size > limit {
+        return PreviewReadResponse {
+            ok: false,
+            path: Some(path),
+            name: resolved.file_name().map(|name| name.to_string_lossy().to_string()),
+            size: Some(size),
+            modified_at,
+            text: None,
+            base64: None,
+            error: Some("File exceeds preview size limit".to_string()),
+        };
+    }
+
+    if mode == "text" {
+        match fs::read_to_string(&resolved) {
+            Ok(text) => PreviewReadResponse {
+                ok: true,
+                path: Some(path),
+                name: resolved.file_name().map(|name| name.to_string_lossy().to_string()),
+                size: Some(size),
+                modified_at,
+                text: Some(text),
+                base64: None,
+                error: None,
+            },
+            Err(err) => PreviewReadResponse {
+                ok: false,
+                path: Some(path),
+                name: resolved.file_name().map(|name| name.to_string_lossy().to_string()),
+                size: Some(size),
+                modified_at,
+                text: None,
+                base64: None,
+                error: Some(err.to_string()),
+            },
+        }
+    } else {
+        match fs::read(&resolved) {
+            Ok(bytes) => PreviewReadResponse {
+                ok: true,
+                path: Some(path),
+                name: resolved.file_name().map(|name| name.to_string_lossy().to_string()),
+                size: Some(size),
+                modified_at,
+                text: None,
+                base64: Some(base64::encode(bytes)),
+                error: None,
+            },
+            Err(err) => PreviewReadResponse {
+                ok: false,
+                path: Some(path),
+                name: resolved.file_name().map(|name| name.to_string_lossy().to_string()),
+                size: Some(size),
+                modified_at,
+                text: None,
+                base64: None,
+                error: Some(err.to_string()),
+            },
+        }
     }
 }

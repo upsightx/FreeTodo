@@ -121,6 +121,23 @@ settings = Dynaconf(
         Validator("agno.learning.db_path", default="agno/learning.db"),
         Validator("agno.learning.add_history_to_context", default=False, is_type_of=bool),
         Validator("agno.user_id", default="local-user"),
+        # AgentOS 配置
+        Validator("agno.agent_os.enabled", default=True, is_type_of=bool),
+        Validator("agno.agent_os.host", default="127.0.0.1"),
+        Validator("agno.agent_os.port", default=None),
+        Validator(
+            "agno.agent_os.port_range",
+            default={"min": 8200, "max": 8299},
+        ),
+        Validator("agno.agent_os.port_file", default="agent_os_port.json"),
+        Validator("agno.agent_os.base_url", default=""),
+        Validator("agno.agent_os.agent_id", default="freetodo-agent"),
+        Validator("agno.agent_os.agent_name", default="FreeTodo Agent"),
+        Validator("agno.agent_os.lang", default="en"),
+        Validator("agno.agent_os.timeout_sec", default=60.0),
+        Validator("agno.agent_os.selected_tools", default=[], is_type_of=list),
+        Validator("agno.agent_os.external_tools", default=[], is_type_of=list),
+        Validator("agno.agent_os.external_tools_config", default={}, is_type_of=dict),
         # LLM 配置（关键配置，启动时不强制要求，运行时检查）
         Validator("llm.api_key", default="YOUR_LLM_KEY_HERE"),
         Validator("llm.base_url", default="https://dashscope.aliyuncs.com/compatible-mode/v1"),

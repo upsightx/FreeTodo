@@ -52,7 +52,16 @@ def stream_direct_response(
     ]
 
     output_chunks: list[str] = []
-    for text in llm_client.stream_chat(messages=messages, temperature=temperature):
+    for text in llm_client.stream_chat(
+        messages=messages,
+        temperature=temperature,
+        log_meta={
+            "endpoint": "rag_stream_direct",
+            "feature_type": "chat",
+            "user_query": user_query,
+            "response_type": "stream",
+        },
+    ):
         if text:
             output_chunks.append(text)
             yield text
@@ -106,7 +115,18 @@ def stream_with_retrieval(
     ]
 
     output_chunks: list[str] = []
-    for text in ctx.llm_client.stream_chat(messages=messages, temperature=temperature):
+    for text in ctx.llm_client.stream_chat(
+        messages=messages,
+        temperature=temperature,
+        log_meta={
+            "endpoint": "rag_stream_retrieval",
+            "feature_type": "rag_retrieval",
+            "user_query": user_query,
+            "response_type": "stream",
+            "query_type": query_type,
+            "max_results": max_results,
+        },
+    ):
         if text:
             output_chunks.append(text)
             yield text

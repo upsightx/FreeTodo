@@ -3,7 +3,9 @@
  * 集中管理所有主进程与渲染进程之间的 IPC 通信
  */
 
-import { app, BrowserWindow, ipcMain, screen } from "electron";
+import fs from "node:fs";
+import path from "node:path";
+import { app, BrowserWindow, dialog, ipcMain, screen, shell } from "electron";
 import { setupTodoCaptureIpcHandlers } from "./ipc-handlers-todo-capture";
 import type { IslandWindowManager } from "./island-window-manager";
 import { logger } from "./logger";
@@ -12,6 +14,9 @@ import {
 	showSystemNotification,
 } from "./notification";
 import type { WindowManager } from "./window-manager";
+
+const MAX_PREVIEW_TEXT_BYTES = 2 * 1024 * 1024;
+const MAX_PREVIEW_BINARY_BYTES = 50 * 1024 * 1024;
 
 /**
  * 设置所有 IPC 处理器
@@ -93,6 +98,105 @@ export function setupIpcHandlers(
 		if (win) {
 			win.setBackgroundColor(color);
 			logger.info(`Window background color set to: ${color}`);
+		}
+	});
+
+	// ========== 文件预览相关 IPC 处理器 ==========
+
+	ipcMain.handle("preview:open-file", async () => {
+		const result = await dialog.showOpenDialog({
+			title: "Open File for Preview",
+			properties: ["openFile"],
+		});
+		if (result.canceled || result.filePaths.length === 0) {
+			return { canceled: true };
+		}
+		return { canceled: false, path: result.filePaths[0] };
+	});
+
+	ipcMain.handle(
+		"preview:read-file",
+		async (
+			_event,
+			payload: { path?: string; mode?: "text" | "binary"; maxBytes?: number },
+		) => {
+			const filePath = payload?.path;
+			if (!filePath) {
+				return { ok: false, error: "Missing file path" };
+			}
+
+			try {
+				const stat = await fs.promises.stat(filePath);
+				if (!stat.isFile()) {
+					return { ok: false, error: "Path is not a file" };
+				}
+
+				const mode = payload?.mode ?? "binary";
+				const maxBytes =
+					payload?.maxBytes ??
+					(mode === "text" ? MAX_PREVIEW_TEXT_BYTES : MAX_PREVIEW_BINARY_BYTES);
+
+				if (stat.size > maxBytes) {
+					return { ok: false, error: "File exceeds preview size limit" };
+				}
+
+				if (mode === "text") {
+					const text = await fs.promises.readFile(filePath, "utf-8");
+					return {
+						ok: true,
+						path: filePath,
+						name: path.basename(filePath),
+						size: stat.size,
+						modifiedAt: stat.mtimeMs,
+						text,
+					};
+				}
+
+				const buffer = await fs.promises.readFile(filePath);
+				return {
+					ok: true,
+					path: filePath,
+					name: path.basename(filePath),
+					size: stat.size,
+					modifiedAt: stat.mtimeMs,
+					base64: buffer.toString("base64"),
+				};
+			} catch (error) {
+				return {
+					ok: false,
+					error:
+						error instanceof Error ? error.message : "Failed to read file",
+				};
+			}
+		},
+	);
+
+	ipcMain.handle("preview:open-external", async (_event, filePath: string) => {
+		if (!filePath) {
+			return { ok: false, error: "Missing file path" };
+		}
+		const result = await shell.openPath(filePath);
+		if (result) {
+			return { ok: false, error: result };
+		}
+		return { ok: true };
+	});
+
+	ipcMain.handle("preview:reveal", async (_event, filePath: string) => {
+		if (!filePath) {
+			return { ok: false, error: "Missing file path" };
+		}
+		try {
+			shell.showItemInFolder(filePath);
+			return { ok: true };
+		} catch (error) {
+			return {
+				ok: false,
+				error:
+					error instanceof Error
+						? error.message
+						: "Failed to reveal file",
+			};
 		}
 	});
 

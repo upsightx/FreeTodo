@@ -22,6 +22,18 @@ const path = require("node:path");
 const DEFAULT_FRONTEND_PORT = 3001;
 const _DEFAULT_BACKEND_PORT = 8001;
 const MAX_PORT_ATTEMPTS = 100;
+const BACKEND_DETECT_INTERVAL_MS = Number.parseInt(
+	process.env.FREETODO_BACKEND_DETECT_INTERVAL_MS || "2000",
+	10,
+);
+const BACKEND_DETECT_LOG_EVERY_MS = Number.parseInt(
+	process.env.FREETODO_BACKEND_DETECT_LOG_EVERY_MS || "5000",
+	10,
+);
+const BACKEND_DETECT_TIMEOUT_MS = Number.parseInt(
+	process.env.FREETODO_BACKEND_DETECT_TIMEOUT_MS || "0",
+	10,
+);
 
 function normalizePath(value) {
 	const resolved = path.resolve(value);
@@ -43,6 +55,47 @@ function isSymlinkedNodeModules() {
 	} catch {
 		return false;
 	}
+}
+
+function sleep(ms) {
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
+}
+
+function stopProcess(proc, timeoutMs = 5000) {
+	return new Promise((resolve) => {
+		if (!proc || proc.killed) {
+			resolve();
+			return;
+		}
+		let resolved = false;
+		const done = () => {
+			if (resolved) return;
+			resolved = true;
+			resolve();
+		};
+
+		proc.once("exit", done);
+
+		try {
+			proc.kill("SIGINT");
+		} catch {
+			proc.kill();
+		}
+
+		setTimeout(() => {
+			if (!proc.killed) {
+				try {
+					proc.kill("SIGTERM");
+				} catch {
+					proc.kill();
+				}
+			}
+		}, 1200);
+
+		setTimeout(done, timeoutMs);
+	});
 }
 
 /**
@@ -190,6 +243,62 @@ async function findRunningBackendPort() {
 	return null;
 }
 
+async function waitForBackendPort() {
+	const startTime = Date.now();
+	let lastLogTime = 0;
+	const hint = "Start backend first - python -m lifetrace.server";
+	const suffix = FRONTEND_GIT_COMMIT ? ` (git commit: ${FRONTEND_GIT_COMMIT})` : "";
+
+	for (;;) {
+		const backendPort = await findRunningBackendPort();
+		if (backendPort) {
+			return backendPort;
+		}
+
+		const now = Date.now();
+		if (!lastLogTime || now - lastLogTime >= BACKEND_DETECT_LOG_EVERY_MS) {
+			console.log(`FreeTodo backend not ready${suffix}. ${hint}`);
+			lastLogTime = now;
+		}
+
+		if (BACKEND_DETECT_TIMEOUT_MS > 0 && now - startTime >= BACKEND_DETECT_TIMEOUT_MS) {
+			throw new Error(
+				`FreeTodo backend not detected within ${BACKEND_DETECT_TIMEOUT_MS}ms${suffix}. ${hint}`,
+			);
+		}
+
+		await sleep(BACKEND_DETECT_INTERVAL_MS);
+	}
+}
+
+function startNextDev(frontendPort, backendUrl, disableTurbopack, onExit) {
+	const nextEnv = {
+		...process.env,
+		PORT: String(frontendPort),
+		NEXT_PUBLIC_API_URL: backendUrl,
+	};
+
+	if (disableTurbopack && !("NEXT_DISABLE_TURBOPACK" in nextEnv)) {
+		nextEnv.NEXT_DISABLE_TURBOPACK = "1";
+	}
+
+	const nextArgs = ["next", "dev", "--port", String(frontendPort)];
+	if (disableTurbopack) {
+		nextArgs.push("--webpack");
+	}
+
+	const nextProcess = spawn("pnpm", nextArgs, {
+		stdio: "inherit",
+		env: {
+			...nextEnv,
+		},
+		shell: true,
+	});
+
+	nextProcess.on("exit", (code) => onExit(nextProcess, code));
+	return nextProcess;
+}
+
 async function main() {
 	console.log("Starting development server...\n");
 
@@ -205,28 +314,6 @@ async function main() {
 			console.log(`Frontend port: ${frontendPort}`);
 		}
 
-		// 2. Find running FreeTodo backend port (verify via /health endpoint)
-		console.log(`Searching for FreeTodo backend...`);
-		if (FRONTEND_GIT_COMMIT) {
-			console.log(`Frontend git commit: ${FRONTEND_GIT_COMMIT}`);
-		}
-		const backendPort = await findRunningBackendPort();
-		if (backendPort) {
-			console.log(`Detected FreeTodo backend running on port: ${backendPort}`);
-		} else {
-			const hint = "Start backend first - python -m lifetrace.server";
-			const suffix = FRONTEND_GIT_COMMIT
-				? ` (git commit: ${FRONTEND_GIT_COMMIT})`
-				: "";
-			throw new Error(
-				`FreeTodo backend not detected via /health endpoint${suffix}. ${hint}`,
-			);
-		}
-
-		const backendUrl = `http://127.0.0.1:${backendPort}`;
-		console.log(`\nBackend API: ${backendUrl}`);
-		console.log(`Frontend URL: http://localhost:${frontendPort}\n`);
-
 		const disableTurbopack = isSymlinkedNodeModules();
 		if (disableTurbopack && !process.env.NEXT_DISABLE_TURBOPACK) {
 			console.log(
@@ -234,32 +321,34 @@ async function main() {
 			);
 		}
 
-		const nextEnv = {
-			...process.env,
-			PORT: String(frontendPort),
-			NEXT_PUBLIC_API_URL: backendUrl,
+		const initialBackendUrl =
+			process.env.NEXT_PUBLIC_API_URL ||
+			`http://127.0.0.1:${_DEFAULT_BACKEND_PORT}`;
+
+		let popupProcess = null;
+		const killPopup = () => {
+			if (popupProcess && !popupProcess.killed) {
+				popupProcess.kill();
+			}
 		};
 
-		if (disableTurbopack && !("NEXT_DISABLE_TURBOPACK" in nextEnv)) {
-			nextEnv.NEXT_DISABLE_TURBOPACK = "1";
-		}
+		const handleNextExit = (proc, code) => {
+			if (proc !== nextProcess) return;
+			killPopup();
+			process.exit(code || 0);
+		};
 
-		// 3. 启动 Next.js 开发服务器
-		const nextArgs = ["next", "dev", "--port", String(frontendPort)];
-		if (disableTurbopack) {
-			nextArgs.push("--webpack");
-		}
+		let nextProcess = startNextDev(
+			frontendPort,
+			initialBackendUrl,
+			disableTurbopack,
+			handleNextExit,
+		);
 
-		const nextProcess = spawn("pnpm", nextArgs, {
-			stdio: "inherit",
-			env: {
-				...nextEnv,
-			},
-			shell: true,
-		});
+		console.log(`Frontend URL: http://localhost:${frontendPort}`);
+		console.log(`Frontend API (initial): ${initialBackendUrl}\n`);
 
-		// 4. 启动系统级通知弹窗（独立 Electron 进程）
-		let popupProcess = null;
+		// 2. 启动系统级通知弹窗（独立 Electron 进程）
 		try {
 			const electronBinary = require("electron");
 			const popupScript = path.join(__dirname, "notification-popup.js");
@@ -282,30 +371,43 @@ async function main() {
 			);
 		}
 
-		// 清理函数：同时关闭 Next.js 和通知弹窗
-		const killPopup = () => {
-			if (popupProcess && !popupProcess.killed) {
-				popupProcess.kill();
-			}
-		};
-
 		// 处理进程信号
 		process.on("SIGINT", () => {
 			killPopup();
-			nextProcess.kill("SIGINT");
-			process.exit(0);
+			stopProcess(nextProcess).finally(() => process.exit(0));
 		});
 
 		process.on("SIGTERM", () => {
 			killPopup();
-			nextProcess.kill("SIGTERM");
-			process.exit(0);
+			stopProcess(nextProcess).finally(() => process.exit(0));
 		});
 
-		nextProcess.on("exit", (code) => {
-			killPopup();
-			process.exit(code || 0);
-		});
+		// 3. Find running FreeTodo backend port (verify via /health endpoint)
+		console.log(`Searching for FreeTodo backend...`);
+		if (FRONTEND_GIT_COMMIT) {
+			console.log(`Frontend git commit: ${FRONTEND_GIT_COMMIT}`);
+		}
+		const backendPort = await waitForBackendPort();
+		console.log(`Detected FreeTodo backend running on port: ${backendPort}`);
+
+		const backendUrl = `http://127.0.0.1:${backendPort}`;
+		console.log(`Backend API: ${backendUrl}`);
+
+		if (backendUrl !== initialBackendUrl) {
+			console.log(
+				"Restarting frontend dev server to update backend API URL...",
+			);
+			if (nextProcess) {
+				nextProcess.removeAllListeners("exit");
+				await stopProcess(nextProcess);
+			}
+			nextProcess = startNextDev(
+				frontendPort,
+				backendUrl,
+				disableTurbopack,
+				handleNextExit,
+			);
+		}
 	} catch (error) {
 		console.error(`Failed to start: ${error.message}`);
 		process.exit(1);

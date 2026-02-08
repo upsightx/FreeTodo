@@ -13,12 +13,12 @@ from sqlmodel import select
 
 from lifetrace.llm.llm_client import LLMClient
 from lifetrace.services.audio_extraction_service import AudioExtractionService
+from lifetrace.services.audio_llm_utils import optimize_transcription_text as _optimize_text
 from lifetrace.storage import get_session
 from lifetrace.storage.models import AudioRecording, Transcription
 from lifetrace.storage.sql_utils import col
 from lifetrace.util.base_paths import get_user_data_dir
 from lifetrace.util.logging_config import get_logger
-from lifetrace.util.prompt_loader import get_prompt
 from lifetrace.util.settings import settings
 from lifetrace.util.time_utils import get_utc_now, to_local
 
@@ -494,55 +494,8 @@ class AudioService:
             logger.error(f"自动提取待办和日程失败 (optimized={optimized}): {e}")
 
     async def optimize_transcription_text(self, text: str) -> str:
-        """使用LLM优化转录文本
-
-        Args:
-            text: 原始转录文本
-
-        Returns:
-            优化后的文本
-        """
-        try:
-            if not self.llm_client.is_available():
-                logger.warning("LLM客户端不可用，跳过文本优化")
-                return text
-
-            # 从配置文件加载提示词
-            system_prompt = get_prompt("transcription_optimization", "system_assistant")
-            user_prompt = get_prompt("transcription_optimization", "user_prompt", text=text)
-
-            if not system_prompt or not user_prompt:
-                logger.warning("无法加载优化提示词，使用默认提示词")
-                system_prompt = "你是一个专业的文本优化助手，擅长优化语音转录文本。"
-                user_prompt = f"请优化以下语音转录文本，使其更加流畅、准确、易读。\n\n转录文本：\n{text}\n\n只返回优化后的文本，不要其他内容。"
-
-            client = self.llm_client
-            client._initialize_client()
-
-            openai_client = client._get_client()
-            response = openai_client.chat.completions.create(
-                model=client.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=0.3,
-            )
-
-            optimized_text = (response.choices[0].message.content or "").strip()
-            # 移除可能的markdown代码块标记
-            if optimized_text.startswith("```"):
-                lines = optimized_text.split("\n")
-                if lines[0].startswith("```"):
-                    min_lines_for_code_block = 2
-                    if len(lines) > min_lines_for_code_block:
-                        optimized_text = "\n".join(lines[1:-1])
-                optimized_text = optimized_text.strip()
-
-            return optimized_text
-        except Exception as e:
-            logger.error(f"优化转录文本失败: {e}")
-            return text
+        """使用LLM优化转录文本。"""
+        return await _optimize_text(self.llm_client, text)
 
     @property
     def extract_todos_and_schedules(self):

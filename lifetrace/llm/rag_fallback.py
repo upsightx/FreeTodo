@@ -5,9 +5,10 @@ RAG 回退响应模块
 
 import contextlib
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from lifetrace.util.logging_config import get_logger
+from lifetrace.util.token_usage_logger import log_token_usage
 
 logger = get_logger()
 
@@ -109,17 +110,31 @@ def generate_direct_response(llm_client, user_query: str, intent_result: dict[st
 如果用户需要查询数据或统计信息，请引导他们使用具体的查询语句。
 """
 
-        response = llm_client.client.chat.completions.create(
-            model=llm_client.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_query},
-            ],
-            temperature=0.7,
-            max_tokens=500,
+        response = cast(
+            "Any",
+            llm_client.client.chat.completions.create(
+                model=llm_client.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_query},
+                ],
+                temperature=0.7,
+                max_tokens=500,
+            ),
         )
 
         llm_response = response.choices[0].message.content.strip()
+        usage = getattr(response, "usage", None)
+        if usage:
+            log_token_usage(
+                model=llm_client.model,
+                input_tokens=usage.prompt_tokens,
+                output_tokens=usage.completion_tokens,
+                endpoint="rag_fallback",
+                user_query=user_query[:200],
+                response_type="fallback_response",
+                feature_type="rag_fallback",
+            )
         logger.info(f"[LLM Direct Response] {llm_response}")
         logger.info(f"LLM直接响应: {llm_response}")
 

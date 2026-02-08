@@ -74,6 +74,10 @@ async def get_cost_stats(days: int = Query(30, description="统计天数")):
                 "cost": round(daily_stats.get("total_cost", 0), 4),
             }
 
+        price_currency = (
+            settings.get("llm.price_currency") or settings.get("cost_tracking.currency") or "CNY"
+        )
+        price_source = settings.get("llm.price_source") or "config"
         now = get_utc_now().astimezone()
         return {
             "success": True,
@@ -84,6 +88,9 @@ async def get_cost_stats(days: int = Query(30, description="统计天数")):
                 "current_model": current_model,
                 "input_token_price": input_price,
                 "output_token_price": output_price,
+                "price_currency": price_currency,
+                "price_source": price_source,
+                "generated_at": now.isoformat(),
                 "feature_costs": feature_costs,
                 "model_costs": model_costs,
                 "daily_costs": daily_costs,

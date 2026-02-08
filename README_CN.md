@@ -118,6 +118,27 @@ source .venv/bin/activate
 .venv\Scripts\activate
 ```
 
+### 一键启动全部服务
+
+开发时可通过脚本一次性启动 **后端 + AgentOS + 前端**：
+
+**macOS/Linux**
+
+```bash
+chmod +x scripts/start_all.sh
+./scripts/start_all.sh
+```
+
+该脚本会在后台启动所有服务，并将日志写入 `.run-logs/`。
+
+**Windows（PowerShell）**
+
+```powershell
+.\scripts\start_all.ps1
+```
+
+该脚本会打开三个终端窗口分别运行各服务。
+
 ### 启动后端服务
 
 > **注意**：首次运行时，如果 `config.yaml` 不存在，系统会自动从 `default_config.yaml` 创建。您可以通过编辑 `lifetrace/config/config.yaml` 来自定义设置。
