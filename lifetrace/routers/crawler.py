@@ -20,27 +20,50 @@ logger = get_logger()
 
 router = APIRouter(prefix="/api/crawler", tags=["crawler"])
 
-# 项目根目录 (LifeTrace)
-# __file__ = lifetrace/routers/crawler.py
-# parent = lifetrace/routers
-# parent.parent = lifetrace
-# parent.parent.parent = LifeTrace (项目根目录)
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+# ---------------------------------------------------------------------------
+# 插件管理器（动态路径解析）
+# ---------------------------------------------------------------------------
+from lifetrace.services.plugin_manager import media_crawler_plugin as _plugin
 
-# MediaCrawlerPro-Python 配置文件路径
-CRAWLER_CONFIG_PATH = PROJECT_ROOT / "MediaCrawlerPro-Python" / "config" / "base_config.py"
+_PLUGIN_NOT_INSTALLED_MSG = (
+    "MediaCrawler 插件未安装。请在「插件管理」中安装 MediaCrawler 插件后再使用爬虫功能。"
+)
 
-# Cookies 配置文件路径
-COOKIES_CONFIG_PATH = PROJECT_ROOT / "MediaCrawlerPro-Python" / "config" / "accounts_cookies.xlsx"
 
-# 签名服务目录
-SIGN_SRV_DIR = PROJECT_ROOT / "MediaCrawlerPro-SignSrv"
+def _get_crawler_dir() -> Path:
+    """动态获取爬虫引擎目录（插件模式优先，开发模式兜底）。"""
+    resolved = _plugin.resolve_crawler_dir()
+    if resolved is None:
+        raise HTTPException(status_code=503, detail=_PLUGIN_NOT_INSTALLED_MSG)
+    return resolved
 
-# 爬虫目录
-CRAWLER_DIR = PROJECT_ROOT / "MediaCrawlerPro-Python"
 
-# 视频转写文本目录
-TRANSCRIPTS_DIR = PROJECT_ROOT / "MediaCrawlerPro-Python" / "data" / "transcripts"
+def _get_sign_srv_dir() -> Path:
+    """动态获取签名服务目录。"""
+    resolved = _plugin.resolve_sign_srv_dir()
+    if resolved is None:
+        raise HTTPException(status_code=503, detail=_PLUGIN_NOT_INSTALLED_MSG)
+    return resolved
+
+
+def _get_crawler_config_path() -> Path:
+    """动态获取爬虫配置文件路径。"""
+    return _get_crawler_dir() / "config" / "base_config.py"
+
+
+def _get_cookies_config_path() -> Path:
+    """动态获取 Cookies 配置文件路径。"""
+    return _get_crawler_dir() / "config" / "accounts_cookies.xlsx"
+
+
+def _get_transcripts_dir() -> Path:
+    """动态获取视频转写文本目录。"""
+    return _get_crawler_dir() / "data" / "transcripts"
+
+
+def _get_videos_download_dir() -> Path:
+    """动态获取视频下载目录。"""
+    return _get_crawler_dir() / "data" / "videos"
 
 # 全局进程管理
 _sign_srv_process: subprocess.Popen | None = None
@@ -106,14 +129,16 @@ class CrawlerConfigResponse(BaseModel):
 
 def read_config_file() -> str:
     """读取配置文件内容"""
-    if not CRAWLER_CONFIG_PATH.exists():
-        raise HTTPException(status_code=404, detail=f"配置文件不存在: {CRAWLER_CONFIG_PATH}")
-    return CRAWLER_CONFIG_PATH.read_text(encoding="utf-8")
+    config_path = _get_crawler_config_path()
+    if not config_path.exists():
+        raise HTTPException(status_code=404, detail=f"配置文件不存在: {config_path}")
+    return config_path.read_text(encoding="utf-8")
 
 
 def write_config_file(content: str) -> None:
     """写入配置文件内容"""
-    CRAWLER_CONFIG_PATH.write_text(content, encoding="utf-8")
+    config_path = _get_crawler_config_path()
+    config_path.write_text(content, encoding="utf-8")
 
 
 def extract_config_value(content: str, key: str, value_type: str = "str") -> Any:
@@ -332,14 +357,15 @@ class UpdateCookieRequest(BaseModel):
 
 def read_cookies_from_xlsx() -> dict[str, list[dict]]:
     """从 Excel 文件读取所有平台的 cookies"""
-    if not COOKIES_CONFIG_PATH.exists():
-        logger.warning(f"Cookies 配置文件不存在: {COOKIES_CONFIG_PATH}")
+    cookies_path = _get_cookies_config_path()
+    if not cookies_path.exists():
+        logger.warning(f"Cookies 配置文件不存在: {cookies_path}")
         return {}
     
     all_cookies = {}
     try:
         # 读取 Excel 文件中的所有 sheet
-        xlsx = pd.ExcelFile(COOKIES_CONFIG_PATH, engine="openpyxl")
+        xlsx = pd.ExcelFile(cookies_path, engine="openpyxl")
         
         for platform in SUPPORTED_PLATFORMS:
             if platform in xlsx.sheet_names:
@@ -363,7 +389,7 @@ def read_cookies_from_xlsx() -> dict[str, list[dict]]:
         logger.warning(f"读取 Cookies 配置文件失败（文件可能损坏，将返回空数据）: {e}")
         # 文件损坏时删除并返回空数据，下次保存时会自动重建
         try:
-            COOKIES_CONFIG_PATH.unlink(missing_ok=True)
+            cookies_path.unlink(missing_ok=True)
             logger.info("已删除损坏的 Cookies 配置文件，下次保存时将自动重建")
         except OSError as del_err:
             logger.warning(f"无法删除损坏的 Cookies 配置文件: {del_err}")
@@ -372,12 +398,13 @@ def read_cookies_from_xlsx() -> dict[str, list[dict]]:
 
 def write_cookies_to_xlsx(platform: str, accounts: list[dict]) -> None:
     """将指定平台的 cookies 写入 Excel 文件"""
+    cookies_path = _get_cookies_config_path()
     try:
         # 先读取现有数据并关闭文件，避免 Windows 文件锁定冲突
         existing_data: dict[str, pd.DataFrame] = {}
-        if COOKIES_CONFIG_PATH.exists():
+        if cookies_path.exists():
             try:
-                xlsx = pd.ExcelFile(COOKIES_CONFIG_PATH, engine="openpyxl")
+                xlsx = pd.ExcelFile(cookies_path, engine="openpyxl")
                 for p in SUPPORTED_PLATFORMS:
                     if p in xlsx.sheet_names:
                         existing_data[p] = pd.read_excel(xlsx, sheet_name=p, engine="openpyxl")
@@ -387,7 +414,7 @@ def write_cookies_to_xlsx(platform: str, accounts: list[dict]) -> None:
                 existing_data = {}
 
         # 写入文件（此时文件句柄已完全释放）
-        with pd.ExcelWriter(COOKIES_CONFIG_PATH, engine="openpyxl") as writer:
+        with pd.ExcelWriter(cookies_path, engine="openpyxl") as writer:
             for p in SUPPORTED_PLATFORMS:
                 if p == platform:
                     # 更新指定平台的数据
@@ -724,16 +751,18 @@ def start_sign_service() -> bool:
         return True
     
     try:
+        sign_srv_dir = _get_sign_srv_dir()
+        
         # 检查目录是否存在
-        if not SIGN_SRV_DIR.exists():
-            logger.error(f"签名服务目录不存在: {SIGN_SRV_DIR}")
+        if not sign_srv_dir.exists():
+            logger.error(f"签名服务目录不存在: {sign_srv_dir}")
             return False
         
         # 获取 venv 的 Python 路径
         if sys.platform == "win32":
-            python_exe = SIGN_SRV_DIR / ".venv" / "Scripts" / "python.exe"
+            python_exe = sign_srv_dir / ".venv" / "Scripts" / "python.exe"
         else:
-            python_exe = SIGN_SRV_DIR / ".venv" / "bin" / "python"
+            python_exe = sign_srv_dir / ".venv" / "bin" / "python"
         
         if not python_exe.exists():
             logger.error(f"SignSrv 虚拟环境 Python 不存在: {python_exe}，请先创建虚拟环境并安装依赖")
@@ -746,7 +775,7 @@ def start_sign_service() -> bool:
         # 设置 UTF-8 编码，避免 Windows GBK 编码导致的 UnicodeEncodeError
         env['PYTHONIOENCODING'] = 'utf-8'
         if sys.platform == "win32":
-            pyvenv_cfg = SIGN_SRV_DIR / ".venv" / "pyvenv.cfg"
+            pyvenv_cfg = sign_srv_dir / ".venv" / "pyvenv.cfg"
             conda_base = None
             if pyvenv_cfg.exists():
                 with open(pyvenv_cfg, 'r') as f:
@@ -770,10 +799,10 @@ def start_sign_service() -> bool:
                 logger.info(f"添加 conda 环境路径到 PATH: {conda_base}")
         
         # 启动签名服务
-        logger.info(f"启动签名服务: {SIGN_SRV_DIR}，使用 Python: {python_exe}")
+        logger.info(f"启动签名服务: {sign_srv_dir}，使用 Python: {python_exe}")
         _sign_srv_process = subprocess.Popen(
             [str(python_exe), "app.py"],
-            cwd=str(SIGN_SRV_DIR),
+            cwd=str(sign_srv_dir),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env,
@@ -806,16 +835,18 @@ def start_crawler_process(platform: str, crawler_type: str) -> bool:
         return True
     
     try:
+        crawler_dir = _get_crawler_dir()
+        
         # 检查目录是否存在
-        if not CRAWLER_DIR.exists():
-            logger.error(f"爬虫目录不存在: {CRAWLER_DIR}")
+        if not crawler_dir.exists():
+            logger.error(f"爬虫目录不存在: {crawler_dir}")
             return False
         
         # 使用 MediaCrawlerPro-Python 项目自己的虚拟环境中的 Python 解释器
         if sys.platform == "win32":
-            python_exe = CRAWLER_DIR / ".venv" / "Scripts" / "python.exe"
+            python_exe = crawler_dir / ".venv" / "Scripts" / "python.exe"
         else:
-            python_exe = CRAWLER_DIR / ".venv" / "bin" / "python"
+            python_exe = crawler_dir / ".venv" / "bin" / "python"
         
         if not python_exe.exists():
             logger.error(f"爬虫虚拟环境 Python 不存在: {python_exe}，请先创建虚拟环境并安装依赖")
@@ -833,10 +864,10 @@ def start_crawler_process(platform: str, crawler_type: str) -> bool:
         env = os.environ.copy()
         env['PYTHONIOENCODING'] = 'utf-8'
         
-        logger.info(f"启动爬虫: {' '.join(cmd)} in {CRAWLER_DIR}")
+        logger.info(f"启动爬虫: {' '.join(cmd)} in {crawler_dir}")
         
         # 将爬虫输出重定向到日志文件，避免 PIPE 缓冲区满导致阻塞
-        crawler_log_file = CRAWLER_DIR / "logs" / "crawler_output.log"
+        crawler_log_file = crawler_dir / "logs" / "crawler_output.log"
         crawler_log_file.parent.mkdir(parents=True, exist_ok=True)
         
         with open(crawler_log_file, 'a', encoding='utf-8') as log_file:
@@ -847,7 +878,7 @@ def start_crawler_process(platform: str, crawler_type: str) -> bool:
         
         _crawler_process = subprocess.Popen(
             cmd,
-            cwd=str(CRAWLER_DIR),
+            cwd=str(crawler_dir),
             stdout=open(crawler_log_file, 'a', encoding='utf-8'),
             stderr=subprocess.STDOUT,  # 合并 stderr 到 stdout
             env=env,
@@ -938,10 +969,19 @@ async def get_crawler_status():
     if _crawler_status == "running" and not is_crawler_running() and not loop_task_running:
         _crawler_status = "idle"
     
+    # 插件可用性检查（不抛异常，只返回状态）
+    plugin_available = _plugin.is_available()
+    plugin_installed = _plugin.is_installed()
+    plugin_mode = "plugin" if plugin_installed else ("dev" if _plugin.resolve_crawler_dir() is not None else "none")
+    
     return {
         "status": _crawler_status,
         "sign_srv_running": is_sign_srv_running(),
         "crawler_running": is_crawler_running(),
+        # 插件状态
+        "plugin_installed": plugin_installed,
+        "plugin_available": plugin_available,
+        "plugin_mode": plugin_mode,  # "plugin" | "dev" | "none"
         # 循环爬取相关状态
         "loop_mode": loop_task_running,  # 是否处于循环爬取模式
         "loop_stopped": _stop_loop_flag,  # 是否收到停止信号
@@ -1256,7 +1296,7 @@ def get_platform_data_dir(platform: str) -> Path:
     例如 PLATFORM = "douyin" 会创建 data/douyin/ 目录，
     所以这里不需要规范化平台名称。
     """
-    return CRAWLER_DIR / "data" / platform
+    return _get_crawler_dir() / "data" / platform
 
 
 def parse_count_value(value: str | None) -> int:
@@ -2200,12 +2240,13 @@ def get_today_transcripts() -> dict[str, list[dict]]:
     today = datetime.now().strftime("%Y-%m-%d")
     all_transcripts = {}
     
-    if not TRANSCRIPTS_DIR.exists():
-        logger.info(f"[Daily Summary] 转写目录不存在: {TRANSCRIPTS_DIR}")
+    transcripts_dir = _get_transcripts_dir()
+    if not transcripts_dir.exists():
+        logger.info(f"[Daily Summary] 转写目录不存在: {transcripts_dir}")
         return all_transcripts
     
     # 遍历所有平台目录
-    for platform_dir in TRANSCRIPTS_DIR.iterdir():
+    for platform_dir in transcripts_dir.iterdir():
         if not platform_dir.is_dir():
             continue
         
@@ -2454,9 +2495,6 @@ async def get_daily_summary():
 
 # ============== 今日视频下载 ==============
 
-# 视频下载目录
-VIDEOS_DOWNLOAD_DIR = PROJECT_ROOT / "MediaCrawlerPro-Python" / "data" / "videos"
-
 # 平台对应的 Referer
 PLATFORM_REFERER_MAP = {
     "xhs": "https://www.xiaohongshu.com/",
@@ -2601,7 +2639,7 @@ async def download_today_videos():
                 video_url = video["video_url"]
                 
                 # 构建保存路径: videos/{date}/{platform}/{note_id}_{title}.mp4
-                save_dir = VIDEOS_DOWNLOAD_DIR / today / platform
+                save_dir = _get_videos_download_dir() / today / platform
                 filename = f"{note_id}_{safe_title}.mp4"
                 save_path = save_dir / filename
                 
@@ -2660,7 +2698,7 @@ async def get_download_status():
     """获取今日视频下载状态"""
     try:
         today = datetime.now().strftime("%Y-%m-%d")
-        videos_dir = VIDEOS_DOWNLOAD_DIR / today
+        videos_dir = _get_videos_download_dir() / today
         
         if not videos_dir.exists():
             return {

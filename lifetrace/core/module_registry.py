@@ -67,6 +67,7 @@ MODULES: tuple[ModuleDefinition, ...] = (
     ModuleDefinition(id="crawler", router_module="lifetrace.routers.crawler"),
     ModuleDefinition(id="audio", router_module="lifetrace.routers.audio"),
     ModuleDefinition(id="proactive_ocr", router_module="lifetrace.routers.proactive_ocr"),
+    ModuleDefinition(id="plugin", router_module="lifetrace.routers.plugin"),
 )
 
 MODULE_INDEX = {module.id: module for module in MODULES}

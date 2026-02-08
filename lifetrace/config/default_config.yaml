@@ -40,6 +40,7 @@ backend_modules:
     - crawler
     - audio
     - proactive_ocr
+    - plugin
 
 # 基础目录配置
 base_dir: data
@@ -256,3 +257,9 @@ observability:
     retry_cooldown_sec: 60 # 触发禁用后多久尝试恢复（秒，0 表示不自动重试）
   terminal:
     summary_only: true # Terminal 是否只输出一行摘要（推荐 true，保持日志精简）
+
+# 插件配置（可选功能模块的按需下载与管理）
+plugins:
+  media_crawler:
+    download_url: "" # 自定义下载 URL（留空则使用默认 GitHub Release 地址）
+    auto_setup_venv: true # 安装后是否自动创建虚拟环境并安装依赖
