@@ -19,6 +19,7 @@ backend_modules:
     - config
     - system
     - logs
+    - plugin
     - chat
     - agent_plan
     - activity
@@ -39,6 +40,20 @@ backend_modules:
     - floating_capture
     - audio
     - proactive_ocr
+
+# 插件系统配置（标准化插件运行时）
+plugins:
+  enabled: []
+  disabled: []
+  install_dir: data/plugins
+  third_party_dirs: []
+  registries:
+    - name: official
+      enabled: false
+      base_url: ""
+  security:
+    enforce_checksum: true
+    allow_unsigned: false
 
 # 基础目录配置
 base_dir: data

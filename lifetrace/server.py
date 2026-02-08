@@ -9,12 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from lifetrace.core.module_registry import (
     MODULES,
-    get_enabled_module_ids,
-    get_module_states,
-    log_module_summary,
-    register_modules,
 )
 from lifetrace.jobs.job_manager import get_job_manager
+from lifetrace.plugins.manager import get_plugin_manager
 from lifetrace.services.config_service import is_llm_configured
 from lifetrace.util.base_paths import get_user_logs_dir
 from lifetrace.util.logging_config import get_logger, setup_logging
@@ -118,14 +115,19 @@ def _order_modules(module_ids: list[str]) -> list[str]:
 
 
 def _register_priority_modules(app: FastAPI) -> None:
-    states = get_module_states()
-    log_module_summary(states)
-    enabled_ids = get_enabled_module_ids(states)
+    plugin_manager = get_plugin_manager()
+    snapshot = plugin_manager.snapshot()
+    states = snapshot.module_states
+
+    enabled_ids = sorted(
+        [module.id for module in MODULES if states[module.id].enabled],
+        key=lambda module_id: [module.id for module in MODULES].index(module_id),
+    )
 
     priority_ids = _order_modules([mid for mid in enabled_ids if mid in PRIORITY_MODULES])
     deferred_ids = _order_modules([mid for mid in enabled_ids if mid not in PRIORITY_MODULES])
 
-    registered = register_modules(app, priority_ids, states=states)
+    registered = plugin_manager.register_subset(app, priority_ids)
     app.state.registered_modules = set(registered)
     app.state.deferred_modules = [
         mid for mid in deferred_ids if mid not in app.state.registered_modules
@@ -137,13 +139,14 @@ def _register_priority_modules(app: FastAPI) -> None:
 
 
 async def _register_deferred_modules(app: FastAPI) -> None:
+    plugin_manager = get_plugin_manager()
     deferred_modules = getattr(app.state, "deferred_modules", [])
     if not deferred_modules:
         return
 
     logger.info(f"开始延迟加载 {len(deferred_modules)} 个模块")
     for module_id in deferred_modules:
-        registered = register_modules(app, [module_id])
+        registered = plugin_manager.register_subset(app, [module_id])
         if registered:
             app.state.registered_modules.update(registered)
         await asyncio.sleep(0)

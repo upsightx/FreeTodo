@@ -152,6 +152,14 @@ settings = Dynaconf(
         Validator("backend_modules.enabled", default=[], is_type_of=list),
         Validator("backend_modules.disabled", default=[], is_type_of=list),
         Validator("backend_modules.unavailable", default=[], is_type_of=list),
+        # 插件配置
+        Validator("plugins.enabled", default=[], is_type_of=list),
+        Validator("plugins.disabled", default=[], is_type_of=list),
+        Validator("plugins.install_dir", default="data/plugins"),
+        Validator("plugins.third_party_dirs", default=[], is_type_of=list),
+        Validator("plugins.registries", default=[], is_type_of=list),
+        Validator("plugins.security.enforce_checksum", default=True, is_type_of=bool),
+        Validator("plugins.security.allow_unsigned", default=False, is_type_of=bool),
     ],
 )
 

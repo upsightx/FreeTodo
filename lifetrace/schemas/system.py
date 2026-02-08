@@ -30,3 +30,7 @@ class CapabilitiesResponse(BaseModel):
     available_modules: list[str]
     disabled_modules: list[str]
     missing_deps: dict[str, list[str]]
+    enabled_plugins: list[str] = []
+    installed_plugins: list[str] = []
+    unavailable_plugins: list[str] = []
+    plugin_missing_deps: dict[str, list[str]] = {}

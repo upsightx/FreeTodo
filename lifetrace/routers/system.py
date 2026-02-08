@@ -4,6 +4,7 @@ import psutil
 from fastapi import APIRouter, HTTPException, Query
 
 from lifetrace.core.module_registry import get_capabilities_report
+from lifetrace.plugins.manager import get_plugin_manager
 from lifetrace.schemas.stats import StatisticsResponse
 from lifetrace.schemas.system import (
     CapabilitiesResponse,
@@ -186,4 +187,12 @@ async def get_system_resources():
 @router.get("/capabilities", response_model=CapabilitiesResponse)
 async def get_capabilities():
     """获取后端模块能力状态"""
-    return get_capabilities_report()
+    report = get_capabilities_report()
+    plugin_states = get_plugin_manager().list_plugins().values()
+
+    report["enabled_plugins"] = sorted([p.id for p in plugin_states if p.enabled])
+    report["installed_plugins"] = sorted([p.id for p in plugin_states if p.installed])
+    report["unavailable_plugins"] = sorted([p.id for p in plugin_states if not p.available])
+    report["plugin_missing_deps"] = {p.id: p.missing_deps for p in plugin_states if p.missing_deps}
+
+    return report

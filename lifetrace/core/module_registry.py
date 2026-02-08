@@ -32,6 +32,7 @@ MODULES: tuple[ModuleDefinition, ...] = (
     ModuleDefinition(id="config", router_module="lifetrace.routers.config", core=True),
     ModuleDefinition(id="system", router_module="lifetrace.routers.system", core=True),
     ModuleDefinition(id="logs", router_module="lifetrace.routers.logs"),
+    ModuleDefinition(id="plugin", router_module="lifetrace.routers.plugin"),
     ModuleDefinition(id="chat", router_module="lifetrace.routers.chat"),
     ModuleDefinition(id="agent_plan", router_module="lifetrace.routers.agent_plan"),
     ModuleDefinition(id="activity", router_module="lifetrace.routers.activity"),
