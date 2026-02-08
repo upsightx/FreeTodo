@@ -7,10 +7,12 @@ interface ChatStoreState {
 	historyPinned: boolean;
 	pendingPrompt: string | null; // 待发送的预设消息（由其他组件触发）
 	pendingNewChat: boolean; // 是否需要先开启新会话再发送消息
+	pendingSessionId: string | null; // 待加载的会话（由其他组件触发）
 	setConversationId: (id: string | null) => void;
 	setHistoryOpen: (open: boolean) => void;
 	setHistoryPinned: (pinned: boolean) => void;
 	setPendingPrompt: (prompt: string | null, startNewChat?: boolean) => void;
+	setPendingSession: (sessionId: string | null) => void;
 }
 
 export const useChatStore = create<ChatStoreState>()(
@@ -21,11 +23,13 @@ export const useChatStore = create<ChatStoreState>()(
 			historyPinned: false,
 			pendingPrompt: null,
 			pendingNewChat: false,
+			pendingSessionId: null,
 			setConversationId: (id) => set({ conversationId: id }),
 			setHistoryOpen: (open) => set({ historyOpen: open }),
 			setHistoryPinned: (pinned) => set({ historyPinned: pinned }),
 			setPendingPrompt: (prompt, startNewChat = false) =>
 				set({ pendingPrompt: prompt, pendingNewChat: startNewChat }),
+			setPendingSession: (sessionId) => set({ pendingSessionId: sessionId }),
 		}),
 		{
 			name: "chat-config",

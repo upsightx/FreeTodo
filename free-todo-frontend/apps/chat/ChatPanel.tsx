@@ -11,9 +11,11 @@ import { HistoryDrawer } from "@/apps/chat/components/layout/HistoryDrawer";
 import { MessageList } from "@/apps/chat/components/message/MessageList";
 import { useBreakdownQuestionnaire } from "@/apps/chat/hooks/useBreakdownQuestionnaire";
 import { useChatController } from "@/apps/chat/hooks/useChatController";
+import { createId } from "@/apps/chat/utils/id";
 import { PanelActionButton } from "@/components/common/layout/PanelHeader";
 import { useChatStore } from "@/lib/store/chat-store";
 import { useLocaleStore } from "@/lib/store/locale";
+import { usePlanChatStore } from "@/lib/store/plan-chat-store";
 import { useTodoStore } from "@/lib/store/todo-store";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +30,13 @@ export function ChatPanel() {
 		useTodoStore();
 
 	// 获取 pendingPrompt（其他组件触发的待发送消息）
-	const { pendingPrompt, pendingNewChat, setPendingPrompt } = useChatStore();
+	const {
+		pendingPrompt,
+		pendingNewChat,
+		pendingSessionId,
+		setPendingPrompt,
+		setPendingSession,
+	} = useChatStore();
 
 	// 使用 Breakdown Questionnaire hook
 	const breakdownQuestionnaire = useBreakdownQuestionnaire();
@@ -62,6 +70,68 @@ export function ChatPanel() {
 			setPendingPrompt(null);
 		}
 	}, [pendingPrompt, pendingNewChat, chatController, setPendingPrompt]);
+
+	useEffect(() => {
+		if (!pendingSessionId) return;
+		chatController.handleNewChat(true);
+		chatController.setConversationId(pendingSessionId);
+		chatController.setMessages([]);
+		chatController.setIsStreaming(false);
+		setPendingSession(null);
+	}, [chatController, pendingSessionId, setPendingSession]);
+
+	const { lastEventId, lastEvent } = usePlanChatStore();
+	const lastPlanEventRef = useRef(0);
+
+	useEffect(() => {
+		if (!lastEvent || lastEventId === lastPlanEventRef.current) return;
+		lastPlanEventRef.current = lastEventId;
+
+		if (!chatController.conversationId) return;
+		if (lastEvent.sessionId !== chatController.conversationId) return;
+
+		if (lastEvent.type === "chat_message") {
+			if (!lastEvent.content) return;
+			chatController.setMessages((prev) => [
+				...prev,
+				{
+					id: createId(),
+					role: lastEvent.role ?? "assistant",
+					content: lastEvent.content,
+				},
+			]);
+			chatController.setIsStreaming(false);
+			return;
+		}
+
+		if (lastEvent.type === "chat_chunk") {
+			if (!lastEvent.content) return;
+			chatController.setIsStreaming(true);
+			chatController.setMessages((prev) => {
+				const last = prev[prev.length - 1];
+				if (last && last.role === "assistant") {
+					const updated = {
+						...last,
+						content: `${last.content}${lastEvent.content}`,
+					};
+					return [...prev.slice(0, -1), updated];
+				}
+				return [
+					...prev,
+					{
+						id: createId(),
+						role: "assistant",
+						content: lastEvent.content,
+					},
+				];
+			});
+			return;
+		}
+
+		if (lastEvent.type === "chat_message_completed") {
+			chatController.setIsStreaming(false);
+		}
+	}, [chatController, lastEvent, lastEventId]);
 
 	const [showTodosExpanded, setShowTodosExpanded] = useState(false);
 	const historyPanelRef = useRef<HTMLDivElement | null>(null);

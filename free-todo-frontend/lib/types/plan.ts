@@ -88,7 +88,10 @@ export type PlanEventType =
 	| "rollback_started"
 	| "rollback_completed"
 	| "step_rollback_started"
-	| "step_rollback_completed";
+	| "step_rollback_completed"
+	| "chat_message"
+	| "chat_chunk"
+	| "chat_message_completed";
 
 export interface PlanEvent {
 	type: PlanEventType;
@@ -96,6 +99,9 @@ export interface PlanEvent {
 	run_id?: string;
 	step_id?: string;
 	step_name?: string;
+	session_id?: string;
+	role?: "user" | "assistant";
+	content?: string;
 	plan?: Record<string, unknown>;
 	status?: string;
 	error?: string;

@@ -4,6 +4,8 @@ import {
 	fetchLatestPlanForTodo,
 	runAgentPlanStream,
 } from "@/lib/api";
+import { useChatStore } from "@/lib/store/chat-store";
+import { usePlanChatStore } from "@/lib/store/plan-chat-store";
 import type { Todo } from "@/lib/types";
 import type {
 	PlanEvent,
@@ -64,14 +66,41 @@ export function usePlanProgress(todo: Todo | null) {
 	const [building, setBuilding] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const abortRef = useRef<AbortController | null>(null);
+	const publishChatEvent = usePlanChatStore((state) => state.publishEvent);
+	const markChatSession = usePlanChatStore((state) => state.markSessionRunning);
 
 	const handlePlanEvent = useCallback((event: PlanEvent) => {
+		if (event.type === "chat_message" || event.type === "chat_chunk") {
+			if (event.session_id && event.content) {
+				publishChatEvent({
+					type: event.type,
+					sessionId: event.session_id,
+					role: event.role ?? "assistant",
+					content: event.content,
+					stepId: event.step_id,
+				});
+			}
+			return;
+		}
+
+		if (event.type === "chat_message_completed") {
+			if (event.session_id) {
+				publishChatEvent({
+					type: event.type,
+					sessionId: event.session_id,
+					role: event.role ?? "assistant",
+					stepId: event.step_id,
+				});
+			}
+			return;
+		}
+
 		if (event.type === "plan_started") {
 			setRun((prev) => ({
 				runId: event.run_id ?? prev?.runId ?? "",
 				planId: event.plan_id ?? prev?.planId ?? "",
 				status: "running",
-				sessionId: prev?.sessionId ?? null,
+				sessionId: event.session_id ?? prev?.sessionId ?? null,
 				error: null,
 				rollbackStatus: prev?.rollbackStatus ?? null,
 				rollbackError: prev?.rollbackError ?? null,
@@ -79,6 +108,10 @@ export function usePlanProgress(todo: Todo | null) {
 				endedAt: null,
 				cancelRequested: false,
 			}));
+			if (event.session_id) {
+				useChatStore.getState().setPendingSession(event.session_id);
+				markChatSession(event.session_id, true);
+			}
 			return;
 		}
 
@@ -88,10 +121,14 @@ export function usePlanProgress(todo: Todo | null) {
 					? { ...prev, status: "completed", endedAt: event.timestamp ?? null }
 					: prev,
 			);
+			if (event.session_id) {
+				markChatSession(event.session_id, false);
+			}
 			return;
 		}
 
 		if (event.type === "plan_failed") {
+			setError(event.error ?? "Plan failed");
 			setRun((prev) =>
 				prev
 					? {
@@ -102,6 +139,9 @@ export function usePlanProgress(todo: Todo | null) {
 						}
 					: prev,
 			);
+			if (event.session_id) {
+				markChatSession(event.session_id, false);
+			}
 			return;
 		}
 
@@ -111,6 +151,9 @@ export function usePlanProgress(todo: Todo | null) {
 					? { ...prev, status: "cancelled", endedAt: event.timestamp ?? null }
 					: prev,
 			);
+			if (event.session_id) {
+				markChatSession(event.session_id, false);
+			}
 			return;
 		}
 
@@ -162,7 +205,7 @@ export function usePlanProgress(todo: Todo | null) {
 				);
 			});
 		}
-	}, []);
+	}, [markChatSession, publishChatEvent]);
 
 	const refresh = useCallback(async () => {
 		if (!todo?.id) {
