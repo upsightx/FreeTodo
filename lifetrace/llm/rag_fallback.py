@@ -7,6 +7,7 @@ import contextlib
 from datetime import datetime
 from typing import Any
 
+from lifetrace.llm.response_utils import get_message_content
 from lifetrace.util.logging_config import get_logger
 
 logger = get_logger()
@@ -119,7 +120,7 @@ def generate_direct_response(llm_client, user_query: str, intent_result: dict[st
             max_tokens=500,
         )
 
-        llm_response = response.choices[0].message.content.strip()
+        llm_response = get_message_content(response).strip()
         logger.info(f"[LLM Direct Response] {llm_response}")
         logger.info(f"LLM直接响应: {llm_response}")
 

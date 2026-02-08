@@ -24,6 +24,7 @@ from .llm_client_query import (
     rule_based_parse,
 )
 from .llm_client_vision import vision_chat
+from .response_utils import get_delta_content, get_message_content
 
 logger = get_logger()
 
@@ -239,7 +240,7 @@ class LLMClient:
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
-            content = response.choices[0].message.content or ""
+            content = get_message_content(response)
             return content
         except Exception as e:
             logger.error(f"文本聊天失败: {e}")
@@ -266,8 +267,7 @@ class LLMClient:
             )
             for chunk in stream:
                 with contextlib.suppress(Exception):
-                    delta = chunk.choices[0].delta
-                    text = getattr(delta, "content", None)
+                    text = get_delta_content(chunk)
                     if text:
                         yield text
         except Exception as e:

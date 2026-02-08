@@ -4,6 +4,7 @@ from typing import Any, TypedDict
 
 from fastapi import APIRouter
 
+from lifetrace.llm.response_utils import get_delta_content
 from lifetrace.services.chat_service import ChatService
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.token_usage_logger import log_token_usage
@@ -54,8 +55,8 @@ def _create_llm_stream_generator(
                 if hasattr(chunk, "usage") and chunk.usage:
                     usage_info = chunk.usage
 
-                if chunk.choices and len(chunk.choices) > 0 and chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
+                content = get_delta_content(chunk)
+                if content:
                     total_content += content
                     yield content
 

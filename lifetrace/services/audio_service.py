@@ -12,6 +12,7 @@ from typing import Any
 from sqlmodel import select
 
 from lifetrace.llm.llm_client import LLMClient
+from lifetrace.llm.response_utils import get_message_content
 from lifetrace.services.audio_extraction_service import AudioExtractionService
 from lifetrace.storage import get_session
 from lifetrace.storage.models import AudioRecording, Transcription
@@ -529,7 +530,7 @@ class AudioService:
                 temperature=0.3,
             )
 
-            optimized_text = (response.choices[0].message.content or "").strip()
+            optimized_text = get_message_content(response).strip()
             # 移除可能的markdown代码块标记
             if optimized_text.startswith("```"):
                 lines = optimized_text.split("\n")

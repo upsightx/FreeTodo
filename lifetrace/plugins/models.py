@@ -21,6 +21,7 @@ class PluginStatus(StrEnum):
     RUNNING = "running"
     DISABLED = "disabled"
     UNAVAILABLE = "unavailable"
+    INSTALLED = "installed"
 
 
 @dataclass

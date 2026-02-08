@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from lifetrace.llm.llm_client import LLMClient
+from lifetrace.llm.response_utils import get_message_content, get_usage_tokens
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.token_usage_logger import log_token_usage
 
@@ -85,17 +86,19 @@ class JournalGenerationService:
             max_tokens=800,
         )
 
-        if hasattr(response, "usage") and response.usage:
+        usage_tokens = get_usage_tokens(response)
+        if usage_tokens is not None:
+            input_tokens, output_tokens = usage_tokens
             log_token_usage(
                 model=self.llm_client.model,
-                input_tokens=response.usage.prompt_tokens,
-                output_tokens=response.usage.completion_tokens,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
                 endpoint="journal_generation",
                 response_type=response_type,
                 feature_type="journal_generation",
             )
 
-        content = (response.choices[0].message.content or "").strip()
+        content = get_message_content(response).strip()
         if not content:
             logger.warning("LLM returned empty content for journal generation")
             return ""

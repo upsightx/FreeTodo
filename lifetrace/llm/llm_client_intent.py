@@ -6,6 +6,7 @@ LLM 意图分类模块
 import json
 from typing import Any
 
+from lifetrace.llm.response_utils import get_message_content, get_usage_tokens
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.prompt_loader import get_prompt
 from lifetrace.util.token_usage_logger import log_token_usage
@@ -58,18 +59,20 @@ def classify_intent_with_llm(client, model: str, user_query: str) -> dict[str, A
             max_tokens=200,
         )
 
-        if hasattr(response, "usage") and response.usage:
+        usage_tokens = get_usage_tokens(response)
+        if usage_tokens is not None:
+            input_tokens, output_tokens = usage_tokens
             log_token_usage(
                 model=model,
-                input_tokens=response.usage.prompt_tokens,
-                output_tokens=response.usage.completion_tokens,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
                 endpoint="classify_intent",
                 user_query=user_query,
                 response_type="intent_classification",
                 feature_type="event_assistant",
             )
 
-        result_text = response.choices[0].message.content.strip()
+        result_text = get_message_content(response).strip()
 
         logger.info("=== LLM意图分类响应 ===")
         logger.info(f"用户输入: {user_query}")

@@ -10,6 +10,7 @@ else:
     ChatCompletionMessageParam = Any
 
 from lifetrace.llm.llm_client import LLMClient
+from lifetrace.llm.response_utils import get_message_content
 from lifetrace.routers.chat.base import router
 from lifetrace.schemas.message_todo_extraction import (
     ExtractedMessageTodo,
@@ -83,7 +84,7 @@ async def extract_todos_from_messages(
             temperature=0.3,
         )
 
-        response_text = response.choices[0].message.content or ""
+        response_text = get_message_content(response)
 
         # 解析响应
         todos = _parse_llm_response(response_text)

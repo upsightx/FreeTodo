@@ -5,6 +5,7 @@ LLM 视觉多模态模块
 
 from typing import Any
 
+from lifetrace.llm.response_utils import get_message_content, get_usage_tokens
 from lifetrace.util.image_utils import get_screenshots_base64
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.settings import settings
@@ -88,20 +89,22 @@ def vision_chat(
             timeout=timeout_seconds,
         )
 
-        result_text = response.choices[0].message.content.strip()
+        result_text = get_message_content(response).strip()
 
         usage_info = None
-        if hasattr(response, "usage") and response.usage:
+        usage_tokens = get_usage_tokens(response)
+        if usage_tokens is not None:
+            input_tokens, output_tokens = usage_tokens
             usage_info = {
-                "prompt_tokens": response.usage.prompt_tokens,
-                "completion_tokens": response.usage.completion_tokens,
-                "total_tokens": response.usage.total_tokens,
+                "prompt_tokens": input_tokens,
+                "completion_tokens": output_tokens,
+                "total_tokens": input_tokens + output_tokens,
             }
 
             log_token_usage(
                 model=vision_model,
-                input_tokens=response.usage.prompt_tokens,
-                output_tokens=response.usage.completion_tokens,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
                 endpoint="vision_chat",
                 user_query=prompt,
                 response_type="vision_analysis",

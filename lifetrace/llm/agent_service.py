@@ -12,6 +12,7 @@ else:
 # 导入工具模块以触发工具注册
 from lifetrace.llm import tools  # noqa: F401
 from lifetrace.llm.llm_client import LLMClient
+from lifetrace.llm.response_utils import get_message_content
 from lifetrace.llm.tools.base import ToolResult
 from lifetrace.llm.tools.registry import ToolRegistry
 from lifetrace.util.language import get_language_instruction
@@ -259,7 +260,7 @@ class AgentService:
             max_tokens=200,
         )
 
-        decision_text = (response.choices[0].message.content or "").strip()
+        decision_text = get_message_content(response).strip()
 
         # 解析 JSON 响应
         try:
@@ -360,7 +361,7 @@ class AgentService:
                 max_tokens=100,
             )
 
-            eval_text = (response.choices[0].message.content or "").strip().lower()
+            eval_text = get_message_content(response).strip().lower()
 
             # 简单判断：如果包含"完成"、"足够"等关键词，认为可以生成回答
             completion_keywords = ["完成", "足够", "可以", "complete", "sufficient"]

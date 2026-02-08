@@ -10,6 +10,7 @@ from typing import Any
 
 from lifetrace.core.dependencies import get_vector_service
 from lifetrace.llm.llm_client import LLMClient
+from lifetrace.llm.response_utils import get_message_content, get_usage_tokens
 from lifetrace.storage import event_mgr, get_session
 from lifetrace.storage.models import Event
 from lifetrace.storage.sql_utils import col
@@ -292,17 +293,19 @@ class EventSummaryService:
                 max_tokens=200,
             )
 
-            if hasattr(response, "usage") and response.usage:
+            usage_tokens = get_usage_tokens(response)
+            if usage_tokens is not None:
+                input_tokens, output_tokens = usage_tokens
                 log_token_usage(
                     model=self.llm_client.model,
-                    input_tokens=response.usage.prompt_tokens,
-                    output_tokens=response.usage.completion_tokens,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
                     endpoint="event_summary",
                     response_type="summary_generation",
                     feature_type="event_summary",
                 )
 
-            content = (response.choices[0].message.content or "").strip()
+            content = get_message_content(response).strip()
             if content:
                 extracted_content, original_content = self._extract_json_from_response(content)
                 if extracted_content:
