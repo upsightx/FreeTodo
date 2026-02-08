@@ -42,6 +42,11 @@ Thumbs.db
 lifetrace/data/
 lifetrace/config/config.yaml
 
+# Legacy submodules (not used)
+MediaCrawlerPro-Downloader/
+
+FreeTodo/
+
 # Frontend - Node.js cache and build artifacts
 **/node_modules/
 **/.next/
@@ -77,3 +82,21 @@ dist-backend/
 **/WixTools/
 **/gen/
 /pop
+
+# 实验性项目（不提交）
+daily-insight-press/
+elegant-ai-summary-redesign/
+
+# MediaCrawlerPro 运行时数据
+MediaCrawlerPro-Python/data/
+MediaCrawlerPro-Python/.venv/
+MediaCrawlerPro-Python/logs/
+MediaCrawlerPro-Python/browser_data/
+MediaCrawlerPro-SignSrv/.venv/
+MediaCrawlerPro-SignSrv/logs/
+
+# 视频文件（防止大文件提交）
+*.mp4
+*.avi
+*.mkv
+*.mov
