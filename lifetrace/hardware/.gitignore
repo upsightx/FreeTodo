@@ -1,0 +1,9 @@
+# Runtime logs
+logs/
+
+# Audio recordings (runtime data)
+audio_recordings/
+
+# Python cache
+__pycache__/
+*.pyc
