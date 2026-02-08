@@ -7,7 +7,7 @@ import contextlib
 from typing import Any, cast
 
 try:
-    import litellm
+    import litellm  # type: ignore[reportMissingImports]
 except Exception:  # pragma: no cover - 仅在依赖缺失时触发
     litellm = None
 

@@ -8,7 +8,7 @@ from functools import lru_cache
 from typing import Any
 
 try:
-    import litellm
+    import litellm  # type: ignore[reportMissingImports]
 except Exception:  # pragma: no cover - 仅在依赖缺失时触发
     litellm = None
 
