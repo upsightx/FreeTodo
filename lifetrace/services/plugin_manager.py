@@ -41,8 +41,8 @@ def _ensure_plugin_base_dir() -> Path:
 
 # 默认的插件下载 URL 模板（指向 GitHub Releases）
 _DEFAULT_DOWNLOAD_URL = (
-    "https://github.com/FreeU-group/LifeTrace/releases/download/"
-    "plugin/media-crawler/{version}/media-crawler-{version}.zip"
+    "https://github.com/FreeU-group/FreeTodo/releases/download/plugin/media-crawler/v1.0.0/media-crawler-v1.0.0.zip"
+    #"plugin/media-crawler/v1.0.0/media-crawler-v1.0.0.zip"
 )
 
 # manifest 文件名

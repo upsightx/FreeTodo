@@ -1,1 +1,0 @@
-alter table bilibili_video add column duration varchar(16) default null comment '视频时长';
