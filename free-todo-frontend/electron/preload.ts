@@ -141,6 +141,32 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	},
 
 	/**
+	 * 打开本地文件选择器（预览）
+	 */
+	previewOpenFile: () => ipcRenderer.invoke("preview:open-file"),
+
+	/**
+	 * 读取文件内容（预览）
+	 */
+	previewReadFile: (payload: {
+		path: string;
+		mode: "text" | "binary";
+		maxBytes?: number;
+	}) => ipcRenderer.invoke("preview:read-file", payload),
+
+	/**
+	 * 使用系统默认应用打开文件
+	 */
+	previewOpenExternal: (path: string) =>
+		ipcRenderer.invoke("preview:open-external", path),
+
+	/**
+	 * 在文件管理器中显示文件
+	 */
+	previewRevealInFolder: (path: string) =>
+		ipcRenderer.invoke("preview:reveal", path),
+
+	/**
 	 * 截图并提取待办事项
 	 */
 	captureAndExtractTodos: async (

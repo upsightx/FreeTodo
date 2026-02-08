@@ -70,6 +70,48 @@ declare global {
 			 */
 			setWindowBackgroundColor: (color: string) => void;
 
+			/**
+			 * 选择本地文件用于预览
+			 */
+			previewOpenFile?: () => Promise<{
+				canceled: boolean;
+				path?: string;
+			}>;
+
+			/**
+			 * 读取本地文件内容用于预览
+			 */
+			previewReadFile?: (payload: {
+				path: string;
+				mode: "text" | "binary";
+				maxBytes?: number;
+			}) => Promise<{
+				ok: boolean;
+				path?: string;
+				name?: string;
+				size?: number;
+				modifiedAt?: number;
+				text?: string;
+				base64?: string;
+				error?: string;
+			}>;
+
+			/**
+			 * 使用系统默认应用打开文件
+			 */
+			previewOpenExternal?: (path: string) => Promise<{
+				ok: boolean;
+				error?: string;
+			}>;
+
+			/**
+			 * 在文件管理器中显示文件
+			 */
+			previewRevealInFolder?: (path: string) => Promise<{
+				ok: boolean;
+				error?: string;
+			}>;
+
 			// ========== Island 动态岛相关 API ==========
 
 		/**

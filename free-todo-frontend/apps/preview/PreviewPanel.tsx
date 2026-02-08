@@ -6,65 +6,32 @@ import {
 	Eye,
 	FileCode2,
 	FileImage,
+	FileQuestion,
 	FileText,
+	Folder,
 	FolderOpen,
+	Loader2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
-import {
-	PanelActionButton,
-	PanelHeader,
-} from "@/components/common/layout/PanelHeader";
+import type { ChangeEvent } from "react";
+import { useMemo, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { PanelActionButton, PanelHeader } from "@/components/common/layout/PanelHeader";
+import { openExternalFile, revealFileInFolder } from "@/lib/preview/commands";
+import { usePreviewStore } from "@/lib/preview/store";
+import type { PreviewFileKind } from "@/lib/preview/utils";
+import { formatBytes, supportsCodeMode } from "@/lib/preview/utils";
 import { cn } from "@/lib/utils";
+import { isElectron, isTauri } from "@/lib/utils/platform";
 
-type PreviewMode = "code" | "view";
-type PreviewFileKind = "markdown" | "html" | "pdf" | "image";
-type PreviewStatus = "live" | "rendering" | "ready";
-
-type PreviewFile = {
-	id: string;
-	name: string;
-	path: string;
-	kind: PreviewFileKind;
-	size: string;
-	updatedAt: string;
-	status: PreviewStatus;
+type FileKindMeta = {
+	labelKey: string;
+	Icon: typeof FileText;
+	badgeClass: string;
 };
 
-const PREVIEW_FILES: [PreviewFile, ...PreviewFile[]] = [
-	{
-		id: "md-spec",
-		name: "Preview Dock Spec.md",
-		path: "workspace/specs/preview-dock.md",
-		kind: "markdown",
-		size: "18.4 KB",
-		updatedAt: "2m ago",
-		status: "live",
-	},
-	{
-		id: "html-sample",
-		name: "viewer-frame.html",
-		path: "workspace/sandbox/viewer-frame.html",
-		kind: "html",
-		size: "9.8 KB",
-		updatedAt: "just now",
-		status: "rendering",
-	},
-	{
-		id: "pdf-report",
-		name: "Research Snapshot.pdf",
-		path: "workspace/reports/2024-q3-snapshot.pdf",
-		kind: "pdf",
-		size: "2.4 MB",
-		updatedAt: "1h ago",
-		status: "ready",
-	},
-];
-
-const FILE_KIND_META: Record<
-	PreviewFileKind,
-	{ labelKey: string; Icon: typeof FileText; badgeClass: string }
-> = {
+const FILE_KIND_META: Record<PreviewFileKind, FileKindMeta> = {
 	markdown: {
 		labelKey: "types.markdown",
 		Icon: FileText,
@@ -89,80 +56,96 @@ const FILE_KIND_META: Record<
 		badgeClass:
 			"border-purple-200/70 bg-purple-50 text-purple-700 dark:border-purple-400/40 dark:bg-purple-500/10 dark:text-purple-200",
 	},
+	text: {
+		labelKey: "types.text",
+		Icon: FileText,
+		badgeClass:
+			"border-slate-200/70 bg-slate-50 text-slate-700 dark:border-slate-400/40 dark:bg-slate-500/10 dark:text-slate-200",
+	},
+	binary: {
+		labelKey: "types.binary",
+		Icon: FileQuestion,
+		badgeClass:
+			"border-zinc-200/70 bg-zinc-50 text-zinc-700 dark:border-zinc-400/40 dark:bg-zinc-500/10 dark:text-zinc-200",
+	},
 };
 
-const STATUS_META: Record<
-	PreviewStatus,
-	{ labelKey: string; dotClass: string; textClass: string }
-> = {
-	live: {
-		labelKey: "status.live",
-		dotClass: "bg-emerald-500",
-		textClass: "text-emerald-700 dark:text-emerald-200",
-	},
-	rendering: {
-		labelKey: "status.rendering",
+const STATUS_META = {
+	loading: {
+		labelKey: "status.loading",
 		dotClass: "bg-sky-500 animate-pulse",
 		textClass: "text-sky-700 dark:text-sky-200",
 	},
 	ready: {
 		labelKey: "status.ready",
-		dotClass: "bg-amber-500",
-		textClass: "text-amber-700 dark:text-amber-200",
+		dotClass: "bg-emerald-500",
+		textClass: "text-emerald-700 dark:text-emerald-200",
 	},
-};
-
-const CODE_SAMPLES: Record<PreviewFileKind, string> = {
-	markdown: `# Preview Dock
-
-Design a universal preview panel for local files.
-
-## Modes
-- Code: raw source
-- View: rendered output
-
-## Requirements
-1. Single active file (no multi preview)
-2. External open support
-3. Auto refresh on save`,
-	html: `<!doctype html>
-<html>
-  <head>
-    <title>Preview Panel</title>
-  </head>
-  <body>
-    <main class="stage">
-      <h1>Preview Dock</h1>
-      <p>Full HTML render with scripts enabled.</p>
-    </main>
-  </body>
-</html>`,
-	pdf: "",
-	image: "",
+	error: {
+		labelKey: "status.error",
+		dotClass: "bg-rose-500",
+		textClass: "text-rose-700 dark:text-rose-200",
+	},
 };
 
 export function PreviewPanel() {
 	const tPage = useTranslations("page");
 	const t = useTranslations("previewPanel");
 
-	const [activeFileId, setActiveFileId] = useState(PREVIEW_FILES[0].id);
-	const [mode, setMode] = useState<PreviewMode>("view");
+	const activeFile = usePreviewStore((state) => state.activeFile);
+	const recentFiles = usePreviewStore((state) => state.recentFiles);
+	const mode = usePreviewStore((state) => state.mode);
+	const setMode = usePreviewStore((state) => state.setMode);
+	const openFromPath = usePreviewStore((state) => state.openFromPath);
+	const openFromPicker = usePreviewStore((state) => state.openFromPicker);
+	const activateRecent = usePreviewStore((state) => state.activateRecent);
 
-	const activeFile = useMemo(
-		() => PREVIEW_FILES.find((file) => file.id === activeFileId) ?? PREVIEW_FILES[0],
-		[activeFileId],
-	);
-	const supportsCode = activeFile.kind === "markdown" || activeFile.kind === "html";
+	const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-	useEffect(() => {
-		if (!supportsCode && mode === "code") {
-			setMode("view");
+	const supportsCode = activeFile ? supportsCodeMode(activeFile.kind) : false;
+	const kindMeta = activeFile ? FILE_KIND_META[activeFile.kind] : null;
+	const statusMeta =
+		activeFile && activeFile.status !== "idle"
+			? STATUS_META[activeFile.status]
+			: null;
+
+	const updatedLabel = useMemo(() => {
+		if (!activeFile?.updatedAt) return t("timeUnknown");
+		const date = new Date(activeFile.updatedAt);
+		return date.toLocaleString();
+	}, [activeFile?.updatedAt, t]);
+
+	const canReveal = Boolean(activeFile?.path) && (isElectron() || isTauri());
+	const canOpenExternal = Boolean(activeFile?.path || activeFile?.objectUrl);
+
+	const handlePickFile = async () => {
+		if (window.electronAPI?.previewOpenFile) {
+			const result = await window.electronAPI.previewOpenFile();
+			if (result?.path) {
+				await openFromPath(result.path, "picker");
+			}
+			return;
 		}
-	}, [supportsCode, mode]);
+		fileInputRef.current?.click();
+	};
 
-	const kindMeta = FILE_KIND_META[activeFile.kind];
-	const statusMeta = STATUS_META[activeFile.status];
-	const StatusIcon = kindMeta.Icon;
+	const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (file) {
+			void openFromPicker(file);
+		}
+		event.target.value = "";
+	};
+
+	const handleOpenExternal = async () => {
+		if (!activeFile) return;
+		await openExternalFile(activeFile.path, activeFile.objectUrl);
+	};
+
+	const handleReveal = async () => {
+		if (!activeFile?.path) return;
+		await revealFileInFolder(activeFile.path);
+	};
 
 	return (
 		<div className="flex h-full flex-col bg-background">
@@ -172,86 +155,143 @@ export function PreviewPanel() {
 				actions={
 					<div className="flex items-center gap-1">
 						<PanelActionButton
-							icon={ExternalLink}
-							aria-label={t("openExternal")}
+							icon={FolderOpen}
+							aria-label={t("openFile")}
+							onClick={handlePickFile}
 						/>
 						<PanelActionButton
-							icon={FolderOpen}
+							icon={ExternalLink}
+							aria-label={t("openExternal")}
+							disabled={!canOpenExternal}
+							onClick={handleOpenExternal}
+						/>
+						<PanelActionButton
+							icon={Folder}
 							aria-label={t("revealInFolder")}
+							disabled={!canReveal}
+							onClick={handleReveal}
 						/>
 					</div>
 				}
 			/>
 
+			<input
+				ref={fileInputRef}
+				type="file"
+				className="hidden"
+				onChange={handleFileChange}
+			/>
+
 			<div className="border-b bg-muted/20 px-4 py-3">
-				<div className="flex flex-wrap items-start justify-between gap-3">
-					<div className="flex min-w-[220px] items-center gap-3">
-						<div className="rounded-lg border border-border bg-background p-2">
-							<StatusIcon className="h-5 w-5 text-muted-foreground" />
-						</div>
-						<div>
-							<div className="text-sm font-semibold text-foreground">
-								{activeFile.name}
+				{activeFile ? (
+					<div className="flex flex-wrap items-start justify-between gap-3">
+						<div className="flex min-w-[220px] items-center gap-3">
+							<div className="rounded-lg border border-border bg-background p-2">
+								{kindMeta ? (
+									<kindMeta.Icon className="h-5 w-5 text-muted-foreground" />
+								) : (
+									<FileText className="h-5 w-5 text-muted-foreground" />
+								)}
 							</div>
-							<div className="text-xs text-muted-foreground">
-								{activeFile.path}
+							<div>
+								<div className="text-sm font-semibold text-foreground">
+									{activeFile.name}
+								</div>
+								<div className="text-xs text-muted-foreground">
+									{activeFile.path ?? t("localFile")}
+								</div>
 							</div>
 						</div>
-					</div>
 
-					<div className="flex flex-wrap items-center gap-2 text-xs">
-						<span
-							className={cn(
-								"inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium",
-								kindMeta.badgeClass,
+						<div className="flex flex-wrap items-center gap-2 text-xs">
+							{kindMeta && (
+								<span
+									className={cn(
+										"inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium",
+										kindMeta.badgeClass,
+									)}
+								>
+									{t(kindMeta.labelKey)}
+								</span>
 							)}
-						>
-							{t(kindMeta.labelKey)}
-						</span>
-						<span className="text-muted-foreground">{activeFile.size}</span>
-						<span className="text-muted-foreground">•</span>
-						<span className="text-muted-foreground">
-							{t("updatedAt", { time: activeFile.updatedAt })}
-						</span>
-						<span className="text-muted-foreground">•</span>
-						<span
-							className={cn(
-								"inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 font-medium",
-								statusMeta.textClass,
-							)}
-						>
-							<span className={cn("h-2 w-2 rounded-full", statusMeta.dotClass)} />
-							{t(statusMeta.labelKey)}
-						</span>
-					</div>
-				</div>
-
-				<div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-					<div className="flex items-center gap-2 text-xs text-muted-foreground">
-						<span className="uppercase tracking-wide">{t("recentFiles")}</span>
-						<div className="flex flex-wrap items-center gap-2">
-							{PREVIEW_FILES.map((file) => {
-								const isActive = file.id === activeFile.id;
-								return (
-									<button
-										key={file.id}
-										type="button"
-										onClick={() => setActiveFileId(file.id)}
+							<span className="text-muted-foreground">
+								{activeFile.size !== undefined
+									? formatBytes(activeFile.size)
+									: t("sizeUnknown")}
+							</span>
+							<span className="text-muted-foreground">•</span>
+							<span className="text-muted-foreground">
+								{t("updatedAt", { time: updatedLabel })}
+							</span>
+							{statusMeta && (
+								<>
+									<span className="text-muted-foreground">•</span>
+									<span
 										className={cn(
-											"inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-											isActive
-												? "border-primary/40 bg-primary/10 text-primary"
-												: "border-border bg-background text-muted-foreground hover:text-foreground",
+											"inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 font-medium",
+											statusMeta.textClass,
 										)}
 									>
-										{file.name}
-									</button>
-								);
-							})}
+										<span
+											className={cn(
+												"h-2 w-2 rounded-full",
+												statusMeta.dotClass,
+											)}
+										/>
+										{t(statusMeta.labelKey)}
+									</span>
+								</>
+							)}
 						</div>
 					</div>
+				) : (
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<div className="text-sm text-muted-foreground">
+							{t("emptyDescription")}
+						</div>
+						<button
+							type="button"
+							onClick={handlePickFile}
+							className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
+						>
+							<FolderOpen className="h-3.5 w-3.5" />
+							{t("openFile")}
+						</button>
+					</div>
+				)}
 
-					<div className="flex flex-wrap items-center gap-2">
+				{recentFiles.length > 0 && (
+					<div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+						<div className="flex items-center gap-2 text-xs text-muted-foreground">
+							<span className="uppercase tracking-wide">
+								{t("recentFiles")}
+							</span>
+							<div className="flex flex-wrap items-center gap-2">
+								{recentFiles.map((file) => {
+									const isActive = file.id === activeFile?.id;
+									return (
+										<button
+											key={file.id}
+											type="button"
+											onClick={() => activateRecent(file.id)}
+											className={cn(
+												"inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+												isActive
+													? "border-primary/40 bg-primary/10 text-primary"
+													: "border-border bg-background text-muted-foreground hover:text-foreground",
+											)}
+										>
+											{file.name}
+										</button>
+									);
+								})}
+							</div>
+						</div>
+					</div>
+				)}
+
+				{activeFile && (
+					<div className="mt-3 flex flex-wrap items-center justify-end gap-2">
 						<div className="inline-flex rounded-lg border border-border bg-background/80 p-0.5">
 							<button
 								type="button"
@@ -288,134 +328,159 @@ export function PreviewPanel() {
 							</span>
 						)}
 					</div>
-				</div>
+				)}
 			</div>
 
 			<div className="flex-1 overflow-hidden">
 				<div className="h-full overflow-y-auto bg-muted/10 px-6 py-6">
-					{mode === "code" && supportsCode ? (
-						<div className="rounded-xl border border-border bg-background p-4 shadow-sm">
-							<div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-								<Code2 className="h-3.5 w-3.5" />
-								{t("codeModeTitle")}
+					{!activeFile && (
+						<div className="flex h-full flex-col items-center justify-center gap-4 text-center">
+							<div className="rounded-full border border-border bg-background p-3">
+								<Eye className="h-6 w-6 text-muted-foreground" />
 							</div>
-							<pre className="max-h-[520px] overflow-auto rounded-lg bg-muted/40 p-4 text-xs text-foreground">
-								<code className="font-mono">{CODE_SAMPLES[activeFile.kind]}</code>
-							</pre>
+							<div className="space-y-1">
+								<div className="text-base font-semibold text-foreground">
+									{t("emptyTitle")}
+								</div>
+								<div className="text-sm text-muted-foreground">
+									{t("emptyDescription")}
+								</div>
+							</div>
+							<button
+								type="button"
+								onClick={handlePickFile}
+								className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
+							>
+								<FolderOpen className="h-4 w-4" />
+								{t("openFile")}
+							</button>
 						</div>
-					) : (
+					)}
+
+					{activeFile && activeFile.status === "loading" && (
+						<div className="flex h-full flex-col items-center justify-center gap-3 text-center text-muted-foreground">
+							<Loader2 className="h-6 w-6 animate-spin" />
+							<div className="text-sm font-medium">{t("loadingTitle")}</div>
+						</div>
+					)}
+
+					{activeFile && activeFile.status === "error" && (
+						<div className="rounded-2xl border border-border bg-background p-6 text-sm text-muted-foreground shadow-sm">
+							<div className="text-base font-semibold text-foreground">
+								{t("errorTitle")}
+							</div>
+							<div className="mt-2">{activeFile.error || t("errorHint")}</div>
+							<button
+								type="button"
+								onClick={handleOpenExternal}
+								className="mt-4 inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
+							>
+								<ExternalLink className="h-3.5 w-3.5" />
+								{t("openExternal")}
+							</button>
+						</div>
+					)}
+
+					{activeFile && activeFile.status === "ready" && (
 						<div className="space-y-6">
-							{activeFile.kind === "markdown" && (
-								<div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
-									<div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-										{t("renderedMarkdown")}
-									</div>
-									<h3 className="mt-2 text-2xl font-semibold text-foreground">
-										Preview Dock
-									</h3>
-									<p className="mt-2 text-sm text-muted-foreground">
-										{t("markdownIntro")}
-									</p>
-									<div className="mt-4 grid gap-3 sm:grid-cols-2">
-										<div className="rounded-lg border border-border bg-muted/20 p-3">
-											<div className="text-xs font-semibold text-muted-foreground">
-												{t("cardModeTitle")}
-											</div>
-											<ul className="mt-2 space-y-1 text-sm text-foreground">
-												<li>{t("cardModeItem1")}</li>
-												<li>{t("cardModeItem2")}</li>
-												<li>{t("cardModeItem3")}</li>
-											</ul>
-										</div>
-										<div className="rounded-lg border border-border bg-muted/20 p-3">
-											<div className="text-xs font-semibold text-muted-foreground">
-												{t("cardViewTitle")}
-											</div>
-											<ul className="mt-2 space-y-1 text-sm text-foreground">
-												<li>{t("cardViewItem1")}</li>
-												<li>{t("cardViewItem2")}</li>
-												<li>{t("cardViewItem3")}</li>
-											</ul>
-										</div>
-									</div>
-									<div className="mt-4 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-										<span className="font-semibold text-foreground">
-											{t("calloutLabel")}
-										</span>{" "}
-										{t("calloutText")}
-									</div>
-								</div>
-							)}
-
-							{activeFile.kind === "html" && (
-								<div className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+							{mode === "code" && supportsCode ? (
+								<div className="rounded-xl border border-border bg-background p-4 shadow-sm">
 									<div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-										{t("renderedHtml")}
-										<span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[10px]">
-											{t("fullRender")}
-										</span>
+										<Code2 className="h-3.5 w-3.5" />
+										{t("codeModeTitle")}
 									</div>
-									<div className="overflow-hidden rounded-xl border border-border bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-100">
-										<div className="flex items-center justify-between border-b border-slate-200/70 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
-											<span>{t("htmlFrameTitle")}</span>
-											<span>{t("htmlFrameBadge")}</span>
-										</div>
-										<div className="px-6 py-5">
-											<h3 className="text-2xl font-semibold">
-												Preview Dock
-											</h3>
-											<p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-												{t("htmlIntro")}
-											</p>
-											<div className="mt-4 grid gap-3 sm:grid-cols-3">
-												{[
-													t("htmlPillScan"),
-													t("htmlPillRender"),
-													t("htmlPillInspect"),
-												].map((label) => (
-													<div
-														key={label}
-														className="rounded-lg border border-slate-200/70 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400"
-													>
-														{label}
-													</div>
-												))}
-											</div>
-										</div>
-									</div>
+									<pre className="max-h-[520px] overflow-auto rounded-lg bg-muted/40 p-4 text-xs text-foreground">
+										<code className="font-mono">
+											{activeFile.text || t("contentUnavailable")}
+										</code>
+									</pre>
 								</div>
-							)}
-
-							{activeFile.kind === "pdf" && (
-								<div className="rounded-2xl border border-border bg-background p-5 shadow-sm">
-									<div className="mb-4 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-										<span>{t("pdfPreviewTitle")}</span>
-										<span>{t("pdfPages", { count: 12 })}</span>
-									</div>
-									<div className="grid gap-4 sm:grid-cols-2">
-										{[1, 2, 3, 4].map((page) => (
-											<div
-												key={page}
-												className="flex flex-col overflow-hidden rounded-lg border border-border bg-muted/30"
+							) : (
+								<>
+									{activeFile.kind === "markdown" && (
+										<div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
+											<ReactMarkdown
+												remarkPlugins={[remarkGfm]}
+												className="prose prose-sm max-w-none text-foreground dark:prose-invert"
 											>
-												<div className="flex-1 bg-linear-to-br from-muted/10 via-muted/40 to-muted/10 p-4">
-													<div className="h-full rounded-md border border-dashed border-muted-foreground/30 bg-background/60" />
-												</div>
-												<div className="border-t border-border bg-background px-3 py-2 text-xs text-muted-foreground">
-													{t("pdfPageLabel", { page })}
-												</div>
+												{activeFile.text || t("contentUnavailable")}
+											</ReactMarkdown>
+										</div>
+									)}
+
+									{activeFile.kind === "html" && (
+										<div className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+											<div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+												{t("renderedHtml")}
+												<span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[10px]">
+													{t("fullRender")}
+												</span>
 											</div>
-										))}
-									</div>
-									<div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-										<span className="rounded-full border border-border bg-muted/20 px-2 py-1">
-											{t("pdfSearchHint")}
-										</span>
-										<span className="rounded-full border border-border bg-muted/20 px-2 py-1">
-											{t("pdfZoomHint")}
-										</span>
-									</div>
-								</div>
+											<div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm dark:bg-slate-900">
+												<iframe
+													title={activeFile.name}
+													className="h-[520px] w-full bg-white"
+													srcDoc={activeFile.text || ""}
+												/>
+											</div>
+										</div>
+									)}
+
+									{activeFile.kind === "pdf" && (
+										<div className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+											<div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+												{t("pdfPreviewTitle")}
+											</div>
+											{activeFile.objectUrl ? (
+												<object
+													data={activeFile.objectUrl}
+													type="application/pdf"
+													className="h-[640px] w-full rounded-lg border border-border"
+												>
+													<div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+														{t("unsupported")}
+													</div>
+												</object>
+											) : (
+												<div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+													{t("unsupported")}
+												</div>
+											)}
+										</div>
+									)}
+
+									{activeFile.kind === "image" && (
+										<div className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+											{activeFile.objectUrl ? (
+												<img
+													src={activeFile.objectUrl}
+													alt={activeFile.name}
+													className="mx-auto max-h-[620px] w-auto rounded-lg object-contain"
+												/>
+											) : (
+												<div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+													{t("unsupported")}
+												</div>
+											)}
+										</div>
+									)}
+
+									{activeFile.kind === "text" && (
+										<div className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+											<pre className="max-h-[520px] overflow-auto rounded-lg bg-muted/40 p-4 text-xs text-foreground">
+												<code className="font-mono">
+													{activeFile.text || t("contentUnavailable")}
+												</code>
+											</pre>
+										</div>
+									)}
+
+									{activeFile.kind === "binary" && (
+										<div className="rounded-2xl border border-border bg-background p-6 text-sm text-muted-foreground shadow-sm">
+											{t("unsupported")}
+										</div>
+									)}
+								</>
 							)}
 						</div>
 					)}
