@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useCrawlerStore } from "@/apps/crawler/store";
 import { type CrawlerType } from "@/apps/crawler/types";
 import { SettingsSection } from "./SettingsSection";
@@ -38,6 +38,11 @@ export function CrawlerConfigSection({ loading = false }: CrawlerConfigSectionPr
 		crawlerType,
 		setCrawlerType,
 		loadConfigFromBackend,
+		pluginInstalled,
+		pluginAvailable,
+		pluginMode,
+		checkPluginStatus,
+		uninstallPlugin,
 	} = useCrawlerStore();
 
 	// 本地配置状态
@@ -48,6 +53,8 @@ export function CrawlerConfigSection({ loading = false }: CrawlerConfigSectionPr
 	const [saveDataOption, setSaveDataOption] = useState("csv");
 	const [blacklistNicknames, setBlacklistNicknames] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
+	const [isUninstalling, setIsUninstalling] = useState(false);
+	const [showUninstallConfirm, setShowUninstallConfirm] = useState(false);
 	const initialLoadRef = useRef(false);
 
 	// 组件挂载时从后端加载配置
@@ -55,10 +62,11 @@ export function CrawlerConfigSection({ loading = false }: CrawlerConfigSectionPr
 		if (!initialLoadRef.current) {
 			initialLoadRef.current = true;
 			loadConfigFromBackend();
+			checkPluginStatus();
 			// 加载额外的配置项
 			fetchFullConfig();
 		}
-	}, [loadConfigFromBackend]);
+	}, [loadConfigFromBackend, checkPluginStatus]);
 
 	// 从后端加载完整配置
 	const fetchFullConfig = async () => {
@@ -139,7 +147,24 @@ export function CrawlerConfigSection({ loading = false }: CrawlerConfigSectionPr
 		saveConfig({ blacklist_nicknames: blacklistNicknames });
 	};
 
+	// 卸载插件
+	const handleUninstall = useCallback(async () => {
+		setIsUninstalling(true);
+		try {
+			await uninstallPlugin();
+			await checkPluginStatus();
+			setShowUninstallConfirm(false);
+		} catch (error) {
+			console.error("[CrawlerConfig] 卸载插件失败:", error);
+		} finally {
+			setIsUninstalling(false);
+		}
+	}, [uninstallPlugin, checkPluginStatus]);
+
 	const isLoading = loading || isSaving;
+
+	// 判断插件是否存在（已安装或开发模式可用）
+	const isPluginPresent = pluginInstalled || pluginAvailable;
 
 	return (
 		<SettingsSection title={t("title")} description={t("description")}>
@@ -275,6 +300,52 @@ export function CrawlerConfigSection({ loading = false }: CrawlerConfigSectionPr
 						disabled={isLoading}
 					/>
 				</div>
+
+				{/* 卸载爬虫插件 */}
+				{isPluginPresent && (
+					<div className="border-t border-border pt-4">
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-sm font-medium text-foreground">
+									卸载爬虫插件
+								</p>
+								<p className="text-xs text-muted-foreground">
+									删除已安装的 MediaCrawler 插件及其所有数据
+									{pluginMode === "dev" && " (当前为开发模式)"}
+								</p>
+							</div>
+							{!showUninstallConfirm ? (
+								<button
+									type="button"
+									onClick={() => setShowUninstallConfirm(true)}
+									disabled={isLoading || isUninstalling}
+									className="rounded-md border border-destructive/50 bg-background px-4 py-2 text-sm text-destructive transition-all hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
+								>
+									卸载
+								</button>
+							) : (
+								<div className="flex items-center gap-2">
+									<button
+										type="button"
+										onClick={() => setShowUninstallConfirm(false)}
+										disabled={isUninstalling}
+										className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground transition-all hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+									>
+										取消
+									</button>
+									<button
+										type="button"
+										onClick={handleUninstall}
+										disabled={isUninstalling}
+										className="rounded-md border border-destructive bg-destructive px-3 py-2 text-sm text-destructive-foreground transition-all hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+									>
+										{isUninstalling ? "卸载中..." : "确认卸载"}
+									</button>
+								</div>
+							)}
+						</div>
+					</div>
+				)}
 			</div>
 		</SettingsSection>
 	);

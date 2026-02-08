@@ -211,14 +211,28 @@ class MediaCrawlerPlugin:
     ) -> None:
         """将已下载的 zip 包解压安装。"""
         install_dir = self.install_dir
+        backup_dir = install_dir.with_suffix(".bak")
 
         # 如果已存在旧版本，先备份然后删除
         if install_dir.exists():
-            backup_dir = install_dir.with_suffix(".bak")
+            # 清理可能残留的旧备份
             if backup_dir.exists():
-                shutil.rmtree(backup_dir)
-            install_dir.rename(backup_dir)
-            logger.info(f"已备份旧插件到: {backup_dir}")
+                self._force_rmtree(backup_dir)
+
+            try:
+                install_dir.rename(backup_dir)
+                logger.info(f"已备份旧插件到: {backup_dir}")
+            except PermissionError:
+                # Windows 上 .pyd 等文件可能被锁定导致 rename 失败，
+                # 直接强制删除旧目录（不做备份回滚）
+                logger.warning(
+                    "旧插件目录中有锁定文件无法重命名，"
+                    "将强制删除旧目录后重新安装"
+                )
+                self._force_rmtree(install_dir)
+                # 如果强制删除后仍有残留文件，也删除目录本身
+                if install_dir.exists():
+                    shutil.rmtree(install_dir, ignore_errors=True)
 
         try:
             _ensure_plugin_base_dir()
@@ -242,18 +256,19 @@ class MediaCrawlerPlugin:
             logger.info(f"插件安装完成: {self.PLUGIN_ID} v{version}")
 
             # 清理备份
-            backup_dir = install_dir.with_suffix(".bak")
             if backup_dir.exists():
-                shutil.rmtree(backup_dir)
+                shutil.rmtree(backup_dir, ignore_errors=True)
 
         except Exception:
-            # 安装失败，恢复备份
+            # 安装失败，恢复备份（如果有）
             if install_dir.exists():
                 shutil.rmtree(install_dir, ignore_errors=True)
-            backup_dir = install_dir.with_suffix(".bak")
             if backup_dir.exists():
-                backup_dir.rename(install_dir)
-                logger.info("安装失败，已恢复旧版本插件")
+                try:
+                    backup_dir.rename(install_dir)
+                    logger.info("安装失败，已恢复旧版本插件")
+                except OSError:
+                    logger.warning("安装失败且无法恢复旧版本，请重新安装插件")
             raise
 
     async def setup_venv(self, target_dir: Path) -> bool:
@@ -327,18 +342,80 @@ class MediaCrawlerPlugin:
     # ------------------------------------------------------------------
 
     async def uninstall(self) -> bool:
-        """卸载插件（删除插件安装目录）。"""
+        """卸载插件（删除插件安装目录）。
+
+        在 Windows 上，.pyd 等 DLL 文件可能被进程锁定，
+        因此使用带重试的删除策略，并在必要时跳过锁定文件。
+        """
         if not self.is_installed():
             logger.info("插件未安装，无需卸载")
             return True
 
-        try:
-            shutil.rmtree(self.install_dir)
-            logger.info(f"插件已卸载: {self.PLUGIN_ID}")
-            return True
-        except Exception as e:
-            logger.error(f"卸载插件失败: {e}")
-            return False
+        import asyncio
+        import sys
+
+        install_path = self.install_dir
+        max_retries = 3
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                shutil.rmtree(install_path)
+                logger.info(f"插件已卸载: {self.PLUGIN_ID}")
+                return True
+            except PermissionError as e:
+                if attempt < max_retries:
+                    wait = attempt * 2  # 2s, 4s
+                    logger.warning(
+                        f"卸载插件第 {attempt} 次尝试失败（文件锁定），"
+                        f"{wait} 秒后重试: {e}"
+                    )
+                    await asyncio.sleep(wait)
+                else:
+                    # 最后一次尝试：使用 onerror 回调跳过无法删除的文件
+                    logger.warning(
+                        f"卸载插件第 {attempt} 次仍有锁定文件，"
+                        "尝试跳过锁定文件强制删除..."
+                    )
+                    try:
+                        self._force_rmtree(install_path)
+                        # 检查目录是否还存在
+                        if not install_path.exists():
+                            logger.info(f"插件已卸载: {self.PLUGIN_ID}")
+                            return True
+                        # 目录仍存在但可能只剩少量锁定文件
+                        remaining = list(install_path.rglob("*"))
+                        logger.warning(
+                            f"插件大部分文件已删除，"
+                            f"仍有 {len(remaining)} 个锁定文件无法删除，"
+                            "请关闭应用后手动删除残留文件"
+                        )
+                        return True  # 视为"基本成功"
+                    except Exception as inner_e:
+                        logger.error(f"强制卸载失败: {inner_e}")
+                        return False
+            except Exception as e:
+                logger.error(f"卸载插件失败: {e}")
+                return False
+
+        return False  # 不应到达此处
+
+    @staticmethod
+    def _force_rmtree(path: Path) -> None:
+        """强制删除目录树，遇到权限错误时修改权限后重试。"""
+        import os
+        import stat
+
+        def _on_error(func, file_path, exc_info):  # noqa: ARG001
+            """shutil.rmtree 的 onerror 回调。"""
+            try:
+                # 尝试移除只读属性后重新删除
+                os.chmod(file_path, stat.S_IWRITE)
+                func(file_path)
+            except Exception:
+                # 仍然失败（文件被锁定），记录但不中断
+                logger.debug(f"无法删除文件（已跳过）: {file_path}")
+
+        shutil.rmtree(path, onerror=_on_error)
 
 
 # ---------------------------------------------------------------------------

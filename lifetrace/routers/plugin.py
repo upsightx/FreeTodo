@@ -79,7 +79,10 @@ async def install_media_crawler(
 
 @router.post("/media-crawler/uninstall")
 async def uninstall_media_crawler():
-    """卸载 MediaCrawler 插件（删除插件安装目录）。"""
+    """卸载 MediaCrawler 插件（删除插件安装目录）。
+
+    卸载前会自动停止正在运行的爬虫和签名服务进程，以释放文件锁。
+    """
     if not media_crawler_plugin.is_installed():
         return {
             "success": True,
@@ -87,6 +90,9 @@ async def uninstall_media_crawler():
         }
 
     try:
+        # 卸载前先停止所有相关进程，避免 Windows 文件锁定
+        await _stop_all_crawler_processes()
+
         success = await media_crawler_plugin.uninstall()
         if success:
             return {"success": True, "message": "插件已成功卸载"}
@@ -96,6 +102,51 @@ async def uninstall_media_crawler():
     except Exception as e:
         logger.error(f"卸载插件失败: {e}")
         raise HTTPException(status_code=500, detail=f"卸载插件失败: {e}") from e
+
+
+async def _stop_all_crawler_processes() -> None:
+    """停止所有爬虫相关进程（爬虫循环 + 爬虫进程 + 签名服务）。"""
+    import asyncio
+
+    try:
+        from lifetrace.routers.crawler import (
+            stop_crawler_process,
+            stop_sign_service,
+            _stop_loop_flag,
+            _loop_crawler_task,
+            _crawler_status,
+        )
+        import lifetrace.routers.crawler as _crawler_mod
+
+        # 1. 设置停止标志，停止循环爬取
+        _crawler_mod._stop_loop_flag = True
+        _crawler_mod._crawler_status = "stopping"
+        logger.info("[卸载] 正在停止爬虫和签名服务进程...")
+
+        # 2. 停止当前爬虫进程
+        stop_crawler_process()
+
+        # 3. 等待循环任务结束
+        task = _crawler_mod._loop_crawler_task
+        if task is not None and not task.done():
+            try:
+                await asyncio.wait_for(asyncio.shield(task), timeout=5.0)
+            except (asyncio.TimeoutError, asyncio.CancelledError):
+                task.cancel()
+
+        # 4. 停止签名服务
+        stop_sign_service()
+
+        _crawler_mod._crawler_status = "idle"
+        logger.info("[卸载] 所有爬虫进程已停止")
+
+        # 5. 等待一小段时间让操作系统释放文件句柄
+        await asyncio.sleep(1)
+
+    except ImportError:
+        logger.warning("[卸载] 无法导入 crawler 模块，跳过进程停止步骤")
+    except Exception as e:
+        logger.warning(f"[卸载] 停止爬虫进程时出错（继续卸载）: {e}")
 
 
 # ==============================================================================
