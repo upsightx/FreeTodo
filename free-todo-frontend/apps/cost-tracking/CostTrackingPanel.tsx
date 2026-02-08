@@ -28,19 +28,29 @@ export function CostTrackingPanel() {
 		refetch,
 	} = useCostStats(days);
 
-	const formatCurrency = (amount: number | undefined | null) => {
-		if (amount === undefined || amount === null || Number.isNaN(amount)) {
-			return "¥0.00";
-		}
-		return `¥${amount.toFixed(2)}`;
-	};
-
 	const formatNumber = (num: number | undefined | null) => {
 		if (num === undefined || num === null || Number.isNaN(num)) {
 			return "0";
 		}
 		const numberLocale = tCommon("numberLocale") as string;
 		return num.toLocaleString(numberLocale);
+	};
+
+	const currencyCode = stats?.priceCurrency ?? "USD";
+	const formatCurrency = (amount: number | undefined | null) => {
+		if (amount === undefined || amount === null || Number.isNaN(amount)) {
+			return currencyCode === "USD" ? "$0.00" : "¥0.00";
+		}
+		try {
+			const numberLocale = tCommon("numberLocale") as string;
+			return new Intl.NumberFormat(numberLocale, {
+				style: "currency",
+				currency: currencyCode,
+			}).format(amount);
+		} catch {
+			const symbol = currencyCode === "USD" ? "$" : "¥";
+			return `${symbol}${amount.toFixed(2)}`;
+		}
 	};
 
 	const featureName = (featureId: string) => {
@@ -85,6 +95,12 @@ export function CostTrackingPanel() {
 			<PanelHeader icon={DollarSign} title={t("title")} />
 			<div className="border-b border-border bg-card/80 px-4 py-3">
 				<p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+				{stats?.priceCurrency ? (
+					<p className="mt-1 text-xs text-[oklch(var(--muted-foreground))]">
+						{stats.priceCurrency}
+						{stats.priceSource ? ` · ${stats.priceSource}` : ""}
+					</p>
+				) : null}
 			</div>
 
 			<div className="flex-1 space-y-4 overflow-auto p-4">
