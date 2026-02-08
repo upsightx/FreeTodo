@@ -20,6 +20,7 @@ import {
 	NotificationPopupSection,
 	OnboardingSection,
 	PanelSwitchesSection,
+	PluginCenterSection,
 	RecorderConfigSection,
 	SchedulerSection,
 	type SettingsCategory,
@@ -157,6 +158,7 @@ export function SettingsPanel() {
 			case "developer":
 				return (
 					<>
+						<PluginCenterSection loading={loading} />
 						{/* <DifyConfigSection config={config} loading={loading} /> */}
 						<SchedulerSection loading={loading} />
 						<RecorderConfigSection config={config} loading={loading} />

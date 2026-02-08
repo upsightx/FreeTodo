@@ -10,6 +10,7 @@ export { NotificationPermissionSection } from "./NotificationPermissionSection";
 export { NotificationPopupSection } from "./NotificationPopupSection";
 export { OnboardingSection } from "./OnboardingSection";
 export { PanelSwitchesSection } from "./PanelSwitchesSection";
+export { PluginCenterSection } from "./PluginCenterSection";
 export { RecorderConfigSection } from "./RecorderConfigSection";
 export { SchedulerSection } from "./SchedulerSection";
 export {

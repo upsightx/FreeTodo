@@ -275,3 +275,75 @@ export interface AutomationTaskUpdateInput {
 	schedule?: AutomationSchedule;
 	action?: AutomationAction;
 }
+
+// ============================================================================
+// Plugin Center Types
+// ============================================================================
+
+export type BackendPluginKind = "backend";
+
+export type BackendPluginStatus =
+	| "discovered"
+	| "enabled"
+	| "running"
+	| "disabled"
+	| "unavailable"
+	| "installed"
+	| string;
+
+export interface BackendPluginState {
+	id: string;
+	name: string;
+	version: string;
+	kind: BackendPluginKind;
+	source: string;
+	enabled: boolean;
+	installed: boolean;
+	available: boolean;
+	status: BackendPluginStatus;
+	missingDeps: string[];
+}
+
+export interface PluginListResponse {
+	plugins: BackendPluginState[];
+	installedThirdParty: string[];
+}
+
+export interface InstallPluginInput {
+	pluginId: string;
+	archivePath: string;
+	expectedSha256?: string;
+	force?: boolean;
+}
+
+export interface InstallPluginResponse {
+	pluginId: string;
+	success: boolean;
+	installDir: string;
+	checksum?: string;
+	message: string;
+	manifest?: Record<string, unknown> | null;
+}
+
+export interface UninstallPluginInput {
+	pluginId: string;
+}
+
+export interface UninstallPluginResponse {
+	pluginId: string;
+	success: boolean;
+	installDir: string;
+	message: string;
+}
+
+export interface PluginLifecycleEvent {
+	eventId: string;
+	pluginId: string;
+	action: "install" | "uninstall" | string;
+	stage: string;
+	status: "running" | "success" | "failed" | string;
+	message: string;
+	progress?: number | null;
+	timestamp: string;
+	details: Record<string, unknown>;
+}

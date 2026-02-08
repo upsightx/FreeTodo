@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from lifetrace.plugins.builtin.module_adapter import BuiltinModulePluginAdapter
+from lifetrace.plugins.events import PluginEventBus
 from lifetrace.plugins.installer import InstallResult, PluginInstaller, UninstallResult
 from lifetrace.plugins.models import PluginSnapshot, PluginState
 
@@ -23,6 +24,7 @@ class PluginManager:
 
     def __init__(self):
         self.installer = PluginInstaller()
+        self.event_bus = PluginEventBus()
         self.builtin_adapter = BuiltinModulePluginAdapter(installer=self.installer)
 
     def snapshot(self) -> PluginSnapshot:
@@ -57,16 +59,53 @@ class PluginManager:
         force: bool = False,
     ) -> InstallResult:
         """Install plugin from local archive."""
+
+        def on_event(
+            stage: str,
+            status: str,
+            message: str,
+            progress: int | None,
+            details: dict[str, object] | None,
+        ) -> None:
+            self.event_bus.publish(
+                plugin_id=plugin_id,
+                action="install",
+                stage=stage,
+                status=status,
+                message=message,
+                progress=progress,
+                details=details,
+            )
+
         return self.installer.install_from_archive(
             plugin_id=plugin_id,
             archive_path=archive_path,
             expected_sha256=expected_sha256,
             force=force,
+            on_event=on_event,
         )
 
     def uninstall_plugin(self, plugin_id: str) -> UninstallResult:
         """Uninstall plugin by id."""
-        return self.installer.uninstall(plugin_id)
+
+        def on_event(
+            stage: str,
+            status: str,
+            message: str,
+            progress: int | None,
+            details: dict[str, object] | None,
+        ) -> None:
+            self.event_bus.publish(
+                plugin_id=plugin_id,
+                action="uninstall",
+                stage=stage,
+                status=status,
+                message=message,
+                progress=progress,
+                details=details,
+            )
+
+        return self.installer.uninstall_with_events(plugin_id, on_event=on_event)
 
     def get_plugin_manifest(self, plugin_id: str) -> dict[str, object] | None:
         """Get installed plugin manifest if available."""

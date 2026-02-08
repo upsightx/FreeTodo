@@ -1050,6 +1050,58 @@
 		},
 		"confirmDelete": "Delete this task?"
 	},
+	"pluginCenter": {
+		"title": "Plugin Center",
+		"description": "Install, uninstall, and inspect backend plugin states.",
+		"loading": "Loading plugins...",
+		"installTitle": "Install plugin",
+		"installHint": "Current installer uses local zip archive path.",
+		"eventsTitle": "Lifecycle events",
+		"eventsEmpty": "No plugin events yet.",
+		"empty": "No plugins found.",
+		"labels": {
+			"pluginId": "Plugin ID",
+			"archivePath": "Archive path",
+			"expectedSha256": "Expected SHA-256 (optional)",
+			"forceInstall": "Force overwrite",
+			"forceInstallHint": "Replace existing plugin if already installed",
+			"enabled": "Enabled",
+			"disabled": "Disabled",
+			"available": "Available",
+			"unavailable": "Unavailable",
+			"installed": "Installed",
+			"notInstalled": "Not installed",
+			"missingDeps": "Missing dependencies: {deps}"
+		},
+		"placeholders": {
+			"pluginId": "media-crawler",
+			"archivePath": "C:/plugins/media-crawler.zip",
+			"expectedSha256": "Optional checksum"
+		},
+		"actions": {
+			"install": "Install",
+			"uninstall": "Uninstall"
+		},
+		"status": {
+			"discovered": "Discovered",
+			"enabled": "Enabled",
+			"running": "Running",
+			"disabled": "Disabled",
+			"unavailable": "Unavailable",
+			"installed": "Installed"
+		},
+		"errors": {
+			"pluginIdRequired": "Plugin ID is required",
+			"archivePathRequired": "Archive path is required",
+			"installFailed": "Failed to install plugin: {error}",
+			"uninstallFailed": "Failed to uninstall plugin: {error}"
+		},
+		"messages": {
+			"installed": "Plugin installed",
+			"uninstalled": "Plugin uninstalled"
+		},
+		"confirmUninstall": "Uninstall plugin {pluginId}?"
+	},
 	"contextMenu": {
 		"selectedCount": "Selected {count} items",
 		"batchCancel": "Batch Cancel",

@@ -15,6 +15,7 @@ import shutil
 import stat
 import threading
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -26,6 +27,10 @@ from lifetrace.util.settings import settings
 PLUGIN_ID_PATTERN = re.compile(r"^[a-z][a-z0-9_-]{1,63}$")
 MAX_ARCHIVE_FILE_COUNT = 5000
 MAX_ARCHIVE_TOTAL_SIZE = 2 * 1024 * 1024 * 1024  # 2GB
+InstallEventCallback = Callable[
+    [str, str, str, int | None, dict[str, object] | None],
+    None,
+]
 
 
 class PluginInstallError(RuntimeError):
@@ -110,35 +115,63 @@ class PluginInstaller:
         archive_path: str,
         expected_sha256: str | None = None,
         force: bool = False,
+        on_event: InstallEventCallback | None = None,
     ) -> InstallResult:
         """Install plugin from local zip archive with validation and rollback."""
         with self._lock:
-            self.validate_plugin_id(plugin_id)
-            archive = Path(archive_path).expanduser().resolve()
-            checksum = self._calculate_sha256(archive)
-            self._validate_archive(archive)
-            self._validate_checksum(checksum, expected_sha256)
-
-            install_dir = self.get_plugin_dir(plugin_id)
-            backup_dir = install_dir.with_name(
-                f"{plugin_id}.bak.{datetime.now(tz=UTC).strftime('%Y%m%d%H%M%S')}"
-            )
-            temp_dir = self.get_install_root() / f".{plugin_id}.tmp.{uuid.uuid4().hex[:8]}"
-
-            if install_dir.exists() and not force:
-                raise PluginValidationError(f"插件 {plugin_id} 已安装，若要覆盖请设置 force=true")
+            self._emit(on_event, "start", "running", "开始安装插件", 0)
+            install_dir: Path | None = None
+            backup_dir: Path | None = None
+            temp_dir: Path | None = None
+            checksum: str | None = None
 
             try:
+                self.validate_plugin_id(plugin_id)
+                self._emit(on_event, "resolve_archive", "running", "解析插件包路径", 10)
+                archive = Path(archive_path).expanduser().resolve()
+                self._emit(on_event, "checksum", "running", "计算插件包校验值", 25)
+                checksum = self._calculate_sha256(archive)
+                self._emit(
+                    on_event,
+                    "validate_archive",
+                    "running",
+                    "校验插件包结构",
+                    40,
+                )
+                self._validate_archive(archive)
+                self._emit(
+                    on_event,
+                    "validate_checksum",
+                    "running",
+                    "校验 SHA-256 签名",
+                    55,
+                    {"checksum": checksum},
+                )
+                self._validate_checksum(checksum, expected_sha256)
+
+                install_dir = self.get_plugin_dir(plugin_id)
+                backup_dir = install_dir.with_name(
+                    f"{plugin_id}.bak.{datetime.now(tz=UTC).strftime('%Y%m%d%H%M%S')}"
+                )
+                temp_dir = self.get_install_root() / f".{plugin_id}.tmp.{uuid.uuid4().hex[:8]}"
+
+                if install_dir.exists() and not force:
+                    raise PluginValidationError(
+                        f"插件 {plugin_id} 已安装，若要覆盖请设置 force=true"
+                    )
+
                 if temp_dir.exists():
                     shutil.rmtree(temp_dir)
                 temp_dir.mkdir(parents=True, exist_ok=True)
 
+                self._emit(on_event, "extract", "running", "解压插件包", 70)
                 self._safe_extract_zip(archive, temp_dir)
 
                 manifest_path = temp_dir / "plugin.manifest.json"
                 if not manifest_path.exists():
                     raise PluginValidationError("插件包缺少 plugin.manifest.json")
 
+                self._emit(on_event, "swap", "running", "切换安装目录", 85)
                 if install_dir.exists():
                     install_dir.rename(backup_dir)
                 temp_dir.rename(install_dir)
@@ -146,34 +179,81 @@ class PluginInstaller:
                 if backup_dir.exists():
                     shutil.rmtree(backup_dir, ignore_errors=True)
 
-                return InstallResult(
+                result = InstallResult(
                     plugin_id=plugin_id,
                     success=True,
                     install_dir=str(install_dir),
                     checksum=checksum,
                     message="插件安装成功",
                 )
-            except Exception:
-                if temp_dir.exists():
+                self._emit(
+                    on_event,
+                    "completed",
+                    "success",
+                    "插件安装成功",
+                    100,
+                    {"checksum": checksum, "install_dir": str(install_dir)},
+                )
+                return result
+            except Exception as exc:
+                self._emit(
+                    on_event,
+                    "failed",
+                    "failed",
+                    f"插件安装失败: {exc}",
+                    None,
+                )
+                if temp_dir and temp_dir.exists():
                     shutil.rmtree(temp_dir, ignore_errors=True)
-                if backup_dir.exists() and not install_dir.exists():
+                if install_dir and backup_dir and backup_dir.exists() and not install_dir.exists():
                     backup_dir.rename(install_dir)
                 raise
 
     def uninstall(self, plugin_id: str) -> UninstallResult:
         """Uninstall plugin by removing install directory."""
+        return self.uninstall_with_events(plugin_id)
+
+    def uninstall_with_events(
+        self,
+        plugin_id: str,
+        on_event: InstallEventCallback | None = None,
+    ) -> UninstallResult:
+        """Uninstall plugin by removing install directory with optional event callback."""
         with self._lock:
-            self.validate_plugin_id(plugin_id)
-            install_dir = self.get_plugin_dir(plugin_id)
-            if not install_dir.exists():
-                raise PluginValidationError(f"插件 {plugin_id} 未安装")
-            shutil.rmtree(install_dir)
-            return UninstallResult(
-                plugin_id=plugin_id,
-                success=True,
-                install_dir=str(install_dir),
-                message="插件卸载成功",
+            self._emit(on_event, "start", "running", "开始卸载插件", 0)
+            install_dir: Path | None = None
+            try:
+                self.validate_plugin_id(plugin_id)
+                install_dir = self.get_plugin_dir(plugin_id)
+                if not install_dir.exists():
+                    raise PluginValidationError(f"插件 {plugin_id} 未安装")
+                self._emit(on_event, "remove", "running", "删除插件目录", 70)
+                shutil.rmtree(install_dir)
+                result = UninstallResult(
+                    plugin_id=plugin_id,
+                    success=True,
+                    install_dir=str(install_dir),
+                    message="插件卸载成功",
+                )
+            except Exception as exc:
+                self._emit(
+                    on_event,
+                    "failed",
+                    "failed",
+                    f"插件卸载失败: {exc}",
+                    None,
+                )
+                raise
+
+            self._emit(
+                on_event,
+                "completed",
+                "success",
+                "插件卸载成功",
+                100,
+                {"install_dir": str(install_dir) if install_dir else ""},
             )
+            return result
 
     def validate_plugin_id(self, plugin_id: str) -> None:
         """Validate plugin id against safe pattern."""
@@ -241,3 +321,16 @@ class PluginInstaller:
         """Extract zip into target dir after prior path validation."""
         with ZipFile(archive_path, "r") as zip_file:
             zip_file.extractall(target_dir)
+
+    def _emit(
+        self,
+        callback: InstallEventCallback | None,
+        stage: str,
+        status: str,
+        message: str,
+        progress: int | None,
+        details: dict[str, object] | None = None,
+    ) -> None:
+        if not callback:
+            return
+        callback(stage, status, message, progress, details)

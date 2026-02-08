@@ -101,6 +101,14 @@ export const queryKeys = {
 		all: ["automationTasks"] as const,
 		list: () => ["automationTasks", "list"] as const,
 	},
+
+	/**
+	 * 插件中心查询键
+	 */
+	plugins: {
+		all: ["plugins"] as const,
+		list: () => ["plugins", "list"] as const,
+	},
 } as const;
 
 /**

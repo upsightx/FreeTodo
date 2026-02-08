@@ -1050,6 +1050,58 @@
 		},
 		"confirmDelete": "确认删除该任务？"
 	},
+	"pluginCenter": {
+		"title": "插件中心",
+		"description": "安装、卸载并查看后端插件运行状态。",
+		"loading": "正在加载插件列表...",
+		"installTitle": "安装插件",
+		"installHint": "当前安装器使用本地 zip 包路径安装。",
+		"eventsTitle": "生命周期事件",
+		"eventsEmpty": "暂无插件事件。",
+		"empty": "暂无插件。",
+		"labels": {
+			"pluginId": "插件 ID",
+			"archivePath": "插件包路径",
+			"expectedSha256": "期望 SHA-256（可选）",
+			"forceInstall": "强制覆盖",
+			"forceInstallHint": "已安装时覆盖同名插件",
+			"enabled": "已启用",
+			"disabled": "已禁用",
+			"available": "可用",
+			"unavailable": "不可用",
+			"installed": "已安装",
+			"notInstalled": "未安装",
+			"missingDeps": "缺少依赖：{deps}"
+		},
+		"placeholders": {
+			"pluginId": "media-crawler",
+			"archivePath": "C:/plugins/media-crawler.zip",
+			"expectedSha256": "可选校验值"
+		},
+		"actions": {
+			"install": "安装",
+			"uninstall": "卸载"
+		},
+		"status": {
+			"discovered": "已发现",
+			"enabled": "已启用",
+			"running": "运行中",
+			"disabled": "已禁用",
+			"unavailable": "不可用",
+			"installed": "已安装"
+		},
+		"errors": {
+			"pluginIdRequired": "请填写插件 ID",
+			"archivePathRequired": "请填写插件包路径",
+			"installFailed": "插件安装失败：{error}",
+			"uninstallFailed": "插件卸载失败：{error}"
+		},
+		"messages": {
+			"installed": "插件安装成功",
+			"uninstalled": "插件卸载成功"
+		},
+		"confirmUninstall": "确认卸载插件 {pluginId} 吗？"
+	},
 	"contextMenu": {
 		"selectedCount": "已选中 {count} 项",
 		"batchCancel": "批量放弃",
