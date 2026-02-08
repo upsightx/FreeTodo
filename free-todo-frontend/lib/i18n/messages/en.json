@@ -795,6 +795,7 @@
 			"canceled": "Canceled",
 			"draft": "Draft"
 		},
+		"dateLocale": "en-US",
 		"numberLocale": "en-US"
 	},
 	"debugCapture": {

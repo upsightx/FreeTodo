@@ -795,6 +795,7 @@
 			"canceled": "已取消",
 			"draft": "草稿"
 		},
+		"dateLocale": "zh-CN",
 		"numberLocale": "zh-CN"
 	},
 	"debugCapture": {
