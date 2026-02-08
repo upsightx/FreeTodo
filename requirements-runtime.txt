@@ -24,6 +24,7 @@ openai>=1.0.0
 litellm>=1.57.7
 dashscope>=1.17.0
 agno>=2.4.1
+PyJWT>=2.8.0
 ddgs>=8.0.0
 tavily-python>=0.5.0
 dynaconf[yaml]>=3.2.0

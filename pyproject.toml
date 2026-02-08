@@ -49,6 +49,7 @@ dependencies = [
     "dashscope>=1.25.0",
     # Agno Agent Framework
     "agno>=2.4.8",
+    "PyJWT>=2.8.0",
     # DuckDuckGo search for Agno Agent
     "ddgs>=9.10.0",
     # Tavily API for web search

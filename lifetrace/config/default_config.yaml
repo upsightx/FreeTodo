@@ -175,6 +175,22 @@ agno:
     mode: always # always | agentic
     db_path: agno/learning.db # 相对 base_dir 的学习数据库路径
     add_history_to_context: false # 是否使用 Agno 自带历史注入
+  agent_os:
+    enabled: true # 是否启用 AgentOS 入口
+    host: 127.0.0.1 # AgentOS 监听地址
+    port: null # 固定端口（可选），留空时从端口范围内动态分配
+    port_range:
+      min: 8200 # 动态端口最小值
+      max: 8299 # 动态端口最大值
+    port_file: agent_os_port.json # 端口记录文件（相对 data 目录）
+    base_url: "" # 可选：直接指定 AgentOS 访问地址（优先级最高）
+    agent_id: freetodo-agent # AgentOS 中的 Agent ID
+    agent_name: FreeTodo Agent # AgentOS 中的 Agent 名称
+    lang: en # AgentOS 默认语言
+    timeout_sec: 60 # AgentOS 调用超时（秒）
+    selected_tools: [] # 空表示启用全部 FreeTodo 工具（AgentOS 启动时）
+    external_tools: [] # 空表示启用全部外部工具（AgentOS 启动时）
+    external_tools_config: {} # 预留外部工具配置
 
 # LLM配置
 llm:
