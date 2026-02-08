@@ -31,7 +31,10 @@ _PLUGIN_NOT_INSTALLED_MSG = (
 
 
 def _get_crawler_dir() -> Path:
-    """动态获取爬虫引擎目录（插件模式优先，开发模式兜底）。"""
+    """动态获取爬虫引擎目录（插件模式优先，开发模式兜底）。
+
+    写操作端点使用此函数——插件不可用时抛出 503。
+    """
     resolved = _plugin.resolve_crawler_dir()
     if resolved is None:
         raise HTTPException(status_code=503, detail=_PLUGIN_NOT_INSTALLED_MSG)
@@ -46,23 +49,61 @@ def _get_sign_srv_dir() -> Path:
     return resolved
 
 
+# ---------------------------------------------------------------------------
+# 以下 _try_* 系列函数用于 **只读** 端点，插件不可用时返回 None 而非抛异常，
+# 使前端设置页面在插件缺失时仍能正常渲染（显示空数据）。
+# ---------------------------------------------------------------------------
+
+def _try_get_crawler_dir() -> Path | None:
+    """尝试获取爬虫引擎目录，不可用时返回 None。"""
+    return _plugin.resolve_crawler_dir()
+
+
+def _try_get_crawler_config_path() -> Path | None:
+    """尝试获取爬虫配置文件路径，不可用时返回 None。"""
+    d = _try_get_crawler_dir()
+    return d / "config" / "base_config.py" if d else None
+
+
+def _try_get_cookies_config_path() -> Path | None:
+    """尝试获取 Cookies 配置文件路径，不可用时返回 None。"""
+    d = _try_get_crawler_dir()
+    return d / "config" / "accounts_cookies.xlsx" if d else None
+
+
+def _try_get_transcripts_dir() -> Path | None:
+    """尝试获取视频转写文本目录，不可用时返回 None。"""
+    d = _try_get_crawler_dir()
+    return d / "data" / "transcripts" if d else None
+
+
+def _try_get_videos_download_dir() -> Path | None:
+    """尝试获取视频下载目录，不可用时返回 None。"""
+    d = _try_get_crawler_dir()
+    return d / "data" / "videos" if d else None
+
+
+# ---------------------------------------------------------------------------
+# 以下保留原有的 _get_* 函数（会抛 503），供写操作端点使用。
+# ---------------------------------------------------------------------------
+
 def _get_crawler_config_path() -> Path:
-    """动态获取爬虫配置文件路径。"""
+    """动态获取爬虫配置文件路径（写操作用）。"""
     return _get_crawler_dir() / "config" / "base_config.py"
 
 
 def _get_cookies_config_path() -> Path:
-    """动态获取 Cookies 配置文件路径。"""
+    """动态获取 Cookies 配置文件路径（写操作用）。"""
     return _get_crawler_dir() / "config" / "accounts_cookies.xlsx"
 
 
 def _get_transcripts_dir() -> Path:
-    """动态获取视频转写文本目录。"""
+    """动态获取视频转写文本目录（写操作用）。"""
     return _get_crawler_dir() / "data" / "transcripts"
 
 
 def _get_videos_download_dir() -> Path:
-    """动态获取视频下载目录。"""
+    """动态获取视频下载目录（写操作用）。"""
     return _get_crawler_dir() / "data" / "videos"
 
 # 全局进程管理
@@ -127,11 +168,23 @@ class CrawlerConfigResponse(BaseModel):
     blacklist_nicknames: str = ""  # 博主黑名单（逗号分隔的昵称列表）
 
 
-def read_config_file() -> str:
-    """读取配置文件内容"""
-    config_path = _get_crawler_config_path()
+def read_config_file(*, require: bool = True) -> str | None:
+    """读取配置文件内容。
+
+    Args:
+        require: 为 True 时使用 _get_crawler_config_path()（不可用则 503）；
+                 为 False 时使用 _try_get_crawler_config_path()（不可用返回 None）。
+    """
+    if require:
+        config_path = _get_crawler_config_path()
+    else:
+        config_path = _try_get_crawler_config_path()
+        if config_path is None:
+            return None
     if not config_path.exists():
-        raise HTTPException(status_code=404, detail=f"配置文件不存在: {config_path}")
+        if require:
+            raise HTTPException(status_code=404, detail=f"配置文件不存在: {config_path}")
+        return None
     return config_path.read_text(encoding="utf-8")
 
 
@@ -202,7 +255,22 @@ def update_config_value(content: str, key: str, value: Any, value_type: str = "s
 async def get_crawler_config():
     """获取爬虫配置"""
     try:
-        content = read_config_file()
+        content = read_config_file(require=False)
+
+        # 插件不可用或配置文件不存在时返回默认值
+        if content is None:
+            return CrawlerConfigResponse(
+                keywords="",
+                platform="xhs",
+                platforms=[],
+                crawler_type="search",
+                max_notes_count=40,
+                enable_comments=False,
+                enable_checkpoint=True,
+                crawler_sleep=1.0,
+                save_data_option="csv",
+                blacklist_nicknames="",
+            )
         
         # 读取平台配置
         platform = extract_config_value(content, "PLATFORM", "str") or "xhs"
@@ -355,9 +423,19 @@ class UpdateCookieRequest(BaseModel):
     cookies: str
 
 
-def read_cookies_from_xlsx() -> dict[str, list[dict]]:
-    """从 Excel 文件读取所有平台的 cookies"""
-    cookies_path = _get_cookies_config_path()
+def read_cookies_from_xlsx(*, require: bool = True) -> dict[str, list[dict]]:
+    """从 Excel 文件读取所有平台的 cookies。
+
+    Args:
+        require: 为 True 时使用 _get_cookies_config_path()（不可用则 503）；
+                 为 False 时使用 _try_get_cookies_config_path()（不可用返回空字典）。
+    """
+    if require:
+        cookies_path = _get_cookies_config_path()
+    else:
+        cookies_path = _try_get_cookies_config_path()
+        if cookies_path is None:
+            return {}
     if not cookies_path.exists():
         logger.warning(f"Cookies 配置文件不存在: {cookies_path}")
         return {}
@@ -437,7 +515,7 @@ def write_cookies_to_xlsx(platform: str, accounts: list[dict]) -> None:
 async def get_all_cookies():
     """获取所有平台的 cookies 配置"""
     try:
-        all_cookies = read_cookies_from_xlsx()
+        all_cookies = read_cookies_from_xlsx(require=False)
         
         platforms = []
         for platform in SUPPORTED_PLATFORMS:
@@ -461,7 +539,7 @@ async def get_platform_cookies(platform: str):
         raise HTTPException(status_code=400, detail=f"不支持的平台: {platform}")
     
     try:
-        all_cookies = read_cookies_from_xlsx()
+        all_cookies = read_cookies_from_xlsx(require=False)
         accounts = all_cookies.get(platform, [])
         
         return {
@@ -1289,14 +1367,20 @@ async def stop_all():
 
 # ============== 爬取结果管理 ==============
 
-def get_platform_data_dir(platform: str) -> Path:
+def get_platform_data_dir(platform: str, *, require: bool = True) -> Path | None:
     """获取平台数据目录
     
     注意：数据目录名称取决于配置文件中的 PLATFORM 值，
     例如 PLATFORM = "douyin" 会创建 data/douyin/ 目录，
     所以这里不需要规范化平台名称。
+
+    Args:
+        require: 为 True 时插件不可用则 503；为 False 时返回 None。
     """
-    return _get_crawler_dir() / "data" / platform
+    if require:
+        return _get_crawler_dir() / "data" / platform
+    d = _try_get_crawler_dir()
+    return d / "data" / platform if d else None
 
 
 def parse_count_value(value: str | None) -> int:
@@ -1490,8 +1574,8 @@ def find_latest_data_files(platform: str, keyword: str | None = None) -> tuple[P
     Returns:
         tuple: (contents_file, comments_file)
     """
-    data_dir = get_platform_data_dir(platform)
-    if not data_dir.exists():
+    data_dir = get_platform_data_dir(platform, require=False)
+    if data_dir is None or not data_dir.exists():
         return None, None
     
     # 查找所有 contents 文件（支持带前缀和不带前缀两种格式）
@@ -1530,7 +1614,9 @@ def find_recent_data_files(platform: str, days: int = 2) -> list[tuple[Path, Pat
     """
     from datetime import timedelta
     
-    data_dir = get_platform_data_dir(platform)
+    data_dir = get_platform_data_dir(platform, require=False)
+    if data_dir is None:
+        return []
     logger.info(f"[find_recent_data_files] 平台: {platform}, 数据目录: {data_dir}")
     if not data_dir.exists():
         logger.warning(f"[find_recent_data_files] 平台 {platform} 数据目录不存在: {data_dir}")
@@ -1589,8 +1675,8 @@ def find_recent_data_files(platform: str, days: int = 2) -> list[tuple[Path, Pat
 
 def get_all_data_files(platform: str) -> list[dict]:
     """获取所有数据文件列表"""
-    data_dir = get_platform_data_dir(platform)
-    if not data_dir.exists():
+    data_dir = get_platform_data_dir(platform, require=False)
+    if data_dir is None or not data_dir.exists():
         return []
     
     files = []
@@ -1679,8 +1765,8 @@ async def get_crawler_results(
         
         # 读取黑名单配置并过滤博主
         try:
-            config_content = read_config_file()
-            blacklist_str = extract_config_value(config_content, "BLACKLIST_NICKNAMES", "str") or ""
+            config_content = read_config_file(require=False)
+            blacklist_str = extract_config_value(config_content, "BLACKLIST_NICKNAMES", "str") or "" if config_content else ""
             if blacklist_str:
                 # 解析黑名单（支持逗号、空格分隔）
                 blacklist = [name.strip() for name in blacklist_str.replace("，", ",").split(",") if name.strip()]
@@ -1869,7 +1955,9 @@ async def get_results_by_file(
 ):
     """获取指定文件的爬取结果"""
     try:
-        data_dir = get_platform_data_dir(platform)
+        data_dir = get_platform_data_dir(platform, require=False)
+        if data_dir is None:
+            return {"success": True, "results": [], "total_count": 0, "file": filename}
         content_file = data_dir / filename
         
         if not content_file.exists():
@@ -2214,8 +2302,8 @@ def get_today_data_for_all_platforms() -> dict[str, list[dict]]:
     all_data = {}
     
     for platform in ALL_PLATFORMS:
-        data_dir = get_platform_data_dir(platform)
-        if not data_dir.exists():
+        data_dir = get_platform_data_dir(platform, require=False)
+        if data_dir is None or not data_dir.exists():
             continue
         
         # 查找今天的内容文件（支持带前缀和时间戳的格式）
@@ -2240,9 +2328,10 @@ def get_today_transcripts() -> dict[str, list[dict]]:
     today = datetime.now().strftime("%Y-%m-%d")
     all_transcripts = {}
     
-    transcripts_dir = _get_transcripts_dir()
-    if not transcripts_dir.exists():
-        logger.info(f"[Daily Summary] 转写目录不存在: {transcripts_dir}")
+    transcripts_dir = _try_get_transcripts_dir()
+    if transcripts_dir is None or not transcripts_dir.exists():
+        if transcripts_dir is not None:
+            logger.info(f"[Daily Summary] 转写目录不存在: {transcripts_dir}")
         return all_transcripts
     
     # 遍历所有平台目录
@@ -2511,8 +2600,8 @@ def get_today_videos_for_all_platforms() -> list[dict]:
     all_videos = []
     
     for platform in ALL_PLATFORMS:
-        data_dir = get_platform_data_dir(platform)
-        if not data_dir.exists():
+        data_dir = get_platform_data_dir(platform, require=False)
+        if data_dir is None or not data_dir.exists():
             continue
         
         # 查找今天的内容文件（支持带时间戳的格式）
@@ -2698,7 +2787,10 @@ async def get_download_status():
     """获取今日视频下载状态"""
     try:
         today = datetime.now().strftime("%Y-%m-%d")
-        videos_dir = _get_videos_download_dir() / today
+        base_dir = _try_get_videos_download_dir()
+        if base_dir is None:
+            return {"downloaded": 0, "total_size": 0, "platforms": {}}
+        videos_dir = base_dir / today
         
         if not videos_dir.exists():
             return {
