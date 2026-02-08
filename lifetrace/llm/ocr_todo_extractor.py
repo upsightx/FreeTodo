@@ -166,6 +166,12 @@ class OCRTodoExtractor:
                         messages=messages,
                         temperature=0.3,
                         max_tokens=1500,
+                        log_meta={
+                            "endpoint": "ocr_todo_extraction",
+                            "feature_type": "ocr_todo_extraction",
+                            "user_query": "",
+                            "response_type": "todo_extraction",
+                        },
                     )
                     # 记录本次真实 LLM 调用时间
                     self._ocr_text_last_llm_call[text_hash] = now_ts

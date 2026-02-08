@@ -36,6 +36,7 @@ export function CostTrackingPanel() {
 		return num.toLocaleString(numberLocale);
 	};
 
+	const dateLocale = tCommon("dateLocale") as string;
 	const currencyCode = stats?.priceCurrency ?? "USD";
 	const formatCurrency = (amount: number | undefined | null) => {
 		if (amount === undefined || amount === null || Number.isNaN(amount)) {
@@ -67,9 +68,9 @@ export function CostTrackingPanel() {
 		// 尝试获取翻译
 		const translation = t(translationKey);
 
-		// 如果翻译结果包含完整的命名空间路径（说明翻译不存在），返回未知功能
+		// 如果翻译结果包含完整的命名空间路径（说明翻译不存在），返回原始 ID
 		if (translation.includes("page.costTracking.featureNames.")) {
-			return t("featureNames.unknown");
+			return featureId || t("featureNames.unknown");
 		}
 
 		return translation;
@@ -99,6 +100,12 @@ export function CostTrackingPanel() {
 					<p className="mt-1 text-xs text-[oklch(var(--muted-foreground))]">
 						{stats.priceCurrency}
 						{stats.priceSource ? ` · ${stats.priceSource}` : ""}
+					</p>
+				) : null}
+				{stats?.generatedAt ? (
+					<p className="mt-1 text-xs text-[oklch(var(--muted-foreground))]">
+						{t("updatedAt")}{" "}
+						{new Date(stats.generatedAt).toLocaleString(dateLocale)}
 					</p>
 				) : null}
 			</div>

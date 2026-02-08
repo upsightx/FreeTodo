@@ -133,10 +133,10 @@ class TokenUsageLogger:
         if metadata is None:
             metadata = {}
 
-        endpoint = metadata.get("endpoint")
+        endpoint = metadata.get("endpoint") or "unknown"
         user_query = metadata.get("user_query")
         response_type = metadata.get("response_type")
-        feature_type = metadata.get("feature_type")
+        feature_type = metadata.get("feature_type") or endpoint
 
         try:
             # 计算成本
