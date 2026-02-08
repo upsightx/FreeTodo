@@ -133,6 +133,16 @@ const panelRegistry: Record<PanelFeature, PanelPlugin> = {
 				default: mod.AudioPanel,
 			})),
 	},
+	preview: {
+		id: "preview",
+		labelKey: "previewLabel",
+		placeholderKey: "previewPlaceholder",
+		icon: FEATURE_ICON_MAP.preview,
+		loader: () =>
+			import("@/apps/preview").then((mod) => ({
+				default: mod.PreviewPanel,
+			})),
+	},
 };
 
 const lazyPanelCache = new Map<PanelFeature, LazyExoticComponent<ComponentType>>();
