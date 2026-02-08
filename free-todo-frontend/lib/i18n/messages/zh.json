@@ -1002,6 +1002,17 @@
 	"previewPanel": {
 		"openExternal": "外部打开",
 		"revealInFolder": "在文件夹中显示",
+		"openFile": "打开文件",
+		"emptyTitle": "尚未选择文件",
+		"emptyDescription": "聊天生成的文件会自动出现在这里，你也可以打开本地文件。",
+		"loadingTitle": "正在加载预览...",
+		"errorTitle": "预览失败",
+		"errorHint": "无法加载该文件，请尝试用外部应用打开。",
+		"localFile": "本地文件",
+		"sizeUnknown": "大小未知",
+		"timeUnknown": "时间未知",
+		"contentUnavailable": "内容不可用",
+		"unsupported": "该文件类型暂不支持预览。",
 		"updatedAt": "更新于 {time}",
 		"recentFiles": "最近文件",
 		"modeCode": "代码",
@@ -1010,13 +1021,17 @@
 		"status": {
 			"live": "实时",
 			"rendering": "渲染中",
-			"ready": "就绪"
+			"ready": "就绪",
+			"loading": "加载中",
+			"error": "错误"
 		},
 		"types": {
 			"markdown": "Markdown",
 			"html": "HTML",
 			"pdf": "PDF",
-			"image": "图片"
+			"image": "图片",
+			"text": "文本",
+			"binary": "二进制"
 		},
 		"codeModeTitle": "源码",
 		"renderedMarkdown": "Markdown 渲染",

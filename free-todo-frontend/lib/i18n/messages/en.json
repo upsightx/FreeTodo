@@ -1002,6 +1002,17 @@
 	"previewPanel": {
 		"openExternal": "Open external",
 		"revealInFolder": "Reveal in folder",
+		"openFile": "Open file",
+		"emptyTitle": "No file selected",
+		"emptyDescription": "Generated files from chat will appear here. You can also open a local file.",
+		"loadingTitle": "Loading preview...",
+		"errorTitle": "Preview failed",
+		"errorHint": "We couldn't load this file. Try opening it externally.",
+		"localFile": "Local file",
+		"sizeUnknown": "Size unknown",
+		"timeUnknown": "Time unknown",
+		"contentUnavailable": "Content unavailable",
+		"unsupported": "Preview not available for this file type.",
 		"updatedAt": "Updated {time}",
 		"recentFiles": "Recent",
 		"modeCode": "Code",
@@ -1010,13 +1021,17 @@
 		"status": {
 			"live": "Live",
 			"rendering": "Rendering",
-			"ready": "Ready"
+			"ready": "Ready",
+			"loading": "Loading",
+			"error": "Error"
 		},
 		"types": {
 			"markdown": "Markdown",
 			"html": "HTML",
 			"pdf": "PDF",
-			"image": "Image"
+			"image": "Image",
+			"text": "Text",
+			"binary": "Binary"
 		},
 		"codeModeTitle": "Source",
 		"renderedMarkdown": "Rendered Markdown",

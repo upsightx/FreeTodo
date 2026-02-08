@@ -28,6 +28,32 @@ export type ElectronAPI = typeof window & {
 			}>;
 			createdCount: number;
 		}>;
+		previewOpenFile?: () => Promise<{
+			canceled: boolean;
+			path?: string;
+		}>;
+		previewReadFile?: (payload: {
+			path: string;
+			mode: "text" | "binary";
+			maxBytes?: number;
+		}) => Promise<{
+			ok: boolean;
+			path?: string;
+			name?: string;
+			size?: number;
+			modifiedAt?: number;
+			text?: string;
+			base64?: string;
+			error?: string;
+		}>;
+		previewOpenExternal?: (path: string) => Promise<{
+			ok: boolean;
+			error?: string;
+		}>;
+		previewRevealInFolder?: (path: string) => Promise<{
+			ok: boolean;
+			error?: string;
+		}>;
 	};
 	require?: (module: string) => {
 		ipcRenderer?: { send: (...args: unknown[]) => void };
