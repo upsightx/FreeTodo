@@ -459,6 +459,30 @@ export function AudioPanel() {
 		[selectedDate],
 	);
 
+	// 自动轮询：查看当天且未录音时，每秒刷新一次（支持硬件设备实时推送）
+	useEffect(() => {
+		// 只在查看当天且未录音时轮询
+		if (!isViewingCurrentDate || isRecording) {
+			console.log("[AudioPanel] 轮询已停止 -", { isViewingCurrentDate, isRecording });
+			return;
+		}
+
+		console.log("[AudioPanel] 启动自动轮询（每秒）");
+		// 立即加载一次
+		loadTimeline((loading) => setIsLoadingTimeline(loading), true);
+
+		// 每秒轮询
+		const interval = setInterval(() => {
+			console.log("[AudioPanel] 轮询：加载时间线");
+			loadTimeline((loading) => setIsLoadingTimeline(loading), true);
+		}, 1000);
+
+		return () => {
+			console.log("[AudioPanel] 停止轮询");
+			clearInterval(interval);
+		};
+	}, [isViewingCurrentDate, isRecording, loadTimeline, setIsLoadingTimeline]);
+
 	return (
 		<div className="flex h-full flex-col bg-[oklch(var(--background))] overflow-hidden">
 			<PanelHeader icon={Icon} title={t("audioLabel")} />
