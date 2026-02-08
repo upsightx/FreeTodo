@@ -153,6 +153,8 @@ max-complexity = 10
 [tool.ruff.lint.per-file-ignores]
 # 测试文件可以使用 assert
 "tests/*.py" = ["S101"]
+# 硬件音频路由在运行时需要这些导入
+"lifetrace/routers/hardware_audio.py" = ["TC001", "TC002"]
 
 # Pylint 复杂度配置
 [tool.ruff.lint.pylint]

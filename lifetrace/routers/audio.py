@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import select
 
 from lifetrace.routers.audio_ws import register_audio_ws_routes
+from lifetrace.routers.hardware_audio import register_hardware_audio_routes
 from lifetrace.services.asr_client import ASRClient
 from lifetrace.services.audio_service import AudioService
 from lifetrace.storage import get_session
@@ -31,6 +32,7 @@ audio_service = AudioService()
 register_audio_ws_routes(
     router=router, logger=logger, asr_client=asr_client, audio_service=audio_service
 )
+register_hardware_audio_routes(router=router, asr_client=asr_client, audio_service=audio_service)
 
 
 def _to_local(dt: datetime | None) -> datetime | None:

@@ -31,6 +31,87 @@ os.makedirs("logs", exist_ok=True)
 # 常量
 PREVIEW_MAX_LENGTH = 100
 
+# LLM 润色等待时间（秒）：最后一句话之后等多久触发润色
+LLM_FLUSH_DELAY = 4.0
+
+
+# ==================== LLM 文本润色器 ====================
+class TextPolisher:
+    """用 LLM 润色 ASR 转录文本，积累句子后批量处理."""
+
+    SYSTEM_PROMPT = (
+        "你是一个语音转文字的后处理助手。用户会给你语音识别的原始文本，请你：\n"
+        "1. 修正明显的语音识别错误（同音字、谐音错误）\n"
+        "2. 去掉口语赘词（嗯、啊、那个、就是说、然后等）\n"
+        "3. 补全和修正标点符号\n"
+        "4. 修复因音频分段导致的语义断裂，使上下文连贯通顺\n"
+        "5. 保持原意不变，不要添加或删除实质内容\n"
+        "6. 直接输出修正后的文本，不要任何解释或前缀\n"
+    )
+
+    def __init__(self) -> None:
+        self._buffer: list[str] = []
+        self._lock = threading.Lock()
+        self._timer: threading.Timer | None = None
+        self._client: Any = None
+
+    def _get_client(self) -> Any:
+        """懒加载 OpenAI 客户端（DashScope 兼容接口）."""
+        if self._client is None:
+            from openai import OpenAI  # noqa: PLC0415
+
+            self._client = OpenAI(
+                api_key=DASHSCOPE_API_KEY,
+                base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+            )
+        return self._client
+
+    def add_sentence(self, text: str) -> None:
+        """添加一句 ASR 识别结果，并重置倒计时."""
+        with self._lock:
+            self._buffer.append(text)
+            # 重置倒计时
+            if self._timer is not None:
+                self._timer.cancel()
+            self._timer = threading.Timer(LLM_FLUSH_DELAY, self._flush)
+            self._timer.daemon = True
+            self._timer.start()
+
+    def _flush(self) -> None:
+        """将缓冲区中的句子发送给 LLM 润色."""
+        with self._lock:
+            if not self._buffer:
+                return
+            raw_text = "".join(self._buffer)
+            self._buffer.clear()
+
+        # 在后台线程调用 LLM
+        threading.Thread(target=self._call_llm, args=(raw_text,), daemon=True).start()
+
+    def _call_llm(self, raw_text: str) -> None:
+        """调用 LLM 润色文本."""
+        try:
+            client = self._get_client()
+            response = client.chat.completions.create(
+                model="qwen-turbo",
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": raw_text},
+                ],
+                temperature=0.3,
+                max_tokens=2000,
+            )
+            polished = response.choices[0].message.content or raw_text
+            print(f"\n   📝 {polished}")
+        except Exception as e:
+            # LLM 失败时回退到原始文本
+            print(f"\n   📝 {raw_text}")
+            print(f"   ⚠️ LLM润色失败: {e}")
+
+
+# 全局润色器
+text_polisher = TextPolisher()
+
 
 # ==================== 全局 WebSocket 管理器 ====================
 class ASRWebSocketManager:
@@ -136,11 +217,12 @@ class ASRWebSocketManager:
         # 显示中间结果和最终结果
         if is_final:
             print(f"   ✓ {text}")
+            # 送入 LLM 润色器
+            text_polisher.add_sentence(text)
+            if self.result_callback:
+                self.result_callback(text)
         else:
-            # 使用 \r 覆盖显示中间结果
             print(f"   ... {text}", end="\r")
-        if self.result_callback and is_final:
-            self.result_callback(text)
 
     def _on_error(self, _ws: ws_module.WebSocketApp, error: Exception) -> None:
         """处理错误."""
@@ -249,11 +331,6 @@ async def receive_audio(request: Request, uid: str, sample_rate: int) -> dict[st
 
     # 计算音频时长
     duration = len(audio_bytes) / (sample_rate * 2)  # 2字节per sample
-    size_kb = len(audio_bytes) / 1024
-
-    # 打印日志（带毫秒时间戳）
-    timestamp = datetime.now(tz=UTC).strftime("%H:%M:%S.%f")[:-3]
-    print(f"[{timestamp}] 📼 收到音频: {size_kb:.1f}KB, {duration:.1f}秒")
 
     # 确保 ASR 连接已建立，然后直接发送音频
     if not asr_manager.is_running:
@@ -360,7 +437,7 @@ def main() -> None:
 
     # 启动服务器 - 绑定 127.0.0.1 以避免安全警告
     # 如需外部访问，请使用 ngrok 或反向代理
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000, access_log=False)
 
 
 if __name__ == "__main__":
