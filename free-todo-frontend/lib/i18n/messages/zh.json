@@ -1056,8 +1056,12 @@
 		"loading": "正在加载插件列表...",
 		"installTitle": "安装插件",
 		"installHint": "当前安装器使用本地 zip 包路径安装。",
+		"tasksTitle": "安装任务历史",
+		"tasksEmpty": "暂无插件任务。",
 		"eventsTitle": "生命周期事件",
 		"eventsEmpty": "暂无插件事件。",
+		"eventsFilterTitle": "事件筛选",
+		"eventsFilterAll": "全部插件",
 		"empty": "暂无插件。",
 		"labels": {
 			"pluginId": "插件 ID",
@@ -1080,7 +1084,10 @@
 		},
 		"actions": {
 			"install": "安装",
-			"uninstall": "卸载"
+			"uninstall": "卸载",
+			"enable": "启用",
+			"disable": "禁用",
+			"clearEvents": "清空事件"
 		},
 		"status": {
 			"discovered": "已发现",
@@ -1094,11 +1101,14 @@
 			"pluginIdRequired": "请填写插件 ID",
 			"archivePathRequired": "请填写插件包路径",
 			"installFailed": "插件安装失败：{error}",
-			"uninstallFailed": "插件卸载失败：{error}"
+			"uninstallFailed": "插件卸载失败：{error}",
+			"toggleFailed": "插件状态更新失败：{error}"
 		},
 		"messages": {
 			"installed": "插件安装成功",
-			"uninstalled": "插件卸载成功"
+			"uninstalled": "插件卸载成功",
+			"enabled": "插件 {pluginId} 已启用",
+			"disabled": "插件 {pluginId} 已禁用"
 		},
 		"confirmUninstall": "确认卸载插件 {pluginId} 吗？"
 	},

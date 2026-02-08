@@ -156,6 +156,7 @@ settings = Dynaconf(
         Validator("plugins.enabled", default=[], is_type_of=list),
         Validator("plugins.disabled", default=[], is_type_of=list),
         Validator("plugins.install_dir", default="data/plugins"),
+        Validator("plugins.history_file", default="data/plugins/history.json"),
         Validator("plugins.third_party_dirs", default=[], is_type_of=list),
         Validator("plugins.registries", default=[], is_type_of=list),
         Validator("plugins.security.enforce_checksum", default=True, is_type_of=bool),

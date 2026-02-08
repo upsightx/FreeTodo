@@ -104,3 +104,20 @@ class BuiltinModulePluginAdapter(BackendPlugin):
                 missing_deps=[],
             )
         return states
+
+    def set_third_party_enabled(self, plugin_id: str, enabled: bool) -> None:
+        """Persist third-party plugin enabled/disabled state into settings."""
+        enabled_plugins = {str(item) for item in settings.get("plugins.enabled", [])}
+        disabled_plugins = {str(item) for item in settings.get("plugins.disabled", [])}
+        was_allow_all = not enabled_plugins
+
+        if enabled:
+            disabled_plugins.discard(plugin_id)
+            if not was_allow_all:
+                enabled_plugins.add(plugin_id)
+        else:
+            enabled_plugins.discard(plugin_id)
+            disabled_plugins.add(plugin_id)
+
+        settings.set("plugins.enabled", sorted(enabled_plugins))
+        settings.set("plugins.disabled", sorted(disabled_plugins))

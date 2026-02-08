@@ -318,6 +318,7 @@ export interface InstallPluginInput {
 
 export interface InstallPluginResponse {
 	pluginId: string;
+	taskId?: string;
 	success: boolean;
 	installDir: string;
 	checksum?: string;
@@ -331,14 +332,25 @@ export interface UninstallPluginInput {
 
 export interface UninstallPluginResponse {
 	pluginId: string;
+	taskId?: string;
 	success: boolean;
 	installDir: string;
 	message: string;
 }
 
+export interface TogglePluginInput {
+	pluginId: string;
+	enabled: boolean;
+}
+
+export interface TogglePluginResponse {
+	plugin: BackendPluginState;
+}
+
 export interface PluginLifecycleEvent {
 	eventId: string;
 	pluginId: string;
+	taskId?: string | null;
 	action: "install" | "uninstall" | string;
 	stage: string;
 	status: "running" | "success" | "failed" | string;
@@ -346,4 +358,27 @@ export interface PluginLifecycleEvent {
 	progress?: number | null;
 	timestamp: string;
 	details: Record<string, unknown>;
+}
+
+export interface PluginTaskRecord {
+	taskId: string;
+	pluginId: string;
+	action: string;
+	status: string;
+	createdAt: string;
+	updatedAt: string;
+	progress?: number | null;
+	message: string;
+	errorCode?: string | null;
+	details: Record<string, unknown>;
+}
+
+export interface PluginTaskListResponse {
+	tasks: PluginTaskRecord[];
+}
+
+export interface PluginApiErrorDetail {
+	code: string;
+	message: string;
+	details?: Record<string, unknown>;
 }

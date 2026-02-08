@@ -108,6 +108,7 @@ export const queryKeys = {
 	plugins: {
 		all: ["plugins"] as const,
 		list: () => ["plugins", "list"] as const,
+		tasks: (pluginId?: string) => ["plugins", "tasks", pluginId] as const,
 	},
 } as const;
 

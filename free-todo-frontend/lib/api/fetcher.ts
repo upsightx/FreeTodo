@@ -133,7 +133,16 @@ export async function customFetcher<T>(
 	const response = await fetch(`${baseUrl}${finalUrl}`, fetchInit);
 
 	if (!response.ok) {
-		throw new Error(`API Error: ${response.status}`);
+		let errorText = "";
+		try {
+			errorText = await response.text();
+		} catch {
+			errorText = "";
+		}
+		const message = errorText
+			? `API Error: ${response.status} ${errorText}`
+			: `API Error: ${response.status}`;
+		throw new Error(message);
 	}
 
 	// 处理空响应体（如 204 No Content 或 DELETE 操作）

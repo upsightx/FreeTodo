@@ -1056,8 +1056,12 @@
 		"loading": "Loading plugins...",
 		"installTitle": "Install plugin",
 		"installHint": "Current installer uses local zip archive path.",
+		"tasksTitle": "Install task history",
+		"tasksEmpty": "No plugin tasks yet.",
 		"eventsTitle": "Lifecycle events",
 		"eventsEmpty": "No plugin events yet.",
+		"eventsFilterTitle": "Event filter",
+		"eventsFilterAll": "All plugins",
 		"empty": "No plugins found.",
 		"labels": {
 			"pluginId": "Plugin ID",
@@ -1080,7 +1084,10 @@
 		},
 		"actions": {
 			"install": "Install",
-			"uninstall": "Uninstall"
+			"uninstall": "Uninstall",
+			"enable": "Enable",
+			"disable": "Disable",
+			"clearEvents": "Clear events"
 		},
 		"status": {
 			"discovered": "Discovered",
@@ -1094,11 +1101,14 @@
 			"pluginIdRequired": "Plugin ID is required",
 			"archivePathRequired": "Archive path is required",
 			"installFailed": "Failed to install plugin: {error}",
-			"uninstallFailed": "Failed to uninstall plugin: {error}"
+			"uninstallFailed": "Failed to uninstall plugin: {error}",
+			"toggleFailed": "Failed to update plugin state: {error}"
 		},
 		"messages": {
 			"installed": "Plugin installed",
-			"uninstalled": "Plugin uninstalled"
+			"uninstalled": "Plugin uninstalled",
+			"enabled": "Plugin {pluginId} enabled",
+			"disabled": "Plugin {pluginId} disabled"
 		},
 		"confirmUninstall": "Uninstall plugin {pluginId}?"
 	},

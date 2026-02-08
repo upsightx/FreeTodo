@@ -1,9 +1,15 @@
 "use client";
 
-import { Download, Loader2, Plug, Trash2 } from "lucide-react";
+import { Download, Loader2, Plug, Power, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { useInstallPlugin, usePlugins, useUninstallPlugin } from "@/lib/query";
+import {
+	useInstallPlugin,
+	usePlugins,
+	usePluginTasks,
+	useTogglePlugin,
+	useUninstallPlugin,
+} from "@/lib/query";
 import { toastError, toastSuccess } from "@/lib/toast";
 import type { PluginLifecycleEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -21,27 +27,30 @@ const statusToneClass: Record<string, string> = {
 	installed: "text-sky-600",
 };
 
-export function PluginCenterSection({
-	loading = false,
-}: PluginCenterSectionProps) {
+export function PluginCenterSection({ loading = false }: PluginCenterSectionProps) {
 	const t = useTranslations("pluginCenter");
 	const { data, isLoading, refetch } = usePlugins();
+	const { data: taskData } = usePluginTasks();
 	const installMutation = useInstallPlugin();
 	const uninstallMutation = useUninstallPlugin();
+	const toggleMutation = useTogglePlugin();
 
 	const [pluginId, setPluginId] = useState("");
 	const [archivePath, setArchivePath] = useState("");
 	const [expectedSha256, setExpectedSha256] = useState("");
 	const [forceInstall, setForceInstall] = useState(false);
+	const [eventFilterPluginId, setEventFilterPluginId] = useState("");
 	const [events, setEvents] = useState<PluginLifecycleEvent[]>([]);
 
 	const busy =
 		loading ||
 		isLoading ||
 		installMutation.isPending ||
-		uninstallMutation.isPending;
+		uninstallMutation.isPending ||
+		toggleMutation.isPending;
 
 	const plugins = data?.plugins ?? [];
+	const tasks = taskData?.tasks ?? [];
 
 	const sortedPlugins = useMemo(
 		() => [...plugins].sort((a, b) => a.id.localeCompare(b.id)),
@@ -49,7 +58,10 @@ export function PluginCenterSection({
 	);
 
 	useEffect(() => {
-		const source = new EventSource("/api/plugins/events");
+		const query = eventFilterPluginId
+			? `?plugin_id=${encodeURIComponent(eventFilterPluginId)}`
+			: "";
+		const source = new EventSource(`/api/plugins/events${query}`);
 
 		source.addEventListener("plugin_event", (event) => {
 			try {
@@ -76,7 +88,7 @@ export function PluginCenterSection({
 		return () => {
 			source.close();
 		};
-	}, [refetch]);
+	}, [eventFilterPluginId, refetch]);
 
 	const handleInstall = async () => {
 		if (!pluginId.trim()) {
@@ -115,6 +127,20 @@ export function PluginCenterSection({
 		}
 	};
 
+	const handleToggle = async (id: string, enabled: boolean) => {
+		try {
+			await toggleMutation.mutateAsync({ pluginId: id, enabled });
+			toastSuccess(
+				enabled
+					? t("messages.enabled", { pluginId: id })
+					: t("messages.disabled", { pluginId: id }),
+			);
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : String(error);
+			toastError(t("errors.toggleFailed", { error: msg }));
+		}
+	};
+
 	const renderStatus = (status: string) => {
 		const tone = statusToneClass[status] ?? "text-muted-foreground";
 		const statusLabel =
@@ -126,9 +152,7 @@ export function PluginCenterSection({
 			status === "installed"
 				? t(`status.${status}`)
 				: status;
-		return (
-			<span className={cn("text-xs font-medium", tone)}>{statusLabel}</span>
-		);
+		return <span className={cn("text-xs font-medium", tone)}>{statusLabel}</span>;
 	};
 
 	return (
@@ -159,7 +183,10 @@ export function PluginCenterSection({
 							/>
 						</div>
 						<div className="space-y-2">
-							<label htmlFor="plugin-center-archive-path" className="text-xs text-muted-foreground">
+							<label
+								htmlFor="plugin-center-archive-path"
+								className="text-xs text-muted-foreground"
+							>
 								{t("labels.archivePath")}
 							</label>
 							<input
@@ -219,14 +246,37 @@ export function PluginCenterSection({
 					</div>
 				</div>
 
-			<div className="space-y-2">
-				{sortedPlugins.length === 0 && !isLoading && (
-					<p className="text-sm text-muted-foreground">{t("empty")}</p>
-				)}
-				{isLoading && (
-					<p className="text-sm text-muted-foreground">{t("loading")}</p>
-				)}
-				{sortedPlugins.map((plugin) => (
+				<div className="rounded-lg border border-border bg-background/70 p-3">
+					<p className="mb-2 text-sm font-medium text-foreground">{t("eventsFilterTitle")}</p>
+					<div className="flex flex-wrap items-center gap-2">
+						<select
+							value={eventFilterPluginId}
+							onChange={(event) => setEventFilterPluginId(event.target.value)}
+							className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+						>
+							<option value="">{t("eventsFilterAll")}</option>
+							{sortedPlugins.map((plugin) => (
+								<option key={plugin.id} value={plugin.id}>
+									{plugin.id}
+								</option>
+							))}
+						</select>
+						<button
+							type="button"
+							onClick={() => setEvents([])}
+							className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground"
+						>
+							{t("actions.clearEvents")}
+						</button>
+					</div>
+				</div>
+
+				<div className="space-y-2">
+					{sortedPlugins.length === 0 && !isLoading && (
+						<p className="text-sm text-muted-foreground">{t("empty")}</p>
+					)}
+					{isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
+					{sortedPlugins.map((plugin) => (
 						<div
 							key={plugin.id}
 							className="rounded-lg border border-border bg-background/70 px-3 py-3"
@@ -240,6 +290,20 @@ export function PluginCenterSection({
 								</div>
 								<div className="flex items-center gap-3">
 									{renderStatus(plugin.status)}
+									<button
+										type="button"
+										onClick={() => handleToggle(plugin.id, !plugin.enabled)}
+										disabled={busy}
+										className={cn(
+											"inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs",
+											plugin.enabled
+												? "border-primary/40 text-primary"
+												: "border-border text-muted-foreground",
+										)}
+									>
+										<Power className="h-3 w-3" />
+										{plugin.enabled ? t("actions.disable") : t("actions.enable")}
+									</button>
 									{plugin.source === "third_party" && (
 										<button
 											type="button"
@@ -264,13 +328,35 @@ export function PluginCenterSection({
 							</div>
 							{plugin.missingDeps.length > 0 && (
 								<p className="mt-2 text-xs text-amber-600">
-									{t("labels.missingDeps", {
-										deps: plugin.missingDeps.join(", "),
-									})}
+									{t("labels.missingDeps", { deps: plugin.missingDeps.join(", ") })}
 								</p>
 							)}
 						</div>
 					))}
+				</div>
+
+				<div className="rounded-lg border border-border bg-background/70 p-3">
+					<p className="mb-2 text-sm font-medium text-foreground">{t("tasksTitle")}</p>
+					{tasks.length === 0 ? (
+						<p className="text-xs text-muted-foreground">{t("tasksEmpty")}</p>
+					) : (
+						<div className="max-h-52 space-y-1 overflow-y-auto pr-1">
+							{tasks.map((task) => (
+								<div
+									key={task.taskId}
+									className="rounded border border-border/60 bg-muted/20 px-2 py-1"
+								>
+									<p className="text-xs text-foreground">
+										[{task.action}] {task.pluginId} · {task.status}
+									</p>
+									<p className="text-[11px] text-muted-foreground">
+										{task.message}
+										{task.errorCode ? ` · ${task.errorCode}` : ""}
+									</p>
+								</div>
+							))}
+						</div>
+					)}
 				</div>
 
 				<div className="rounded-lg border border-border bg-background/70 p-3">
@@ -288,11 +374,14 @@ export function PluginCenterSection({
 									className="rounded border border-border/60 bg-muted/20 px-2 py-1"
 								>
 									<p className="text-xs text-foreground">
-										[{eventItem.action}] {eventItem.pluginId} · {eventItem.stage}
+										[{eventItem.action}] {eventItem.pluginId}
+										{eventItem.taskId ? ` · ${eventItem.taskId}` : ""} · {eventItem.stage}
 									</p>
 									<p className="text-[11px] text-muted-foreground">
 										{eventItem.message}
-										{typeof eventItem.progress === "number" ? ` (${eventItem.progress}%)` : ""}
+										{typeof eventItem.progress === "number"
+											? ` (${eventItem.progress}%)`
+											: ""}
 									</p>
 								</div>
 							))}

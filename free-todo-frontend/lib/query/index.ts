@@ -42,7 +42,13 @@ export {
 // Query Keys
 export { type QueryKeys, queryKeys } from "./keys";
 // Plugin Hooks
-export { useInstallPlugin, usePlugins, useUninstallPlugin } from "./plugins";
+export {
+	useInstallPlugin,
+	usePlugins,
+	usePluginTasks,
+	useTogglePlugin,
+	useUninstallPlugin,
+} from "./plugins";
 // Provider
 export { getQueryClient, QueryProvider } from "./provider";
 // Todo Hooks
