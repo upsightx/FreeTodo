@@ -148,7 +148,17 @@ class WebSearchService:
             # 流式调用 LLM
             logger.info("开始流式生成回答")
             output_chunks: list[str] = []
-            for text in self.llm_client.stream_chat(messages=messages, temperature=0.7):
+            for text in self.llm_client.stream_chat(
+                messages=messages,
+                temperature=0.7,
+                log_meta={
+                    "endpoint": "web_search",
+                    "feature_type": "web_search",
+                    "user_query": actual_query,
+                    "response_type": "stream",
+                    "additional_info": {"result_count": len(tavily_result.get("results", []))},
+                },
+            ):
                 if text:
                     output_chunks.append(text)
                     yield text

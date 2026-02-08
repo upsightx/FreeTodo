@@ -252,7 +252,7 @@ class LLMClient:
                 if usage:
                     meta = dict(log_meta or {})
                     endpoint = meta.pop("endpoint", "llm_chat")
-                    feature_type = meta.pop("feature_type", "")
+                    feature_type = meta.pop("feature_type", "") or endpoint
                     user_query = meta.pop("user_query", "")
                     response_type = meta.pop("response_type", "chat")
                     meta["response_length"] = len(content)
@@ -317,7 +317,7 @@ class LLMClient:
             if log_usage and usage_info:
                 meta = dict(log_meta or {})
                 endpoint = meta.pop("endpoint", "llm_stream_chat")
-                feature_type = meta.pop("feature_type", "")
+                feature_type = meta.pop("feature_type", "") or endpoint
                 user_query = meta.pop("user_query", "")
                 response_type = meta.pop("response_type", "stream")
                 meta["response_length"] = total_chars

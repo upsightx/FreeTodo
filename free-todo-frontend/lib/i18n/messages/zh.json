@@ -213,6 +213,7 @@
 		"costTracking": {
 			"title": "费用统计",
 			"subtitle": "查看 LLM 使用情况和费用统计",
+			"updatedAt": "更新时间",
 			"statisticsPeriod": "统计周期",
 			"last7Days": "最近 7 天",
 			"last30Days": "最近 30 天",
@@ -236,6 +237,18 @@
 			"dailyCostTrend": "每日费用趋势",
 			"loadFailed": "加载失败",
 			"featureNames": {
+				"chat": "普通聊天",
+				"agent": "智能助手",
+				"todo_extraction": "待办提取",
+				"ocr_todo_extraction": "OCR 待办提取",
+				"audio_extraction": "音频待办/日程提取",
+				"audio_transcription": "转录文本优化",
+				"journal_generation": "日记生成",
+				"rag_fallback": "RAG 直答",
+				"rag_retrieval": "RAG 检索问答",
+				"web_search": "联网搜索",
+				"llm_chat": "通用聊天",
+				"llm_stream_chat": "通用流式聊天",
 				"event_assistant": "事件助手",
 				"event_summary": "事件摘要",
 				"project_assistant": "项目助手",
@@ -793,6 +806,7 @@
 			"canceled": "已取消",
 			"draft": "草稿"
 		},
+		"dateLocale": "zh-CN",
 		"numberLocale": "zh-CN"
 	},
 	"debugCapture": {
