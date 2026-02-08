@@ -283,16 +283,27 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 					if (!line.trim()) continue;
 					try {
 						const progress = JSON.parse(line);
-						const step = progress.step || "";
+						// 后端字段名是 stage，不是 step
+						const step = progress.stage || progress.step || "";
 						const message = progress.message || "";
+						const stagePercent = progress.percent ?? 0;
 
-						// 根据步骤推算百分比
+						// 将各阶段的局部百分比映射为总进度百分比
+						// 下载: 0-50%, 解压: 50-70%, 安装依赖: 70-95%, 完成: 100%
 						let percent = 0;
-						if (step === "downloading") percent = progress.percent ?? 20;
-						else if (step === "extracting") percent = 50;
-						else if (step === "installing_deps") percent = 70;
-						else if (step === "complete") percent = 100;
-						else if (step === "error") percent = 0;
+						if (step === "downloading") {
+							percent = Math.round(stagePercent * 0.5); // 0-50%
+						} else if (step === "extracting") {
+							percent = 50 + Math.round(stagePercent * 0.2); // 50-70%
+						} else if (step === "installing_deps") {
+							percent = 70 + Math.round(stagePercent * 0.25); // 70-95%
+						} else if (step === "warning") {
+							percent = 95;
+						} else if (step === "complete") {
+							percent = 100;
+						} else if (step === "error") {
+							percent = 0;
+						}
 
 						set({
 							pluginInstallProgress: { step, percent, message },
