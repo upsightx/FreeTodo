@@ -64,7 +64,24 @@ const saveDailySummaryCache = (summary: string, date: string): void => {
 	}
 };
 
+// ---------------------------------------------------------------------------
+// 插件安装进度
+// ---------------------------------------------------------------------------
+interface PluginInstallProgress {
+	step: string;        // downloading | extracting | installing_deps | complete | error
+	percent: number;     // 0-100
+	message: string;
+}
+
 interface CrawlerStore {
+	// 插件状态
+	pluginInstalled: boolean;
+	pluginAvailable: boolean;
+	pluginMode: "plugin" | "dev" | "none";  // 当前运行模式
+	pluginChecked: boolean;                  // 是否已完成首次检查
+	pluginInstalling: boolean;
+	pluginInstallProgress: PluginInstallProgress;
+
 	// 当前状态
 	status: CrawlerStatus;
 	platforms: CrawlerPlatform[];  // 多平台支持
@@ -109,6 +126,11 @@ interface CrawlerStore {
 	// 已查看的内容
 	viewedItems: Set<string>;
 	
+	// 插件操作
+	checkPluginStatus: () => Promise<void>;
+	installPlugin: (downloadUrl?: string) => Promise<void>;
+	uninstallPlugin: () => Promise<void>;
+
 	// Actions
 	setStatus: (status: CrawlerStatus) => void;
 	setPlatforms: (platforms: CrawlerPlatform[]) => void;
@@ -159,6 +181,14 @@ interface CrawlerStore {
 const cachedSummary = loadDailySummaryCache();
 
 export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
+	// 插件初始状态
+	pluginInstalled: false,
+	pluginAvailable: false,
+	pluginMode: "none",
+	pluginChecked: false,
+	pluginInstalling: false,
+	pluginInstallProgress: { step: "", percent: 0, message: "" },
+
 	// 初始状态
 	status: "idle",
 	platforms: ["xhs"],  // 默认选中小红书
@@ -186,8 +216,135 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 	excludedKeywords: [],
 	extractingKeywords: false,
 	viewedItems: loadViewedItems(),
+
+	// ======================== 插件操作 ========================
+
+	// 检查插件安装状态
+	checkPluginStatus: async () => {
+		try {
+			const response = await fetch(`${API_BASE_URL}/api/plugins/media-crawler/status`);
+			if (response.ok) {
+				const data = await response.json();
+				set({
+					pluginInstalled: data.installed ?? false,
+					pluginAvailable: data.available ?? false,
+					pluginMode: data.mode ?? "none",
+					pluginChecked: true,
+				});
+				console.log("[Crawler] 插件状态:", data);
+			} else {
+				// 后端 plugin 路由不存在时（旧版后端），默认按开发模式处理
+				set({ pluginAvailable: true, pluginMode: "dev", pluginChecked: true });
+			}
+		} catch (error) {
+			console.warn("[Crawler] 检查插件状态失败，默认按可用处理:", error);
+			set({ pluginAvailable: true, pluginMode: "dev", pluginChecked: true });
+		}
+	},
+
+	// 安装插件（流式读取安装进度）
+	installPlugin: async (downloadUrl?: string) => {
+		set({
+			pluginInstalling: true,
+			pluginInstallProgress: { step: "downloading", percent: 0, message: "正在准备下载..." },
+		});
+
+		try {
+			const body: Record<string, string> = {};
+			if (downloadUrl) body.download_url = downloadUrl;
+
+			const response = await fetch(`${API_BASE_URL}/api/plugins/media-crawler/install`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
+
+			if (!response.ok) {
+				const errData = await response.json().catch(() => ({}));
+				throw new Error(errData.detail || `安装请求失败: HTTP ${response.status}`);
+			}
+
+			// 读取 NDJSON 流式进度
+			const reader = response.body?.getReader();
+			if (!reader) throw new Error("无法读取安装进度流");
+
+			const decoder = new TextDecoder();
+			let buffer = "";
+
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+
+				buffer += decoder.decode(value, { stream: true });
+				const lines = buffer.split("\n");
+				buffer = lines.pop() || "";
+
+				for (const line of lines) {
+					if (!line.trim()) continue;
+					try {
+						const progress = JSON.parse(line);
+						const step = progress.step || "";
+						const message = progress.message || "";
+
+						// 根据步骤推算百分比
+						let percent = 0;
+						if (step === "downloading") percent = progress.percent ?? 20;
+						else if (step === "extracting") percent = 50;
+						else if (step === "installing_deps") percent = 70;
+						else if (step === "complete") percent = 100;
+						else if (step === "error") percent = 0;
+
+						set({
+							pluginInstallProgress: { step, percent, message },
+						});
+
+						if (step === "error") {
+							throw new Error(message);
+						}
+					} catch (parseErr) {
+						if (parseErr instanceof SyntaxError) {
+							console.warn("[Crawler] 解析安装进度失败:", line);
+						} else {
+							throw parseErr;
+						}
+					}
+				}
+			}
+
+			// 安装完成后刷新状态
+			await get().checkPluginStatus();
+			set({ pluginInstalling: false });
+			console.log("[Crawler] 插件安装完成");
+		} catch (error) {
+			console.error("[Crawler] 安装插件失败:", error);
+			set({
+				pluginInstalling: false,
+				pluginInstallProgress: {
+					step: "error",
+					percent: 0,
+					message: `安装失败: ${error instanceof Error ? error.message : String(error)}`,
+				},
+			});
+		}
+	},
+
+	// 卸载插件
+	uninstallPlugin: async () => {
+		try {
+			const response = await fetch(`${API_BASE_URL}/api/plugins/media-crawler/uninstall`, {
+				method: "POST",
+			});
+			if (response.ok) {
+				console.log("[Crawler] 插件已卸载");
+			}
+			// 刷新插件状态
+			await get().checkPluginStatus();
+		} catch (error) {
+			console.error("[Crawler] 卸载插件失败:", error);
+		}
+	},
 	
-	// Actions
+	// ======================== 原有 Actions ========================
 	setStatus: (status) => set({ status }),
 	setPlatforms: (platforms) => {
 		set({ platforms });
@@ -298,7 +455,16 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 				// 循环爬取模式下，即使单次爬取完成（crawler_running=false），
 				// 只要循环任务还在运行（loop_mode=true），就认为是 running 状态
 				const newStatus = (data.crawler_running || data.loop_mode) ? "running" : "idle";
-				set({ status: newStatus });
+
+				// 同步插件状态（后端 /api/crawler/status 现在也会返回插件字段）
+				const pluginUpdate: Partial<CrawlerStore> = { status: newStatus };
+				if (data.plugin_installed !== undefined) {
+					pluginUpdate.pluginInstalled = data.plugin_installed;
+					pluginUpdate.pluginAvailable = data.plugin_available ?? false;
+					pluginUpdate.pluginMode = data.plugin_mode ?? "none";
+					pluginUpdate.pluginChecked = true;
+				}
+				set(pluginUpdate as CrawlerStore);
 			}
 		} catch (error) {
 			console.error("[Crawler] 获取状态失败:", error);
