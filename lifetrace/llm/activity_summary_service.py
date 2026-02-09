@@ -5,7 +5,7 @@
 
 import json
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 from lifetrace.llm.llm_client import LLMClient
 from lifetrace.util.logging_config import get_logger
@@ -148,22 +148,26 @@ class ActivitySummaryService:
 
             # 调用LLM（增加max_tokens以支持结构化摘要）
             client = self.llm_client._get_client()
-            response = client.chat.completions.create(
-                model=self.llm_client.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=0.3,
-                max_tokens=1000,  # 增加token限制以支持结构化摘要（500字中文约需1000 tokens）
+            response = cast(
+                "Any",
+                client.chat.completions.create(
+                    model=self.llm_client.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=0.3,
+                    max_tokens=1000,  # 增加token限制以支持结构化摘要（500字中文约需1000 tokens）
+                ),
             )
 
             # 记录token使用量
-            if hasattr(response, "usage") and response.usage:
+            usage = getattr(response, "usage", None)
+            if usage:
                 log_token_usage(
                     model=self.llm_client.model,
-                    input_tokens=response.usage.prompt_tokens,
-                    output_tokens=response.usage.completion_tokens,
+                    input_tokens=usage.prompt_tokens,
+                    output_tokens=usage.completion_tokens,
                     endpoint="activity_summary",
                     response_type="summary_generation",
                     feature_type="activity_summary",

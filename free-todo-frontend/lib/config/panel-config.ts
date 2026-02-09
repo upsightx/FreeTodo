@@ -12,6 +12,7 @@ import {
 	CalendarDays,
 	Camera,
 	DollarSign,
+	Eye,
 	FileText,
 	ListTodo,
 	type LucideIcon,
@@ -35,7 +36,8 @@ export type PanelFeature =
 	| "debugShots"
 	| "crawler"
 	| "crawlerDetail"
-	| "audio";
+	| "audio"
+	| "preview";
 
 /**
  * 开发中的面板功能列表
@@ -67,6 +69,7 @@ export const ALL_PANEL_FEATURES: PanelFeature[] = [
 	"crawler",
 	"crawlerDetail",
 	"audio",
+	"preview",
 ];
 
 /**
@@ -86,4 +89,5 @@ export const FEATURE_ICON_MAP: Record<PanelFeature, LucideIcon> = {
 	crawler: Bug,
 	crawlerDetail: Network,
 	audio: Mic,
+	preview: Eye,
 };

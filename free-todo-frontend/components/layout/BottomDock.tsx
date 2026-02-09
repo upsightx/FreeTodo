@@ -65,6 +65,7 @@ const FEATURE_LABEL_MAP: Partial<Record<PanelFeature, string>> = {
 	crawler: "crawler",
 	crawlerDetail: "crawlerDetail",
 	audio: "audio",
+	preview: "preview",
 };
 
 // 功能到翻译键的映射配置，缺失项回退到 todos

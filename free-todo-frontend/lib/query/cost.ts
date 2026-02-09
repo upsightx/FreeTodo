@@ -13,6 +13,12 @@ interface CostStatsResponse {
 		totalCost?: number;
 		totalTokens?: number;
 		totalRequests?: number;
+		currentModel?: string;
+		inputTokenPrice?: number;
+		outputTokenPrice?: number;
+		priceCurrency?: string;
+		priceSource?: string;
+		generatedAt?: string;
 		dailyCosts?: Record<string, { cost?: number; totalTokens?: number }>;
 		featureCosts?: Record<
 			string,
@@ -55,6 +61,8 @@ export function useCostStats(days: number) {
 			query: {
 				queryKey: queryKeys.costStats(days),
 				staleTime: 60 * 1000, // 1 分钟内数据被认为是新鲜的
+				refetchInterval: 30 * 1000,
+				refetchIntervalInBackground: true,
 				select: (data: unknown) => {
 					// 处理响应格式：{ success: boolean, data?: CostStats }
 					const response = data as CostStatsResponse;

@@ -6,7 +6,7 @@
 import json
 import threading
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from lifetrace.core.dependencies import get_vector_service
 from lifetrace.llm.llm_client import LLMClient
@@ -282,21 +282,25 @@ class EventSummaryService:
             )
 
             client = self.llm_client._get_client()
-            response = client.chat.completions.create(
-                model=self.llm_client.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=0.3,
-                max_tokens=200,
+            response = cast(
+                "Any",
+                client.chat.completions.create(
+                    model=self.llm_client.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=0.3,
+                    max_tokens=200,
+                ),
             )
 
-            if hasattr(response, "usage") and response.usage:
+            usage = getattr(response, "usage", None)
+            if usage:
                 log_token_usage(
                     model=self.llm_client.model,
-                    input_tokens=response.usage.prompt_tokens,
-                    output_tokens=response.usage.completion_tokens,
+                    input_tokens=usage.prompt_tokens,
+                    output_tokens=usage.completion_tokens,
                     endpoint="event_summary",
                     response_type="summary_generation",
                     feature_type="event_summary",

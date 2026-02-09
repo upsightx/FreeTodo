@@ -18,6 +18,7 @@ from lifetrace.schemas.message_todo_extraction import (
 )
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.prompt_loader import get_prompt
+from lifetrace.util.token_usage_logger import log_token_usage
 
 logger = get_logger()
 
@@ -77,13 +78,27 @@ async def extract_todos_from_messages(
         ]
 
         client = llm_client._get_client()
-        response = client.chat.completions.create(
-            model=llm_client.model,
-            messages=cast("list[ChatCompletionMessageParam]", messages),
-            temperature=0.3,
+        response = cast(
+            "Any",
+            client.chat.completions.create(
+                model=llm_client.model,
+                messages=cast("list[ChatCompletionMessageParam]", messages),
+                temperature=0.3,
+            ),
         )
 
         response_text = response.choices[0].message.content or ""
+        usage = getattr(response, "usage", None)
+        if usage:
+            log_token_usage(
+                model=llm_client.model,
+                input_tokens=usage.prompt_tokens,
+                output_tokens=usage.completion_tokens,
+                endpoint="message_todo_extraction",
+                user_query=messages_text[:200],
+                response_type="todo_extraction",
+                feature_type="todo_extraction",
+            )
 
         # 解析响应
         todos = _parse_llm_response(response_text)

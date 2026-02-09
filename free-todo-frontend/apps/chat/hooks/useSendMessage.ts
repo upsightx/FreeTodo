@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { flushSync } from "react-dom";
 import type { SessionCacheReturn } from "@/apps/chat/hooks/useSessionCache";
 import type { StreamControllerReturn } from "@/apps/chat/hooks/useStreamController";
@@ -22,6 +22,11 @@ import {
 import { useCrawlerStore } from "@/apps/crawler/store";
 import type { ToolCallEvent } from "@/lib/api";
 import { sendChatMessageStream } from "@/lib/api";
+import { usePreviewStore } from "@/lib/preview/store";
+import {
+	extractPathFromToolEvent,
+	normalizePath,
+} from "@/lib/preview/utils";
 import { queryKeys } from "@/lib/query/keys";
 import { useChatStore } from "@/lib/store/chat-store";
 import { toastInfo } from "@/lib/toast";
@@ -126,6 +131,7 @@ export const useSendMessage = ({
 		};
 	}, []);
 
+	const previewFileTools = useMemo(() => new Set(["file", "local_fs"]), []);
 	/**
 	 * 发送消息
 	 * @param text - 要发送的文本
@@ -382,6 +388,38 @@ export const useSendMessage = ({
 								nextAnchors,
 							);
 						}
+
+						if (
+							event.type === "tool_call_end" &&
+							event.tool_name &&
+							previewFileTools.has(event.tool_name)
+						) {
+							const rawPath = extractPathFromToolEvent(
+								event.tool_args,
+								event.result_preview,
+							);
+							if (rawPath) {
+								void usePreviewStore
+									.getState()
+									.openFromPath(normalizePath(rawPath), "chat");
+							}
+						}
+
+						if (
+							event.type === "tool_call_end" &&
+							event.tool_name &&
+							previewFileTools.has(event.tool_name)
+						) {
+							const rawPath = extractPathFromToolEvent(
+								event.tool_args,
+								event.result_preview,
+							);
+							if (rawPath) {
+								void usePreviewStore
+									.getState()
+									.openFromPath(normalizePath(rawPath), "chat");
+							}
+						}
 					},
 				);
 
@@ -442,6 +480,7 @@ export const useSendMessage = ({
 		effectiveTodos,
 		hasSelection,
 		locale,
+			previewFileTools,
 		queryClient,
 		scheduleTodosRefresh,
 		selectedAgnoTools,

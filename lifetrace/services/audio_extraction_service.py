@@ -5,7 +5,7 @@
 
 import hashlib
 import json
-from typing import Any
+from typing import Any, cast
 
 from sqlmodel import select
 
@@ -15,6 +15,7 @@ from lifetrace.storage.models import Transcription
 from lifetrace.storage.sql_utils import col
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.prompt_loader import get_prompt
+from lifetrace.util.token_usage_logger import log_token_usage
 
 logger = get_logger()
 
@@ -385,18 +386,32 @@ class AudioExtractionService:
             client._initialize_client()
 
             openai_client = client._get_client()
-            response = openai_client.chat.completions.create(
-                model=client.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=0.3,
+            response = cast(
+                "Any",
+                openai_client.chat.completions.create(
+                    model=client.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=0.3,
+                ),
             )
 
             # 解析响应
             result_text = (response.choices[0].message.content or "").strip()
             result = self._parse_llm_response(result_text)
+            usage = getattr(response, "usage", None)
+            if usage:
+                log_token_usage(
+                    model=client.model,
+                    input_tokens=usage.prompt_tokens,
+                    output_tokens=usage.completion_tokens,
+                    endpoint="audio_extraction",
+                    user_query=text[:200],
+                    response_type="todo_schedule_extraction",
+                    feature_type="audio_extraction",
+                )
 
             # 规范化结果格式
             result = self._normalize_extraction_result(result)

@@ -118,6 +118,27 @@ source .venv/bin/activate
 .venv\Scripts\activate
 ```
 
+### Start All Services (One-Click)
+
+For development, you can start **backend + AgentOS + frontend** with a single script:
+
+**macOS/Linux**
+
+```bash
+chmod +x scripts/start_all.sh
+./scripts/start_all.sh
+```
+
+This runs all services in the background and writes logs to `.run-logs/`.
+
+**Windows (PowerShell)**
+
+```powershell
+.\scripts\start_all.ps1
+```
+
+This opens three terminal windows to run each service.
+
 ### Start the Backend Service
 
 > **Note**: On first run, the system will automatically create `config.yaml` from `default_config.yaml` if it doesn't exist. You can customize your settings by editing `lifetrace/config/config.yaml`.
