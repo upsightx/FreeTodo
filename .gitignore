@@ -66,6 +66,9 @@ lifetrace/config/config.yaml
 .cache/
 .ruff_cache/
 
+# Local startup scripts
+scripts/start-all.bat
+
 # Build
 dist-backend/
 
