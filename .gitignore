@@ -100,3 +100,8 @@ MediaCrawlerPro-SignSrv/logs/
 *.avi
 *.mkv
 *.mov
+
+# 内部产品文档（不提交）
+产品说明文档.md
+技术开发架构文档.md
+雷达早报产品文档.md
