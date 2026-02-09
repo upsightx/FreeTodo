@@ -651,7 +651,7 @@ export function CrawlerDetailPanel() {
 										<div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[100px] -z-10 pointer-events-none" />
 										<div className="px-6 py-5 flex items-center gap-3 bg-white/5 border-b border-white/5">
 											<img
-												src="/leida_logo.png"
+												src="/platform-logos/leida.png"
 												alt="AI Logo"
 												className="w-10 h-10 rounded-lg shadow-lg shadow-indigo-500/20 animate-pulse"
 											/>
@@ -680,7 +680,7 @@ export function CrawlerDetailPanel() {
 										>
 											<div className="flex items-center gap-3">
 												<img
-													src="/leida_logo.png"
+													src="/platform-logos/leida.png"
 													alt="AI Logo"
 													className="w-10 h-10 rounded-lg shadow-lg shadow-indigo-500/20"
 												/>
