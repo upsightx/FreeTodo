@@ -78,21 +78,38 @@ function stopProcess(proc, timeoutMs = 5000) {
 
 		proc.once("exit", done);
 
-		try {
-			proc.kill("SIGINT");
-		} catch {
-			proc.kill();
-		}
-
-		setTimeout(() => {
-			if (!proc.killed) {
+		if (process.platform === "win32") {
+			// Windows: SIGINT/SIGTERM 无法可靠杀死 shell: true 的子进程树
+			// 使用 taskkill /F /T 强制杀死整个进程树
+			try {
+				execSync(`taskkill /F /T /PID ${proc.pid}`, {
+					stdio: "ignore",
+				});
+			} catch {
+				// taskkill 失败时回退到默认方式
 				try {
-					proc.kill("SIGTERM");
-				} catch {
 					proc.kill();
+				} catch {
+					/* ignore */
 				}
 			}
-		}, 1200);
+		} else {
+			try {
+				proc.kill("SIGINT");
+			} catch {
+				proc.kill();
+			}
+
+			setTimeout(() => {
+				if (!proc.killed) {
+					try {
+						proc.kill("SIGTERM");
+					} catch {
+						proc.kill();
+					}
+				}
+			}, 1200);
+		}
 
 		setTimeout(done, timeoutMs);
 	});
@@ -401,6 +418,29 @@ async function main() {
 				nextProcess.removeAllListeners("exit");
 				await stopProcess(nextProcess);
 			}
+
+			// 等待端口真正释放后再重启，避免 EADDRINUSE
+			const portWaitStart = Date.now();
+			const portWaitTimeoutMs = 30000;
+			let portFreed = false;
+			for (let attempt = 0; attempt < 60; attempt++) {
+				if (await isPortAvailable(frontendPort)) {
+					portFreed = true;
+					break;
+				}
+				if (Date.now() - portWaitStart > portWaitTimeoutMs) {
+					break;
+				}
+				await sleep(500);
+			}
+			if (!portFreed) {
+				console.error(
+					`Port ${frontendPort} is still in use after ${Math.round((Date.now() - portWaitStart) / 1000)}s. ` +
+						"Please manually kill the process occupying the port and try again.",
+				);
+				process.exit(1);
+			}
+
 			nextProcess = startNextDev(
 				frontendPort,
 				backendUrl,
