@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
+if TYPE_CHECKING:
+    from datetime import datetime
+
 
 class AutomationSchedule(BaseModel):
     """任务调度配置"""
@@ -66,7 +69,3 @@ class AutomationTaskListResponse(BaseModel):
 
     total: int
     tasks: list[AutomationTaskResponse]
-
-
-if TYPE_CHECKING:
-    from datetime import datetime

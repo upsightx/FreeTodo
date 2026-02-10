@@ -1,11 +1,10 @@
 """AgentOS tool helpers for FreeTodo."""
 
-from __future__ import annotations
-
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from agno.exceptions import AgentRunException
+from agno.run import RunContext
 from agno.tools import Toolkit
 from agno.tools.file import FileTools
 from agno.tools.local_file_system import LocalFileSystemTools
@@ -13,15 +12,6 @@ from agno.tools.shell import ShellTools
 
 from lifetrace.llm.agno_agent import current_session_id
 from lifetrace.llm.agno_external_tools import create_external_tool
-
-if TYPE_CHECKING:
-    from agno.run import RunContext
-else:
-
-    class RunContext:  # pragma: no cover - runtime typing stub
-        session_id: str | None
-        dependencies: dict[str, Any] | None
-
 
 FREETODO_TOOL_NAMES = [
     "create_todo",
@@ -40,7 +30,7 @@ FREETODO_TOOL_NAMES = [
     "suggest_tags",
 ]
 
-EXTERNAL_TOOL_FUNCTIONS: dict[str, set[str]] = {
+EXTERNAL_TOOL_FUNCTIONS: "dict[str, set[str]]" = {
     "file": {
         "save_file",
         "read_file",
@@ -57,18 +47,18 @@ EXTERNAL_TOOL_FUNCTIONS: dict[str, set[str]] = {
     "sleep": {"sleep"},
 }
 
-TOOL_NAME_TO_GROUP: dict[str, str] = {
+TOOL_NAME_TO_GROUP: "dict[str, str]" = {
     tool_name: group
     for group, tool_names in EXTERNAL_TOOL_FUNCTIONS.items()
     for tool_name in tool_names
 }
 
 
-def get_all_freetodo_tools() -> list[str]:
+def get_all_freetodo_tools() -> "list[str]":
     return list(FREETODO_TOOL_NAMES)
 
 
-def _get_dependencies(run_context: RunContext | None) -> dict[str, Any]:
+def _get_dependencies(run_context: RunContext | None) -> "dict[str, Any]":
     if run_context is None:
         return {}
     deps = getattr(run_context, "dependencies", None)
@@ -92,7 +82,7 @@ def _get_enable_delete(run_context: RunContext | None) -> bool:
     return bool(deps.get("enable_file_delete"))
 
 
-def _ensure_workspace(path: Path | None) -> tuple[Path | None, str | None]:
+def _ensure_workspace(path: Path | None) -> "tuple[Path | None, str | None]":
     if path is None:
         return None, "未配置 workspace_path，无法使用文件类工具"
     if not path.exists() or not path.is_dir():
@@ -151,7 +141,7 @@ class DynamicFileTools(Toolkit):
 
     def _build_file_tool(
         self, run_context: RunContext | None
-    ) -> tuple[FileTools | None, str | None]:
+    ) -> "tuple[FileTools | None, str | None]":
         workspace_path, error = _ensure_workspace(_get_workspace_path(run_context))
         if error:
             return None, error
@@ -272,7 +262,7 @@ class DynamicShellTools(Toolkit):
         tools = [self.run_shell_command]
         super().__init__(name="dynamic_shell", tools=tools)
 
-    def run_shell_command(self, run_context: RunContext, args: list[str], tail: int = 100) -> str:
+    def run_shell_command(self, run_context: RunContext, args: "list[str]", tail: int = 100) -> str:
         workspace_path, error = _ensure_workspace(_get_workspace_path(run_context))
         if error or workspace_path is None:
             return error or "无法执行命令"
@@ -280,7 +270,7 @@ class DynamicShellTools(Toolkit):
         return tool.run_shell_command(args=args, tail=tail)
 
 
-def build_agent_os_external_tools(allowed_tools: list[str] | None = None) -> list[Toolkit]:
+def build_agent_os_external_tools(allowed_tools: "list[str] | None" = None) -> "list[Toolkit]":
     allow_all = not allowed_tools
     allowed_set = set(allowed_tools or [])
 
