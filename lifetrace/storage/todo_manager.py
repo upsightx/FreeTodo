@@ -160,9 +160,10 @@ class TodoManager(TodoAttachmentMixin, TodoIcalMixin):
             return 0
 
     def get_active_todos_for_prompt(self, limit: int = 100) -> list[dict[str, Any]]:
-        """获取用于提示词的活跃 todo 列表（精简字段）。
+        """获取用于提示词的活跃/草稿 todo 列表（精简字段）。
 
-        返回的数据适合直接序列化为 JSON 传给 LLM，让模型了解当前已有的待办。
+        返回 active 和 draft 状态的待办，适合直接序列化为 JSON 传给 LLM，
+        让模型了解当前已有的待办（包括自动提取但尚未确认的 draft 待办）。
         """
         try:
             with self.db_base.get_session() as session:
@@ -171,7 +172,7 @@ class TodoManager(TodoAttachmentMixin, TodoIcalMixin):
                     q = q.filter(col(Todo.deleted_at).is_(None))
 
                 q = (
-                    q.filter(col(Todo.status) == "active")
+                    q.filter(col(Todo.status).in_(["active", "draft"]))
                     .order_by(col(Todo.created_at).desc())
                     .limit(limit)
                 )
@@ -184,6 +185,7 @@ class TodoManager(TodoAttachmentMixin, TodoIcalMixin):
                         {
                             "id": t.id,
                             "name": t.name,
+                            "status": t.status,
                             "description": t.description,
                             "start_time": schedule.isoformat() if schedule else None,
                         }

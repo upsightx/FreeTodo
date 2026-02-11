@@ -8,6 +8,7 @@ import hashlib
 import json
 import re
 import time
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -19,6 +20,34 @@ from lifetrace.util.settings import settings
 from lifetrace.util.time_utils import get_utc_now
 
 logger = get_logger()
+
+
+def _normalize_title(title: str) -> str:
+    """对待办标题进行标准化处理，用于去重比较。
+
+    - NFKC 标准化（全角→半角、兼容字符统一）
+    - 转小写
+    - 去除所有空白和常见标点
+    """
+    normalized = unicodedata.normalize("NFKC", title)
+    normalized = normalized.lower()
+    # 去除空白和常见中英文标点
+    normalized = re.sub(
+        r"""[\s\u3000.,;:!?，。；：！？、·\-_"'""''()（）【】{}\[\]]""", "", normalized
+    )
+    return normalized
+
+
+def _is_similar_title(title_a: str, title_b: str) -> bool:
+    """判断两个标题是否语义相似（基于包含关系）。
+
+    在标准化后，如果一个标题是另一个标题的子串，则认为相似。
+    """
+    na = _normalize_title(title_a)
+    nb = _normalize_title(title_b)
+    if not na or not nb:
+        return False
+    return na == nb or na in nb or nb in na
 
 
 def _compute_text_hash(text_content: str) -> str | None:
@@ -223,10 +252,18 @@ class OCRTodoExtractor:
             # 从这里开始，todos 已经就绪（来自缓存或本次 LLM 调用结果）
             # 后续统一执行本地去重与 draft 待办创建逻辑
             try:
-                # 构建去重集合：使用数据库中现有的 active/draft 待办，按 (标题, 时间) 去重
-                dedupe_keys: set[tuple[str, str | None]] = set()
+                # 构建去重集合：
+                # 1. dedupe_exact: (标准化标题, 时间) 精确去重
+                # 2. dedupe_names: 存储所有已有待办的原始名称，用于模糊匹配
+                # 3. dedupe_sources: 已有待办的来源文本集合，用于来源去重
+                dedupe_exact: set[tuple[str, str | None]] = set()
+                dedupe_names: list[str] = []
+                dedupe_sources: set[str] = set()
                 try:
                     existing_todos_full = todo_mgr.list_todos(limit=1000, offset=0, status=None)
+                    logger.info(
+                        f"本地去重：从数据库加载了 {len(existing_todos_full)} 条待办用于去重"
+                    )
                     for t in existing_todos_full:
                         name = (t.get("name") or "").strip()
                         if not name:
@@ -237,7 +274,17 @@ class OCRTodoExtractor:
                             if isinstance(schedule_time, datetime)
                             else None
                         )
-                        dedupe_keys.add((name, time_key))
+                        # 使用标准化后的标题作为去重键
+                        normalized_name = _normalize_title(name)
+                        dedupe_exact.add((normalized_name, time_key))
+                        dedupe_names.append(name)
+
+                        # 从 user_notes 中提取来源文本，用于来源去重
+                        user_notes_raw = (t.get("user_notes") or "").strip()
+                        if user_notes_raw.startswith("来源文本: "):
+                            src = _normalize_title(user_notes_raw[len("来源文本: ") :])
+                            if src:
+                                dedupe_sources.add(src)
                 except Exception as e:
                     logger.warning(f"构建去重集合失败，将跳过本地去重逻辑: {e}")
 
@@ -266,26 +313,63 @@ class OCRTodoExtractor:
                             except (ValueError, TypeError) as e:
                                 logger.warning(f"解析 scheduled_time 失败: {raw_scheduled!r}, {e}")
 
-                        # 使用 (标题 + 时间) 进行本地去重，避免重复创建同一待办
+                        # 提取来源文本（去重和创建待办都需要）
+                        source_text = (todo_data.get("source_text") or "").strip()
+
+                        # 使用多层去重策略，避免重复创建同一待办
                         try:
                             time_key = (
                                 scheduled_time.isoformat()
                                 if isinstance(scheduled_time, datetime)
                                 else None
                             )
-                            key = (title, time_key)
-                            if key in dedupe_keys:
+                            normalized_title = _normalize_title(title)
+
+                            # 层1：精确去重（标准化标题 + 时间）
+                            exact_key = (normalized_title, time_key)
+                            if exact_key in dedupe_exact:
                                 logger.info(
-                                    "检测到已存在相同标题与时间的待办，跳过创建："
+                                    "去重命中(精确匹配)，跳过创建："
                                     f"title={title!r}, scheduled_time={time_key!r}"
                                 )
                                 continue
+
+                            # 层2：仅标题标准化去重（忽略时间差异）
+                            title_only_match = any(k[0] == normalized_title for k in dedupe_exact)
+                            if title_only_match:
+                                logger.info(
+                                    "去重命中(标题匹配，忽略时间)，跳过创建："
+                                    f"title={title!r}, scheduled_time={time_key!r}"
+                                )
+                                continue
+
+                            # 层3：模糊去重（标题包含关系）
+                            similar_match = any(
+                                _is_similar_title(title, existing_name)
+                                for existing_name in dedupe_names
+                            )
+                            if similar_match:
+                                logger.info(f"去重命中(模糊匹配)，跳过创建：title={title!r}")
+                                continue
+
+                            # 层4：来源文本去重（相同 source_text 说明来自同一段对话/文档）
+                            if source_text:
+                                normalized_source = _normalize_title(source_text)
+                                if normalized_source and normalized_source in dedupe_sources:
+                                    logger.info(
+                                        f"去重命中(来源文本匹配)，跳过创建：title={title!r}, "
+                                        f"source_text={source_text!r}"
+                                    )
+                                    continue
+
                             # 将当前 key 加入去重集合，避免本批次内重复
-                            dedupe_keys.add(key)
+                            dedupe_exact.add(exact_key)
+                            dedupe_names.append(title)
+                            if source_text:
+                                dedupe_sources.add(_normalize_title(source_text))
                         except Exception as e:
                             logger.warning(f"本地去重检查失败，仍然尝试创建待办: {e}")
 
-                        source_text = (todo_data.get("source_text") or "").strip()
                         user_notes = f"来源文本: {source_text}" if source_text else None
 
                         todo_id = todo_mgr.create_todo(

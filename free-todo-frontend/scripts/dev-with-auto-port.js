@@ -349,6 +349,38 @@ async function main() {
 			}
 		};
 
+		/**
+		 * 启动（或重启）系统级通知弹窗 Electron 进程
+		 * @param {number} backendPort 后端端口号
+		 */
+		const startPopup = (backendPort) => {
+			killPopup();
+			try {
+				const electronBinary = require("electron");
+				const popupScript = path.join(__dirname, "notification-popup.js");
+				popupProcess = spawn(String(electronBinary), [popupScript], {
+					stdio: "ignore",
+					env: {
+						...process.env,
+						ELECTRON_DISABLE_SECURITY_WARNINGS: "1",
+						LIFETRACE_BACKEND_PORT: String(backendPort),
+					},
+				});
+				popupProcess.on("error", (err) => {
+					console.warn(
+						`[notification-popup] Failed to start: ${err.message}`,
+					);
+				});
+				console.log(
+					`[notification-popup] System-level popup started (backend port: ${backendPort})`,
+				);
+			} catch (err) {
+				console.warn(
+					`[notification-popup] Could not start (electron not available): ${err.message}`,
+				);
+			}
+		};
+
 		const handleNextExit = (proc, code) => {
 			if (proc !== nextProcess) return;
 			killPopup();
@@ -365,28 +397,8 @@ async function main() {
 		console.log(`Frontend URL: http://localhost:${frontendPort}`);
 		console.log(`Frontend API (initial): ${initialBackendUrl}\n`);
 
-		// 2. 启动系统级通知弹窗（独立 Electron 进程）
-		try {
-			const electronBinary = require("electron");
-			const popupScript = path.join(__dirname, "notification-popup.js");
-			popupProcess = spawn(String(electronBinary), [popupScript], {
-				stdio: "ignore",
-				env: {
-					...process.env,
-					ELECTRON_DISABLE_SECURITY_WARNINGS: "1",
-				},
-			});
-			popupProcess.on("error", (err) => {
-				console.warn(
-					`[notification-popup] Failed to start: ${err.message}`,
-				);
-			});
-			console.log("[notification-popup] System-level popup started");
-		} catch (err) {
-			console.warn(
-				`[notification-popup] Could not start (electron not available): ${err.message}`,
-			);
-		}
+		// 2. 先用初始端口启动系统级通知弹窗（后续发现正确端口后会重启）
+		startPopup(_DEFAULT_BACKEND_PORT);
 
 		// 处理进程信号
 		process.on("SIGINT", () => {
@@ -414,6 +426,13 @@ async function main() {
 			console.log(
 				"Restarting frontend dev server to update backend API URL...",
 			);
+
+			// 同时重启通知弹窗进程，使用正确的后端端口
+			console.log(
+				`[notification-popup] Restarting with correct backend port: ${backendPort}`,
+			);
+			startPopup(backendPort);
+
 			if (nextProcess) {
 				nextProcess.removeAllListeners("exit");
 				await stopProcess(nextProcess);
