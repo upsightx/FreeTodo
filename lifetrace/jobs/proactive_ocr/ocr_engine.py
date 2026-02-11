@@ -136,9 +136,15 @@ class OcrEngine:
         cls_time_ms = 0.0
 
         if elapse:
-            # elapse 可能是字符串或字典
-            if isinstance(elapse, str):
-                # 解析字符串格式
+            # elapse 格式随 RapidOCR 版本不同而不同：
+            # - v1.4.x: list[float] = [det_time, cls_time, rec_time] (秒)
+            # - 旧版本: str 或 dict
+            if isinstance(elapse, (list, tuple)) and len(elapse) >= 3:
+                det_time_ms = float(elapse[0]) * 1000
+                cls_time_ms = float(elapse[1]) * 1000
+                rec_time_ms = float(elapse[2]) * 1000
+            elif isinstance(elapse, str):
+                # 解析字符串格式（兼容旧版本）
                 det_match = re.search(r"det[:\s]+(\d+\.?\d*)s?", elapse)
                 rec_match = re.search(r"rec[:\s]+(\d+\.?\d*)s?", elapse)
                 cls_match = re.search(r"cls[:\s]+(\d+\.?\d*)s?", elapse)

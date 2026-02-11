@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from fastapi import HTTPException
@@ -11,7 +11,7 @@ from lifetrace.services.todo_service import TodoService
 
 class FakeTodoRepository:
     def __init__(self) -> None:
-        now = datetime(2024, 1, 1, 8, 0, tzinfo=timezone.utc)
+        now = datetime(2024, 1, 1, 8, 0, tzinfo=UTC)
         self.todo = {
             "id": 1,
             "uid": "todo-1",
@@ -74,7 +74,7 @@ class FakeTodoRepository:
 def test_update_todo_dtstart_does_not_touch_due() -> None:
     repo = FakeTodoRepository()
     service = TodoService(repo)
-    dtstart = datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
+    dtstart = datetime(2024, 1, 1, 10, 0, tzinfo=UTC)
 
     service.update_todo(1, TodoUpdate(dtstart=dtstart))
 
@@ -87,7 +87,7 @@ def test_update_todo_dtstart_does_not_touch_due() -> None:
 def test_update_todo_duration_conflict_raises() -> None:
     repo = FakeTodoRepository()
     service = TodoService(repo)
-    due = datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc)
+    due = datetime(2024, 1, 1, 12, 0, tzinfo=UTC)
 
     with pytest.raises(HTTPException):
         service.update_todo(1, TodoUpdate(duration="PT30M", due=due))
@@ -96,7 +96,7 @@ def test_update_todo_duration_conflict_raises() -> None:
 def test_create_todo_duration_conflict_raises() -> None:
     repo = FakeTodoRepository()
     service = TodoService(repo)
-    due = datetime(2024, 1, 2, 12, 0, tzinfo=timezone.utc)
+    due = datetime(2024, 1, 2, 12, 0, tzinfo=UTC)
 
     with pytest.raises(HTTPException):
         service.create_todo(TodoCreate(name="Test", duration="PT30M", due=due))

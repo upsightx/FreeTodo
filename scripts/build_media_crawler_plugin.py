@@ -45,9 +45,8 @@ import json
 import os
 import shutil
 import sys
-import tempfile
 import zipfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # 确保 Windows 下 stdout 使用 UTF-8 编码
@@ -81,8 +80,8 @@ EXCLUDE_DIRS: list[str] = [
     ".mypy_cache",
     ".ruff_cache",
     ".pytest_cache",
-    "test",           # 测试目录，插件运行时不需要
-    "static",         # 静态资源/文档截图
+    "test",  # 测试目录，插件运行时不需要
+    "static",  # 静态资源/文档截图
 ]
 
 # 需要排除的文件名（精确匹配或 glob 模式）
@@ -122,8 +121,8 @@ def find_project_root() -> Path:
     # 尝试从脚本位置推导
     script_dir = Path(__file__).resolve().parent
     candidates = [
-        script_dir.parent,              # scripts/ 的上级
-        Path.cwd(),                     # 当前工作目录
+        script_dir.parent,  # scripts/ 的上级
+        Path.cwd(),  # 当前工作目录
     ]
     for root in candidates:
         if (root / "lifetrace").is_dir() and (root / "MediaCrawlerPro-Python").is_dir():
@@ -209,7 +208,7 @@ def create_manifest(version: str, zip_path: Path) -> dict:
         "version": version,
         "name": "MediaCrawler",
         "description": "社交媒体内容爬取引擎，支持小红书、抖音、哔哩哔哩等 7 大平台",
-        "build_time": datetime.now(timezone.utc).isoformat(),
+        "build_time": datetime.now(UTC).isoformat(),
         "sha256": sha256,
         "file_size": file_size,
         "file_size_mb": round(file_size / (1024 * 1024), 2),
@@ -236,12 +235,12 @@ def build_plugin(version: str, output_dir: Path, project_root: Path) -> Path:
     zip_path = output_dir / zip_filename
     manifest_path = output_dir / "manifest.json"
 
-    print(f"{'='*60}")
-    print(f"  MediaCrawler 插件打包工具")
+    print(f"{'=' * 60}")
+    print("  MediaCrawler 插件打包工具")
     print(f"  版本: {version}")
     print(f"  项目根: {project_root}")
     print(f"  输出: {zip_path}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # 1. 检查源目录存在
     for dir_name in SOURCE_DIRS:
@@ -259,9 +258,8 @@ def build_plugin(version: str, output_dir: Path, project_root: Path) -> Path:
     staging_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-
         # 3. 复制并过滤每个源目录
-        print(f"\n--- 复制与过滤 ---")
+        print("\n--- 复制与过滤 ---")
         for dir_name in SOURCE_DIRS:
             src = project_root / dir_name
             dst = staging_dir / dir_name
@@ -275,8 +273,8 @@ def build_plugin(version: str, output_dir: Path, project_root: Path) -> Path:
         #    Step B: 把 manifest 也写入 zip
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"\n--- 创建 zip 包 ---")
-        print(f"  压缩中...", end=" ", flush=True)
+        print("\n--- 创建 zip 包 ---")
+        print("  压缩中...", end=" ", flush=True)
 
         # 先创建一个不含 manifest 的 zip，用来计算哈希 ->
         # 实际上更好的方式是：先打包完整 zip（含 manifest 占位），然后算 hash。
@@ -295,7 +293,7 @@ def build_plugin(version: str, output_dir: Path, project_root: Path) -> Path:
         print(f"完成 ({zip_size_mb:.1f} MB)")
 
         # 5. 生成 manifest
-        print(f"  生成 manifest.json ...", end=" ", flush=True)
+        print("  生成 manifest.json ...", end=" ", flush=True)
         manifest = create_manifest(version, zip_path)
         manifest_json = json.dumps(manifest, indent=2, ensure_ascii=False)
         manifest_path.write_text(manifest_json, encoding="utf-8")
@@ -315,18 +313,18 @@ def build_plugin(version: str, output_dir: Path, project_root: Path) -> Path:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
     # 7. 打印摘要
-    print(f"\n{'='*60}")
-    print(f"  打包完成！")
+    print(f"\n{'=' * 60}")
+    print("  打包完成！")
     print(f"  文件: {zip_path}")
     print(f"  大小: {final_size_mb} MB")
     print(f"  SHA-256: {manifest['sha256']}")
     print(f"  Manifest: {manifest_path}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print()
     print("  下一步：")
     print(f"  1. 在 GitHub 仓库创建 Release（tag: plugin/media-crawler/v{version}）")
     print(f"  2. 上传 {zip_filename} 到 Release Assets")
-    print(f"  3. 上传 manifest.json 到 Release Assets（可选）")
+    print("  3. 上传 manifest.json 到 Release Assets（可选）")
     print()
 
     return zip_path
@@ -337,12 +335,14 @@ def main():
         description="将 MediaCrawlerPro 打包为可下载的插件 zip",
     )
     parser.add_argument(
-        "--version", "-v",
+        "--version",
+        "-v",
         default=DEFAULT_VERSION,
         help=f"插件版本号（默认: {DEFAULT_VERSION}）",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         default=None,
         help="输出目录（默认: 项目根/dist/）",
     )

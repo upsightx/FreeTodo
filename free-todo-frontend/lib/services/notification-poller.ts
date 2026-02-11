@@ -169,20 +169,29 @@ class NotificationPoller {
 				}
 			}
 
-			if (todos.length > 0) {
-				// 取最新的一个 todo
-				const latestTodo = todos[0];
+		if (todos.length > 0) {
+			// 取最新的一个 todo
+			const latestTodo = todos[0];
 
-				// 转换为通知格式
-				const notification: Notification = {
-					id: `draft-todo-${latestTodo.id}`,
-					title: "新待办事项待确认",
-					content: latestTodo.name || "待办事项",
-					timestamp: latestTodo.createdAt || new Date().toISOString(),
-					source: endpoint.id,
-					todoId: latestTodo.id, // 添加 todoId 以便后续操作
-				};
-				store.setNotificationsFromSource(endpoint.id, [notification]);
+			// 转换为通知格式
+			const notification: Notification = {
+				id: `draft-todo-${latestTodo.id}`,
+				title: "新待办事项待确认",
+				content: latestTodo.name || "待办事项",
+				timestamp: latestTodo.createdAt || new Date().toISOString(),
+				source: endpoint.id,
+				todoId: latestTodo.id, // 添加 todoId 以便后续操作
+			};
+
+			// 如果是新通知（之前没有通知过），触发 Electron 通知弹窗
+			const isNew = !store.notifiedIds.has(notification.id);
+			store.setNotificationsFromSource(endpoint.id, [notification]);
+			if (isNew && typeof window !== "undefined" && window.electronAPI?.triggerNotificationPopup) {
+				window.electronAPI.triggerNotificationPopup({
+					title: "待办提醒",
+					message: `检测到：${latestTodo.name || "新的待办事项"}`,
+				});
+			}
 			} else {
 				// 如果没有 draft todos 了，且当前通知是来自这个端点的，清除通知
 				store.removeNotificationsBySource(endpoint.id);

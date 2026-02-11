@@ -45,12 +45,16 @@ export function LlmConfigSection({
 	const [llmMaxTokens, setLlmMaxTokens] = useState(
 		(config?.llmMaxTokens as number) ?? 2048,
 	);
+	const [llmTodoExtractionModel, setLlmTodoExtractionModel] = useState(
+		(config?.llmTodoExtractionModel as string) || "",
+	);
 	const [initialLlmConfig, setInitialLlmConfig] = useState({
 		llmApiKey: (config?.llmApiKey as string) || "",
 		llmBaseUrl: (config?.llmBaseUrl as string) || "",
 		llmModel: (config?.llmModel as string) || "qwen-plus",
 		llmTemperature: (config?.llmTemperature as number) ?? 0.7,
 		llmMaxTokens: (config?.llmMaxTokens as number) ?? 2048,
+		llmTodoExtractionModel: (config?.llmTodoExtractionModel as string) || "",
 	});
 	const [testMessage, setTestMessage] = useState<{
 		type: "success" | "error";
@@ -82,6 +86,11 @@ export function LlmConfigSection({
 			if (config.llmMaxTokens !== undefined) {
 				setLlmMaxTokens((config.llmMaxTokens as number) ?? 2048);
 			}
+			if (config.llmTodoExtractionModel !== undefined) {
+				setLlmTodoExtractionModel(
+					(config.llmTodoExtractionModel as string) || "",
+				);
+			}
 			// 更新初始配置（用于检测变更）
 			setInitialLlmConfig({
 				llmApiKey: (config.llmApiKey as string) || "",
@@ -89,6 +98,8 @@ export function LlmConfigSection({
 				llmModel: (config.llmModel as string) || "qwen-plus",
 				llmTemperature: (config.llmTemperature as number) ?? 0.7,
 				llmMaxTokens: (config.llmMaxTokens as number) ?? 2048,
+				llmTodoExtractionModel:
+					(config.llmTodoExtractionModel as string) || "",
 			});
 		}
 	}, [config]);
@@ -150,10 +161,12 @@ export function LlmConfigSection({
 			currentBaseUrl !== initialLlmConfig.llmBaseUrl ||
 			currentModel !== initialLlmConfig.llmModel;
 
-		// 检查其他配置是否改变（Temperature, Max Tokens）
+		// 检查其他配置是否改变（Temperature, Max Tokens, Todo Extraction Model）
 		const otherConfigChanged =
 			llmTemperature !== initialLlmConfig.llmTemperature ||
-			llmMaxTokens !== initialLlmConfig.llmMaxTokens;
+			llmMaxTokens !== initialLlmConfig.llmMaxTokens ||
+			llmTodoExtractionModel !==
+				initialLlmConfig.llmTodoExtractionModel;
 
 		// 如果没有任何改动，不需要保存
 		if (!llmCoreConfigChanged && !otherConfigChanged) {
@@ -169,6 +182,7 @@ export function LlmConfigSection({
 					llmModel: currentModel,
 					llmTemperature,
 					llmMaxTokens,
+					llmTodoExtractionModel,
 				},
 			});
 
@@ -179,6 +193,7 @@ export function LlmConfigSection({
 				llmModel: currentModel,
 				llmTemperature,
 				llmMaxTokens,
+				llmTodoExtractionModel,
 			});
 
 			// 2. 只有当核心配置改变且配置完整时，才测试并初始化 LLM
@@ -350,6 +365,29 @@ export function LlmConfigSection({
 							disabled={isLoading}
 						/>
 					</div>
+				</div>
+
+				{/* Todo Extraction Model */}
+				<div>
+					<label
+						htmlFor="llm-todo-extraction-model"
+						className="mb-1 block text-sm font-medium text-foreground"
+					>
+						{t("todoExtractionModel")}
+					</label>
+					<input
+						id="llm-todo-extraction-model"
+						type="text"
+						className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+						placeholder={llmModel || "qwen-turbo"}
+						value={llmTodoExtractionModel}
+						onChange={(e) => setLlmTodoExtractionModel(e.target.value)}
+						onBlur={handleSaveLlmConfig}
+						disabled={isLoading}
+					/>
+					<p className="mt-1 text-xs text-muted-foreground">
+						{t("todoExtractionModelHint")}
+					</p>
 				</div>
 
 				{/* 测试按钮 */}

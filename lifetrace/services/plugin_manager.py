@@ -42,7 +42,7 @@ def _ensure_plugin_base_dir() -> Path:
 # 默认的插件下载 URL 模板（指向 GitHub Releases）
 _DEFAULT_DOWNLOAD_URL = (
     "https://github.com/FreeU-group/FreeTodo/releases/download/plugin/media-crawler/v1.0.0/media-crawler-v1.0.0.zip"
-    #"plugin/media-crawler/v1.0.0/media-crawler-v1.0.0.zip"
+    # "plugin/media-crawler/v1.0.0/media-crawler-v1.0.0.zip"
 )
 
 # manifest 文件名
@@ -225,10 +225,7 @@ class MediaCrawlerPlugin:
             except PermissionError:
                 # Windows 上 .pyd 等文件可能被锁定导致 rename 失败，
                 # 直接强制删除旧目录（不做备份回滚）
-                logger.warning(
-                    "旧插件目录中有锁定文件无法重命名，"
-                    "将强制删除旧目录后重新安装"
-                )
+                logger.warning("旧插件目录中有锁定文件无法重命名，将强制删除旧目录后重新安装")
                 self._force_rmtree(install_dir)
                 # 如果强制删除后仍有残留文件，也删除目录本身
                 if install_dir.exists():
@@ -352,7 +349,6 @@ class MediaCrawlerPlugin:
             return True
 
         import asyncio
-        import sys
 
         install_path = self.install_dir
         max_retries = 3
@@ -366,15 +362,13 @@ class MediaCrawlerPlugin:
                 if attempt < max_retries:
                     wait = attempt * 2  # 2s, 4s
                     logger.warning(
-                        f"卸载插件第 {attempt} 次尝试失败（文件锁定），"
-                        f"{wait} 秒后重试: {e}"
+                        f"卸载插件第 {attempt} 次尝试失败（文件锁定），{wait} 秒后重试: {e}"
                     )
                     await asyncio.sleep(wait)
                 else:
                     # 最后一次尝试：使用 onerror 回调跳过无法删除的文件
                     logger.warning(
-                        f"卸载插件第 {attempt} 次仍有锁定文件，"
-                        "尝试跳过锁定文件强制删除..."
+                        f"卸载插件第 {attempt} 次仍有锁定文件，尝试跳过锁定文件强制删除..."
                     )
                     try:
                         self._force_rmtree(install_path)
@@ -441,37 +435,39 @@ class AsyncInstallProgress:
             _ensure_plugin_base_dir()
             tmp_zip = PLUGIN_BASE_DIR / f"{self._plugin.PLUGIN_ID}-{self._version}.zip"
 
-            async with httpx.AsyncClient(
-                timeout=httpx.Timeout(connect=30, read=120, write=30, pool=30),
-                follow_redirects=True,
-            ) as client:
-                async with client.stream("GET", self._url) as resp:
-                    if resp.status_code != 200:
+            async with (
+                httpx.AsyncClient(
+                    timeout=httpx.Timeout(connect=30, read=120, write=30, pool=30),
+                    follow_redirects=True,
+                ) as client,
+                client.stream("GET", self._url) as resp,
+            ):
+                if resp.status_code != 200:
+                    yield self._progress(
+                        "error",
+                        0,
+                        message=f"下载失败: HTTP {resp.status_code}",
+                        error=True,
+                    )
+                    return
+
+                total_size = int(resp.headers.get("content-length", 0))
+                downloaded = 0
+
+                with open(tmp_zip, "wb") as f:
+                    async for chunk in resp.aiter_bytes(chunk_size=65536):
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total_size > 0:
+                            pct = min(int(downloaded / total_size * 100), 100)
+                        else:
+                            pct = -1  # 未知大小
                         yield self._progress(
-                            "error",
-                            0,
-                            message=f"下载失败: HTTP {resp.status_code}",
-                            error=True,
+                            "downloading",
+                            pct,
+                            downloaded=downloaded,
+                            total=total_size,
                         )
-                        return
-
-                    total_size = int(resp.headers.get("content-length", 0))
-                    downloaded = 0
-
-                    with open(tmp_zip, "wb") as f:
-                        async for chunk in resp.aiter_bytes(chunk_size=65536):
-                            f.write(chunk)
-                            downloaded += len(chunk)
-                            if total_size > 0:
-                                pct = min(int(downloaded / total_size * 100), 100)
-                            else:
-                                pct = -1  # 未知大小
-                            yield self._progress(
-                                "downloading",
-                                pct,
-                                downloaded=downloaded,
-                                total=total_size,
-                            )
 
             yield self._progress("downloading", 100, message="下载完成")
 

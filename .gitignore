@@ -106,3 +106,5 @@ MediaCrawlerPro-SignSrv/logs/
 *.mov
 
 
+/ref_project
+/tests

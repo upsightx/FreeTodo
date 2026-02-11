@@ -1,5 +1,7 @@
 """
 微信先验配置
+
+严格参照 ref_project/proactive_key_method/src/priors/wechat.py 实现
 """
 
 import numpy as np
@@ -54,7 +56,7 @@ class WeChatPrior(AppPrior):
             )
 
         # 兜底：使用固定比例
-        if split_x is None:
+        if split_x is None or split_x > int(w * 0.7):
             split_x = int(w * 0.35)
 
         # 裁切

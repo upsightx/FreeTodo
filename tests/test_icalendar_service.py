@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from icalendar import Calendar
 
@@ -10,7 +10,7 @@ from lifetrace.services.icalendar_service import ICalendarService
 
 def test_export_vtodo_fallbacks_due_to_dtstart() -> None:
     service = ICalendarService()
-    dtstart = datetime(2024, 1, 1, 9, 30, tzinfo=timezone.utc)
+    dtstart = datetime(2024, 1, 1, 9, 30, tzinfo=UTC)
 
     ics = service.export_todos(
         [

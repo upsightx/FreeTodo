@@ -48,26 +48,18 @@ JOB_ENABLED_CONFIG_TO_JOB_ID = {
     "jobs.ocr.enabled": "ocr_job",
     "jobs.clean_data.enabled": "clean_data_job",
     "jobs.activity_aggregator.enabled": "activity_aggregator_job",
-    "jobs.todo_recorder.enabled": "todo_recorder_job",
     "jobs.audio_recording.enabled": "audio_recording_job",
     # snake_case 格式（前端 fetcher 转换后发送的格式）
     "jobs_recorder_enabled": "recorder_job",
     "jobs_ocr_enabled": "ocr_job",
     "jobs_clean_data_enabled": "clean_data_job",
     "jobs_activity_aggregator_enabled": "activity_aggregator_job",
-    "jobs_todo_recorder_enabled": "todo_recorder_job",
     "jobs_audio_recording_enabled": "audio_recording_job",
 }
 
 # 联动配置映射：配置键 -> 需要联动的配置键列表
 # 当一个配置变化时，需要同步更新关联的配置
-JOB_LINKED_CONFIG = {
-    # auto_todo_detection 与 todo_recorder 联动
-    "jobs.auto_todo_detection.enabled": ["jobs.todo_recorder.enabled"],
-    "jobs_auto_todo_detection_enabled": ["jobs_todo_recorder_enabled"],
-    "jobs.todo_recorder.enabled": ["jobs.auto_todo_detection.enabled"],
-    "jobs_todo_recorder_enabled": ["jobs_auto_todo_detection_enabled"],
-}
+JOB_LINKED_CONFIG: dict[str, list[str]] = {}
 
 
 # 简单前缀映射：prefix -> (prefix_length, dot_prefix)
@@ -97,7 +89,6 @@ _COMPOUND_JOB_NAMES: dict[str, str] = {
     "clean": "clean_data",
     "activity": "activity_aggregator",
     "auto": "auto_todo_detection",
-    "todo": "todo_recorder",
 }
 
 # 最小 jobs 配置部分数量
@@ -304,6 +295,7 @@ class ConfigService:
             "llm.api_key",
             "llm.base_url",
             "llm.model",
+            "llm.todo_extraction_model",
             "llm.temperature",
             "llm.max_tokens",
             # 服务器配置
@@ -318,9 +310,6 @@ class ConfigService:
             # 自动待办检测配置
             "jobs.auto_todo_detection.enabled",
             "jobs.auto_todo_detection.params.whitelist.apps",
-            # Todo 专用录制配置
-            "jobs.todo_recorder.enabled",
-            "jobs.todo_recorder.interval",
             # Dify 配置
             "dify.enabled",
             "dify.api_key",

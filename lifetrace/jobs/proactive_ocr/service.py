@@ -10,7 +10,8 @@ import time
 from functools import lru_cache
 from typing import Any
 
-from PIL import Image
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
 
 from lifetrace.llm.todo_extraction_service import todo_extraction_service
 from lifetrace.storage import ocr_mgr, screenshot_mgr
@@ -151,9 +152,20 @@ class ProactiveOCRService:
             f"({frame.width}x{frame.height})"
         )
 
+        # 检测空白/全黑图像（PrintWindow 偶尔返回空白帧）
+        img_std = float(np.std(frame.data))
+        if img_std < 5.0:
+            logger.warning(
+                f"ProactiveOCR: Captured image appears blank/uniform "
+                f"(std={img_std:.1f}), skipping OCR"
+            )
+            self.stats["failed_captures"] += 1
+            return None
+
         # ROI 裁切
         image_to_ocr = frame.data
         theme = None
+        roi_result = None
 
         if self.use_roi:
             t0 = time.perf_counter()
@@ -161,23 +173,42 @@ class ProactiveOCRService:
             timings["roi"] = (time.perf_counter() - t0) * 1000
 
             if roi_result:
-                image_to_ocr = roi_result.image
-                theme = roi_result.theme
-                logger.info(
-                    f"ProactiveOCR: ROI extracted - theme={theme}, "
-                    f"region={roi_result.width}x{roi_result.height} "
-                    f"(from x={roi_result.x}), time={timings['roi']:.1f}ms"
-                )
+                # 安全网：如果 ROI 区域面积不到原图的 10%，说明裁切可能出错，回退全图
+                roi_area = roi_result.width * roi_result.height
+                full_area = frame.width * frame.height
+                min_area_ratio = 0.10
+
+                if full_area > 0 and roi_area / full_area < min_area_ratio:
+                    logger.warning(
+                        f"ProactiveOCR: ROI too small ({roi_result.width}x{roi_result.height}, "
+                        f"{roi_area / full_area:.1%} of full image), falling back to full image"
+                    )
+                    roi_result = None  # 丢弃异常的 ROI
+                else:
+                    image_to_ocr = roi_result.image
+                    theme = roi_result.theme
+                    logger.info(
+                        f"ProactiveOCR: ROI extracted - theme={theme}, "
+                        f"region={roi_result.width}x{roi_result.height} "
+                        f"(from x={roi_result.x}, y={roi_result.y}), "
+                        f"time={timings['roi']:.1f}ms"
+                    )
 
         # 执行 OCR 识别
-        logger.debug("ProactiveOCR: Starting OCR recognition...")
+        ocr_h, ocr_w = image_to_ocr.shape[:2]
+        logger.info(
+            f"ProactiveOCR: OCR input {ocr_w}x{ocr_h} "
+            f"(resize_max_side={self.resize_max_side}, det_limit={self.det_limit_side_len})"
+        )
         t0 = time.perf_counter()
         ocr_result = self.ocr_engine.ocr(image_to_ocr)
         timings["ocr_total"] = (time.perf_counter() - t0) * 1000
 
         logger.info(
             f"ProactiveOCR: OCR completed in {timings['ocr_total']:.0f}ms "
-            f"(det={ocr_result.det_time_ms:.0f}ms, rec={ocr_result.rec_time_ms:.0f}ms)"
+            f"(det={ocr_result.det_time_ms:.0f}ms, "
+            f"cls={ocr_result.cls_time_ms:.0f}ms, "
+            f"rec={ocr_result.rec_time_ms:.0f}ms)"
         )
 
         # 过滤低置信度结果
@@ -194,7 +225,14 @@ class ProactiveOCRService:
 
             # 保存截图和 OCR 结果到数据库
             screenshot_id = self._save_to_database(
-                frame, window, app_type, text_content, ocr_result, valid_lines
+                frame,
+                window,
+                app_type,
+                text_content,
+                ocr_result,
+                valid_lines,
+                roi_image=roi_result.image if roi_result else None,
+                ocr_input_image=image_to_ocr,
             )
 
             if screenshot_id:
@@ -217,6 +255,88 @@ class ProactiveOCRService:
             "timings": timings,
         }
 
+    @staticmethod
+    def _draw_ocr_visualization(
+        image: np.ndarray,
+        valid_lines: list,
+    ) -> Image.Image:
+        """在图像上绘制 OCR 识别结果的边界框和文本标注
+
+        Args:
+            image: OCR 输入图像 (numpy array, RGB)
+            valid_lines: 通过置信度过滤后的 OcrLine 列表
+
+        Returns:
+            带有边界框标注的 PIL Image
+        """
+        vis_img = Image.fromarray(image.copy())
+        draw = ImageDraw.Draw(vis_img)
+
+        # 尝试加载字体（回退到默认字体）
+        font = None
+        font_small = None
+        try:
+            # Windows 系统常见中文字体
+            for font_name in [
+                "msyh.ttc",  # 微软雅黑
+                "simhei.ttf",  # 黑体
+                "simsun.ttc",  # 宋体
+                "arial.ttf",  # Arial
+            ]:
+                try:
+                    font = ImageFont.truetype(font_name, 14)
+                    font_small = ImageFont.truetype(font_name, 11)
+                    break
+                except OSError:
+                    continue
+        except Exception:
+            pass
+
+        if font is None:
+            font = ImageFont.load_default()
+            font_small = font
+
+        for line in valid_lines:
+            bbox = line.bbox_px
+            x1, y1 = bbox.x, bbox.y
+            x2, y2 = bbox.x + bbox.width, bbox.y + bbox.height
+
+            # 根据置信度选择颜色：高置信度绿色，中等黄色，低置信度红色
+            if line.score >= 0.95:
+                box_color = (0, 200, 0)  # 绿色
+            elif line.score >= 0.85:
+                box_color = (0, 160, 255)  # 蓝色
+            else:
+                box_color = (255, 140, 0)  # 橙色
+
+            # 画边界框
+            draw.rectangle([x1, y1, x2, y2], outline=box_color, width=2)
+
+            # 画标签背景（置信度 + 文本预览）
+            score_text = f"{line.score:.2f}"
+            label = f"{score_text} {line.text[:20]}"
+            label_bbox = draw.textbbox((0, 0), label, font=font_small)
+            label_w = label_bbox[2] - label_bbox[0] + 6
+            label_h = label_bbox[3] - label_bbox[1] + 4
+
+            # 标签放在框的上方，如果空间不够就放下方
+            label_y = y1 - label_h - 2
+            if label_y < 0:
+                label_y = y2 + 2
+
+            draw.rectangle(
+                [x1, label_y, x1 + label_w, label_y + label_h],
+                fill=box_color,
+            )
+            draw.text(
+                (x1 + 3, label_y + 2),
+                label,
+                fill=(255, 255, 255),
+                font=font_small,
+            )
+
+        return vis_img
+
     def _save_to_database(
         self,
         frame,
@@ -225,6 +345,8 @@ class ProactiveOCRService:
         text_content: str,
         ocr_result,
         valid_lines,
+        roi_image=None,
+        ocr_input_image=None,
     ) -> int | None:
         """保存截图和 OCR 结果到数据库"""
         try:
@@ -237,9 +359,33 @@ class ProactiveOCRService:
             filename = f"proactive_{app_type.value}_{timestamp}_{frame.capture_id}.png"
             file_path = str(screenshots_dir / filename)
 
-            # 保存图像（PIL Image）
+            # 保存原始图像（PIL Image）
             img = Image.fromarray(frame.data)
             img.save(file_path)
+
+            # 保存 ROI 裁切后的图像
+            if roi_image is not None:
+                roi_filename = f"proactive_{app_type.value}_{timestamp}_{frame.capture_id}_roi.png"
+                roi_file_path = str(screenshots_dir / roi_filename)
+                roi_img = Image.fromarray(roi_image)
+                roi_img.save(roi_file_path)
+                logger.debug(f"ProactiveOCR: ROI image saved to {roi_file_path}")
+
+            # 保存 OCR 可视化图像（在 OCR 输入图像上画框）
+            if ocr_input_image is not None and valid_lines:
+                try:
+                    vis_img = self._draw_ocr_visualization(ocr_input_image, valid_lines)
+                    vis_filename = (
+                        f"proactive_{app_type.value}_{timestamp}_{frame.capture_id}_ocr.png"
+                    )
+                    vis_file_path = str(screenshots_dir / vis_filename)
+                    vis_img.save(vis_file_path)
+                    logger.debug(
+                        f"ProactiveOCR: OCR visualization saved to {vis_file_path} "
+                        f"({len(valid_lines)} boxes)"
+                    )
+                except Exception as e:
+                    logger.warning(f"ProactiveOCR: Failed to save OCR visualization: {e}")
 
             # 计算文件哈希
             with open(file_path, "rb") as f:
@@ -281,16 +427,21 @@ class ProactiveOCRService:
 
             if ocr_result_id:
                 logger.debug(f"ProactiveOCR: Saved OCR result_id={ocr_result_id}")
-                # 可选：自动触发基于 OCR 文本的待办提取
+                # 自动触发基于 OCR 文本的待办提取
+                # 同时检查 proactive_ocr 自身开关和全局自动待办检测开关
                 try:
                     auto_extract = settings.get(
                         "jobs.proactive_ocr.params.auto_extract_todos", False
                     )
+                    global_auto_todo = settings.get("jobs.auto_todo_detection.enabled", False)
                     min_text_length = settings.get(
                         "jobs.proactive_ocr.params.min_text_length",
                         10,
                     )
-                    if auto_extract and len((text_content or "").strip()) >= min_text_length:
+                    should_extract = (auto_extract or global_auto_todo) and len(
+                        (text_content or "").strip()
+                    ) >= min_text_length
+                    if should_extract:
                         logger.info(
                             "ProactiveOCR: auto_extract_todos 开启，开始基于 OCR 文本提取待办"
                         )

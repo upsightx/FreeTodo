@@ -235,9 +235,14 @@ if (!gotTheLock) {
 		trayManager = managers.trayManager;
 		shortcutManager = managers.shortcutManager;
 
-		// 启动系统级通知弹窗（每 10 秒从左下角弹出，3 秒后自动消失）
+		// 初始化系统级通知弹窗（事件驱动：自动待办检测时触发）
 		notificationPopupManager = new NotificationPopupManager();
-		notificationPopupManager.start();
+		notificationPopupManager.init();
+
+		// 注册 IPC 事件：渲染进程触发通知弹窗（支持动态内容）
+		ipcMain.on("trigger-notification-popup", (_event, data?: { title?: string; message?: string }) => {
+			notificationPopupManager?.trigger(data);
+		});
 	});
 }
 

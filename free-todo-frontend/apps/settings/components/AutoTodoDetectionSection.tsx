@@ -65,18 +65,14 @@ export function AutoTodoDetectionSection({
 	const isLoading = loading || saveConfigMutation.isPending;
 
 	// 自动待办检测处理
-	// 与 Todo 专用录制任务联动：同时开启/关闭两个功能
 	const handleToggleAutoTodoDetection = async (enabled: boolean) => {
 		try {
 			// 记录保存时间戳
 			lastSaveTimeRef.current = Date.now();
 
-			// 同时保存 autoTodoDetection 和 todoRecorder 的状态
-			// 后端 ConfigService 会自动处理联动逻辑
 			await saveConfigMutation.mutateAsync({
 				data: {
 					jobsAutoTodoDetectionEnabled: enabled,
-					jobsTodoRecorderEnabled: enabled, // 联动 Todo 专用录制
 				},
 			});
 			setAutoTodoDetectionEnabled(enabled);

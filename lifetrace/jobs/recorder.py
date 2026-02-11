@@ -23,8 +23,6 @@ from .recorder_capture import (
     extract_screen_id_from_path,
     get_unprocessed_files,
     process_screenshot_event,
-    should_detect_todos,
-    trigger_todo_detection_async,
 )
 from .recorder_config import UNKNOWN_APP, UNKNOWN_WINDOW, with_timeout
 
@@ -178,9 +176,6 @@ class ScreenRecorder:
         if screenshot_id:
             logger.debug(f"[窗口 {screen_id}] 截图记录已保存到数据库: {screenshot_id}")
             process_screenshot_event(screenshot_id, app_name, window_title, timestamp)
-
-            if should_detect_todos(app_name):
-                trigger_todo_detection_async(screenshot_id, app_name)
         else:
             logger.warning(f"[窗口 {screen_id}] 数据库保存失败，但文件已保存: {filename}")
 

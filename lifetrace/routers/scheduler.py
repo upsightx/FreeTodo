@@ -304,14 +304,11 @@ def _sync_job_enabled_to_config(job_id: str, enabled: bool):
         "ocr_job": "jobs.ocr.enabled",
         "clean_data_job": "jobs.clean_data.enabled",
         "activity_aggregator_job": "jobs.activity_aggregator.enabled",
-        "todo_recorder_job": "jobs.todo_recorder.enabled",
         "proactive_ocr_job": "jobs.proactive_ocr.enabled",
     }
 
-    # 联动配置：todo_recorder_job 与 auto_todo_detection 联动
-    linked_config_map = {
-        "todo_recorder_job": "jobs.auto_todo_detection.enabled",
-    }
+    # 联动配置（暂无）
+    linked_config_map: dict[str, str] = {}
 
     if job_id in job_config_map:
         config_key = job_config_map[job_id]
@@ -351,7 +348,6 @@ def _sync_job_interval_to_config(
         "ocr_job": "jobs.ocr.interval",
         "clean_data_job": "jobs.clean_data.interval",
         "activity_aggregator_job": "jobs.activity_aggregator.interval",
-        "todo_recorder_job": "jobs.todo_recorder.interval",
         "proactive_ocr_job": "jobs.proactive_ocr.interval",
     }
 

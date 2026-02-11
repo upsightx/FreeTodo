@@ -186,6 +186,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
 		return await ipcRenderer.invoke("capture-and-extract-todos", panelBounds);
 	},
 
+	/**
+	 * 触发通知弹窗（由自动待办检测等事件调用）
+	 * @param data 可选的弹窗内容数据
+	 */
+	triggerNotificationPopup: (data?: { title?: string; message?: string }) => {
+		ipcRenderer.send("trigger-notification-popup", data);
+	},
+
 	// ========== Island 动态岛相关 API ==========
 
 	/**

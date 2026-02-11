@@ -1,6 +1,8 @@
 """
 先验配置基类
 定义应用先验的通用接口
+
+严格参照 ref_project/proactive_key_method/src/priors/base.py 实现
 """
 
 from abc import ABC, abstractmethod

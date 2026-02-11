@@ -97,7 +97,5 @@ export interface UiStoreState {
 	setSelectedExternalTools: (tools: string[]) => void;
 	// 通知弹窗设置
 	notificationPopupEnabled: boolean;
-	notificationPopupIntervalSeconds: number;
 	setNotificationPopupEnabled: (enabled: boolean) => void;
-	setNotificationPopupIntervalSeconds: (seconds: number) => void;
 }
