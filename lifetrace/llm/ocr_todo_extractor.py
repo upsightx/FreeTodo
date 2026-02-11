@@ -8,7 +8,7 @@ import hashlib
 import json
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from lifetrace.llm.llm_client import LLMClient
@@ -253,11 +253,16 @@ class OCRTodoExtractor:
                             continue
 
                         # 直接解析 LLM 返回的 ISO 时间字符串
+                        # LLM 输出的时间默认视为北京时间（UTC+8）
+                        _beijing_tz = timezone(timedelta(hours=8))
                         scheduled_time = None
                         raw_scheduled = todo_data.get("scheduled_time")
                         if raw_scheduled and isinstance(raw_scheduled, str):
                             try:
                                 scheduled_time = datetime.fromisoformat(raw_scheduled)
+                                # 如果是 naive datetime（无时区），视为北京时间
+                                if scheduled_time.tzinfo is None:
+                                    scheduled_time = scheduled_time.replace(tzinfo=_beijing_tz)
                             except (ValueError, TypeError) as e:
                                 logger.warning(f"解析 scheduled_time 失败: {raw_scheduled!r}, {e}")
 
