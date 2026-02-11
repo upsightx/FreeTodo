@@ -12,19 +12,19 @@ dependencies = [
     "sqlalchemy>=2.0.0",
     "sqlmodel>=0.0.22",
     "alembic>=1.14.0",
-    "python-multipart>=0.0.6",   # 文件上传支持（Form data）
-    "icalendar>=6.0.0",          # iCalendar (ICS) 导入/导出
+    "python-multipart>=0.0.6", # 文件上传支持（Form data）
+    "icalendar>=6.0.0", # iCalendar (ICS) 导入/导出
     # Screenshot and image processing
     "mss>=9.0.0",
     "Pillow>=10.0.0",
     "imagehash>=4.3.0",
-    "opencv-python>=4.8.0",  # For proactive OCR image processing
+    "opencv-python>=4.8.0", # For proactive OCR image processing
     # OCR processing (rapidocr requires numpy)
     "rapidocr-onnxruntime",
     "numpy>=2.4.2",
     # Audio processing (for ASR WebSocket stream)
-    "websockets>=16.0",      # WebSocket 客户端（用于连接 WhisperLiveKit 服务器）
-    "python-socks>=2.0.0",   # SOCKS 代理支持（websockets 库的可选依赖）
+    "websockets>=16.0", # WebSocket 客户端（用于连接 WhisperLiveKit 服务器）
+    "python-socks>=2.0.0", # SOCKS 代理支持（websockets 库的可选依赖）
     # FunASR 语音识别（可选，需要 Visual C++ 构建工具）
     # 如果安装失败，系统音频实时识别功能将不可用
     # 安装方法：
@@ -33,11 +33,11 @@ dependencies = [
     # "funasr>=1.0.0",  # 注释掉，作为可选依赖
     # Data processing
     "pyyaml>=6.0",
-    "openpyxl>=3.1.0",           # Excel 文件读写（用于 cookies 配置）
+    "openpyxl>=3.1.0", # Excel 文件读写（用于 cookies 配置）
     "sentence-transformers>=2.2.0", # 文本嵌入模型
-    "chromadb>=1.4.1",              # 向量数据库
-    "scipy>=1.9.0",                 # 科学计算（用于余弦距离）
-    "hdbscan>=0.8.0",               # 文本聚类算法
+    "chromadb>=1.4.1", # 向量数据库
+    "scipy>=1.9.0", # 科学计算（用于余弦距离）
+    "hdbscan>=0.8.0", # 文本聚类算法
     # Scheduler
     "apscheduler>=3.10.0",
     # Utils
@@ -58,10 +58,10 @@ dependencies = [
     # Logging
     "loguru>=0.7.3",
     # Observability (Phoenix + OpenInference)
-    "arize-phoenix>=12.33.0",  # Phoenix 服务器和 UI（包含 phoenix serve 命令）
-    "arize-phoenix-otel>=0.14.0",  # Phoenix OTEL 集成
-    "openinference-instrumentation>=0.1.0",  # OpenInference 基础工具（using_session 等）
-    "openinference-instrumentation-agno>=0.1.0",  # Agno 自动 instrument
+    "arize-phoenix>=12.33.0", # Phoenix 服务器和 UI（包含 phoenix serve 命令）
+    "arize-phoenix-otel>=0.14.0", # Phoenix OTEL 集成
+    "openinference-instrumentation>=0.1.0", # OpenInference 基础工具（using_session 等）
+    "openinference-instrumentation-agno>=0.1.0", # Agno 自动 instrument
     "opentelemetry-sdk>=1.39.0",
     "opentelemetry-exporter-otlp-proto-http>=1.39.0",
     # macOS specific dependencies (only install on macOS)
@@ -71,6 +71,7 @@ dependencies = [
     "pywin32>=306; sys_platform == 'win32'",
     "openinference-instrumentation-openai>=0.1.41",
     "agno-infra>=1.0.7",
+    "winocr>=0.0.15",
 ]
 
 [dependency-groups]

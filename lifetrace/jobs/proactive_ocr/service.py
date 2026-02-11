@@ -39,6 +39,8 @@ class ProactiveOCRService:
 
         # 从配置读取参数
         self.interval = settings.get("jobs.proactive_ocr.interval", 1.0)
+        self.ocr_backend = settings.get("jobs.proactive_ocr.ocr_backend", "auto")
+        self.winrt_lang = settings.get("jobs.proactive_ocr.winrt_lang", "zh-Hans-CN")
         self.use_roi = settings.get("jobs.proactive_ocr.use_roi", True)
         self.resize_max_side = settings.get("jobs.proactive_ocr.resize_max_side", 800)
         self.det_limit_side_len = settings.get("jobs.proactive_ocr.det_limit_side_len", 640)
@@ -51,10 +53,12 @@ class ProactiveOCRService:
         self.capture = get_capture(fps=1.0 / self.interval)
         self.roi_extractor = get_roi_extractor()
         self.ocr_engine = get_ocr_engine(
+            backend=self.ocr_backend,
             det_limit_side_len=self.det_limit_side_len,
             resize_max_side=self.resize_max_side,
             rec_batch_num=self.rec_batch_num,
             use_cls=self.use_cls,
+            winrt_lang=self.winrt_lang,
         )
 
         # 统计信息

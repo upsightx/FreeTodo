@@ -137,6 +137,8 @@ jobs:
     interval: 1.0 # 检测间隔（秒），默认1秒
     params:
       apps: ["wechat", "feishu"] # 目标应用列表
+      ocr_backend: auto # OCR后端：auto(自动选择) | winrt(Windows原生,最快) | rapidocr(跨平台)
+      winrt_lang: zh-Hans-CN # WinRT OCR 语言（zh-Hans-CN 简体中文, en 英文）
       use_roi: true # 是否使用ROI裁切加速（只识别聊天区域）
       resize_max_side: 1920 # 图像预缩放最大边长，0表示不缩放（仅对超大图像生效，避免内存溢出）
       det_limit_side_len: 960 # OCR检测输入边长限制（越大检测精度越高，但越慢；推荐640~960）

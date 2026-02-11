@@ -215,20 +215,50 @@ class OcrEngine:
         return [(line.text, line.score) for line in result.lines]
 
 
-# 单例实例
+# 单例实例（支持多后端）
 _engine_state: dict[str, OcrEngine | None] = {"instance": None}
 
 
 def get_ocr_engine(
+    backend: str = "auto",
     det_limit_side_len: int = 640,
     det_limit_type: str = "max",
     rec_batch_num: int = 8,
     resize_max_side: int = 0,
     use_cls: bool = False,
+    winrt_lang: str = "zh-Hans-CN",
 ) -> OcrEngine:
-    """获取OCR引擎单例"""
+    """
+    获取 OCR 引擎单例
+
+    Args:
+        backend: OCR 后端选择
+            - "auto": 自动选择（Windows 优先 WinRT，其他用 RapidOCR）
+            - "winrt": 强制使用 WinRT（仅 Windows）
+            - "rapidocr": 强制使用 RapidOCR（跨平台）
+        det_limit_side_len: RapidOCR 检测边长限制
+        det_limit_type: RapidOCR 边长限制类型
+        rec_batch_num: RapidOCR 识别批次大小
+        resize_max_side: 图像预缩放最大边长
+        use_cls: RapidOCR 是否启用方向分类
+        winrt_lang: WinRT OCR 语言代码
+    """
     instance = _engine_state["instance"]
-    if instance is None:
+    if instance is not None:
+        return instance
+
+    # 选择后端
+    chosen_backend = _resolve_backend(backend)
+
+    if chosen_backend == "winrt":
+        from .ocr_engine_winrt import WinRtOcrEngine
+
+        instance = WinRtOcrEngine(
+            lang=winrt_lang,
+            resize_max_side=resize_max_side,
+        )
+        logger.info("OCR backend: WinRT (Windows.Media.Ocr)")
+    else:
         instance = OcrEngine(
             det_limit_side_len=det_limit_side_len,
             det_limit_type=det_limit_type,
@@ -236,5 +266,43 @@ def get_ocr_engine(
             resize_max_side=resize_max_side,
             use_cls=use_cls,
         )
-        _engine_state["instance"] = instance
+        logger.info("OCR backend: RapidOCR (ONNX Runtime)")
+
+    _engine_state["instance"] = instance
     return instance
+
+
+def _resolve_backend(backend: str) -> str:
+    """
+    解析 OCR 后端选择
+
+    Args:
+        backend: "auto", "winrt", "rapidocr"
+
+    Returns:
+        实际使用的后端名称
+    """
+    if backend == "rapidocr":
+        return "rapidocr"
+
+    if backend == "winrt":
+        from .ocr_engine_winrt import WINOCR_AVAILABLE
+
+        if WINOCR_AVAILABLE:
+            return "winrt"
+        logger.warning("WinRT OCR requested but not available, falling back to RapidOCR")
+        return "rapidocr"
+
+    # auto: Windows 上优先 WinRT
+    if backend == "auto":
+        import platform
+
+        if platform.system() == "Windows":
+            from .ocr_engine_winrt import WINOCR_AVAILABLE
+
+            if WINOCR_AVAILABLE:
+                return "winrt"
+        return "rapidocr"
+
+    logger.warning(f"Unknown OCR backend '{backend}', falling back to RapidOCR")
+    return "rapidocr"
