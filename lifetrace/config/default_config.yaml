@@ -140,6 +140,8 @@ jobs:
       use_roi: true # 是否使用ROI裁切加速（只识别聊天区域）
       resize_max_side: 1920 # 图像预缩放最大边长，0表示不缩放（仅对超大图像生效，避免内存溢出）
       det_limit_side_len: 960 # OCR检测输入边长限制（越大检测精度越高，但越慢；推荐640~960）
+      rec_batch_num: 8 # 识别批次大小（越大越快，内存稍增；推荐6~8）
+      use_cls: false # 是否启用方向分类（聊天场景不需要，关闭可省50~200ms）
       min_confidence: 0.8 # 最低置信度阈值
       auto_extract_todos: true # 是否在识别后自动触发基于 OCR 文本的待办提取
       min_text_length: 5 # 触发自动待办提取所需的最小文本长度（按字符数）

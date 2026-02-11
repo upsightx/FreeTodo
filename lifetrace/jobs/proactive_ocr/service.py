@@ -42,6 +42,8 @@ class ProactiveOCRService:
         self.use_roi = settings.get("jobs.proactive_ocr.use_roi", True)
         self.resize_max_side = settings.get("jobs.proactive_ocr.resize_max_side", 800)
         self.det_limit_side_len = settings.get("jobs.proactive_ocr.det_limit_side_len", 640)
+        self.rec_batch_num = settings.get("jobs.proactive_ocr.rec_batch_num", 8)
+        self.use_cls = settings.get("jobs.proactive_ocr.use_cls", False)
         self.min_confidence = settings.get("jobs.proactive_ocr.min_confidence", 0.8)
 
         # 初始化组件
@@ -51,6 +53,8 @@ class ProactiveOCRService:
         self.ocr_engine = get_ocr_engine(
             det_limit_side_len=self.det_limit_side_len,
             resize_max_side=self.resize_max_side,
+            rec_batch_num=self.rec_batch_num,
+            use_cls=self.use_cls,
         )
 
         # 统计信息

@@ -40,9 +40,10 @@ class OcrEngine:
         self,
         det_limit_side_len: int = 640,
         det_limit_type: str = "max",
-        rec_batch_num: int = 1,
+        rec_batch_num: int = 8,
         use_gpu: bool = False,
         resize_max_side: int = 0,  # 预缩放最大边长，0表示不缩放
+        use_cls: bool = False,  # 是否启用方向分类（聊天场景不需要）
     ):
         """
         初始化OCR引擎
@@ -50,9 +51,10 @@ class OcrEngine:
         Args:
             det_limit_side_len: 检测输入图像的边长限制，减小可降低内存占用
             det_limit_type: 边长限制类型，"max"限制最大边，"min"限制最小边
-            rec_batch_num: 识别批次大小，减小可降低内存峰值
+            rec_batch_num: 识别批次大小，增大可提升速度（推荐6~8）
             use_gpu: 是否使用GPU（需要安装CUDA版本onnxruntime）
             resize_max_side: 输入图像预缩放的最大边长，0表示不缩放
+            use_cls: 是否启用方向分类，关闭可省50~200ms
         """
         if not RAPIDOCR_AVAILABLE:
             raise ImportError(
@@ -78,6 +80,7 @@ class OcrEngine:
         self.det_limit_type = det_limit_type
         self.rec_batch_num = rec_batch_num
         self.resize_max_side = resize_max_side
+        self.use_cls = use_cls
 
     def _resize_image(self, image: np.ndarray, max_side: int) -> tuple:
         """
@@ -125,8 +128,8 @@ class OcrEngine:
         if self.resize_max_side > 0:
             image, scale = self._resize_image(image, self.resize_max_side)
 
-        # 执行OCR
-        result, elapse = self.engine(image)
+        # 执行OCR（use_cls=False 跳过方向分类以加速）
+        result, elapse = self.engine(image, use_cls=self.use_cls)
 
         latency_ms = (time.time() - start_time) * 1000
 
@@ -219,8 +222,9 @@ _engine_state: dict[str, OcrEngine | None] = {"instance": None}
 def get_ocr_engine(
     det_limit_side_len: int = 640,
     det_limit_type: str = "max",
-    rec_batch_num: int = 1,
+    rec_batch_num: int = 8,
     resize_max_side: int = 0,
+    use_cls: bool = False,
 ) -> OcrEngine:
     """获取OCR引擎单例"""
     instance = _engine_state["instance"]
@@ -230,6 +234,7 @@ def get_ocr_engine(
             det_limit_type=det_limit_type,
             rec_batch_num=rec_batch_num,
             resize_max_side=resize_max_side,
+            use_cls=use_cls,
         )
         _engine_state["instance"] = instance
     return instance
