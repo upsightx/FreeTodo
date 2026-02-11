@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { getTranscriptionApiAudioTranscriptionRecordingIdGet } from "@/lib/generated/audio/audio";
+import { getAudioApiBaseUrl } from "../utils/getAudioApiBaseUrl";
 
 type TodoItem = {
 	id?: string;
@@ -14,112 +15,70 @@ type TodoItem = {
 	linked_todo_id?: number | null;
 };
 
-type ScheduleItem = {
-	id?: string;
-	dedupe_key?: string;
-	title: string;
-	time?: string;
-	description?: string;
-	source_text?: string;
-	linked?: boolean;
-	linked_todo_id?: number | null;
-};
-
 type ExtractionData = {
 	todos?: TodoItem[];
-	schedules?: ScheduleItem[];
 };
 
 /**
  * Hook for linking extracted items to todos
- * 用于将提取的待办/日程关联到待办列表
+ * 用于将提取的待办关联到待办列表
  */
 export function useAudioLink() {
-	const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
+	const apiBaseUrl = getAudioApiBaseUrl();
 
-	/**
-	 * Link extracted items to todos
-	 * @param recordingId - 录音ID
-	 * @param links - 链接列表，包含 kind (todo/schedule), item_id, todo_id
-	 * @param optimized - 是否更新优化文本的提取结果（默认 true）
-	 */
 	const linkExtractedItems = useCallback(
 		async (
 			recordingId: number,
-			links: Array<{ kind: "todo" | "schedule"; item_id: string; todo_id: number }>,
-			optimized: boolean = true
+			links: Array<{ kind: "todo"; item_id: string; todo_id: number }>,
 		) => {
-			const response = await fetch(
-				`${apiBaseUrl}/api/audio/transcription/${recordingId}/link?optimized=${optimized}`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ links }),
-				}
-			);
+			const response = await fetch(`${apiBaseUrl}/api/audio/transcription/${recordingId}/link`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ links }),
+			});
 			if (!response.ok) {
 				throw new Error(`Failed to link items: ${response.status}`);
 			}
 			return response.json();
 		},
-		[apiBaseUrl]
+		[apiBaseUrl],
 	);
 
-	/**
-	 * Get transcription extraction data
-	 * @param recordingId - 录音ID
-	 * @param optimized - 是否获取优化文本的提取结果（默认 true）
-	 */
-	const getTranscriptionExtraction = useCallback(
-		async (recordingId: number, optimized: boolean = true): Promise<ExtractionData> => {
-			const data = (await getTranscriptionApiAudioTranscriptionRecordingIdGet(recordingId, {
-				optimized,
-			})) as ExtractionData;
-			return {
-				todos: Array.isArray(data.todos) ? data.todos : [],
-				schedules: Array.isArray(data.schedules) ? data.schedules : [],
-			};
-		},
-		[]
-	);
+	const getTranscriptionExtraction = useCallback(async (recordingId: number): Promise<ExtractionData> => {
+		const data = (await getTranscriptionApiAudioTranscriptionRecordingIdGet(recordingId)) as ExtractionData;
+		return {
+			todos: Array.isArray(data.todos) ? data.todos : [],
+		};
+	}, []);
 
-	/**
-	 * Link items and update extraction data
-	 * 关联项目并更新提取数据（完整流程）
-	 * @param byRec - 按 recordingId 分组的链接数据
-	 * @param onUpdate - 更新提取数据的回调
-	 */
 	const linkAndRefresh = useCallback(
 		async (
-			byRec: Map<number, Array<{ kind: "todo" | "schedule"; item_id: string; todo_id: number }>>,
-			onUpdate: (recordingId: number, data: ExtractionData) => void
+			byRec: Map<number, Array<{ kind: "todo"; item_id: string; todo_id: number }>>,
+			onUpdate: (recordingId: number, data: ExtractionData) => void,
 		) => {
-			// 1. 调用 link API
 			await Promise.all(
 				Array.from(byRec.entries()).map(async ([recId, links]) => {
-					await linkExtractedItems(recId, links, true);
-				})
+					await linkExtractedItems(recId, links);
+				}),
 			);
 
-			// 2. 重新拉取数据
 			try {
 				const refreshed = await Promise.all(
 					Array.from(byRec.keys()).map(async (recId) => {
-						const data = await getTranscriptionExtraction(recId, true);
+						const data = await getTranscriptionExtraction(recId);
 						return { id: recId, ...data };
-					})
+					}),
 				);
 
-				// 3. 调用更新回调
 				for (const r of refreshed) {
-					onUpdate(r.id, { todos: r.todos, schedules: r.schedules });
+					onUpdate(r.id, { todos: r.todos });
 				}
 			} catch (error) {
 				console.error("Failed to refresh extraction data:", error);
 				throw error;
 			}
 		},
-		[linkExtractedItems, getTranscriptionExtraction]
+		[linkExtractedItems, getTranscriptionExtraction],
 	);
 
 	return {
