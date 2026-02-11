@@ -70,6 +70,7 @@ FreeTodo/
 *.tmp
 .cache/
 .ruff_cache/
+.run-logs/
 
 # Local startup scripts
 scripts/start-all.bat

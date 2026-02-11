@@ -65,24 +65,6 @@ FreeTodo adopts a **frontend-backend separation** architecture:
 - Node.js 20+
 - pnpm package manager
 
-<!-- ### One-Click Install & Start
-
-> Requires Python 3.12+, Node.js 20+, and Git. Tauri/Electron build also requires Rust.
-
-**macOS/Linux**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/FreeU-group/FreeTodo/main/scripts/install.sh | bash
-```
-
-**Windows (PowerShell)**
-
-```powershell
-iwr -useb https://raw.githubusercontent.com/FreeU-group/FreeTodo/main/scripts/install.ps1 | iex
-```
-
-For full options, environment variables, and examples, see: [.github/INSTALL.md](.github/INSTALL.md) -->
-
 ### Install Dependencies
 
 This project uses [uv](https://github.com/astral-sh/uv) for fast and reliable dependency management.
@@ -116,6 +98,9 @@ source .venv/bin/activate
 
 # Windows
 .venv\Scripts\activate
+
+# Install frontend dependencies
+pnpm -C free-todo-frontend install
 ```
 
 ### Start All Services (One-Click)
@@ -125,11 +110,11 @@ For development, you can start **backend + AgentOS + frontend** with a single sc
 **macOS/Linux**
 
 ```bash
+# The bash startup script is temporarily unstable.
+# It's recommended to follow the step-by-step startup below.
 chmod +x scripts/start_all.sh
 ./scripts/start_all.sh
 ```
-
-This runs all services in the background and writes logs to `.run-logs/`.
 
 **Windows (PowerShell)**
 
@@ -141,42 +126,21 @@ This opens three terminal windows to run each service.
 
 ### Start the Backend Service
 
-> **Note**: On first run, the system will automatically create `config.yaml` from `default_config.yaml` if it doesn't exist. You can customize your settings by editing `lifetrace/config/config.yaml`.
-
 **Start the server:**
 
 ```bash
 python -m lifetrace.server
+python -m lifetrace.agent_os
 ```
-
-> **Customize Prompts**: If you want to modify AI prompts for different features, you can edit `lifetrace/config/prompt.yaml`.
-
-The backend service will automatically find an available port starting from `8001` (or `8100` for build version). If the default port is occupied, it will automatically use the next available port and display the actual port in the console.
-
-- **Default Backend Port**: `http://localhost:8001`
-- **API Documentation**: The actual API docs URL will be displayed in the console (typically `http://localhost:8001/docs`)
 
 ### Start the Frontend Service
 
-The frontend is required to use FreeTodo. Start the frontend development server:
-
 ```bash
-cd free-todo-frontend
-
-pnpm install
-pnpm dev
+# Run from the repo root:
+pnpm -C free-todo-frontend dev
 ```
 
-The frontend development server will:
-- Automatically find an available port starting from `3001` (default port for development)
-- Automatically detect the running FreeTodo backend port by checking the `/health` endpoint
-- Set up API proxy to the detected backend port
-
 The actual frontend URL and backend connection status will be displayed in the console. Once both services are running, open your browser and navigate to the displayed frontend URL (typically `http://localhost:3001`) to enjoy FreeTodo! 🎉
-
-> **Note**: If ports are occupied, both frontend and backend will automatically find the next available ports. The console will show the actual ports being used.
-
-For more details, see: [free-todo-frontend/README.md](free-todo-frontend/README.md)
 
 ## 📋 TODO & Roadmap
 

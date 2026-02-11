@@ -64,25 +64,7 @@ FreeTodo 采用**前后端分离**架构：
 
 - Node.js 20+
 - pnpm 包管理器
-<!--
-### 一键安装并启动
-
-> 需要安装 Python 3.12+、Node.js 20+、Git；Tauri/Electron 构建还需要 Rust。
-
-**macOS/Linux**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/FreeU-group/FreeTodo/main/scripts/install.sh | bash
-```
-
-**Windows (PowerShell)**
-
-```powershell
-iwr -useb https://raw.githubusercontent.com/FreeU-group/FreeTodo/main/scripts/install.ps1 | iex
-```
-
-完整选项、环境变量和示例请见：[.github/INSTALL_CN.md](.github/INSTALL_CN.md) -->
-
+- 
 ### 安装依赖
 
 本项目使用 [uv](https://github.com/astral-sh/uv) 进行快速可靠的依赖管理。
@@ -106,6 +88,8 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 **安装依赖并同步环境:**
 
+以下命令均在项目根目录下运行：
+
 ```bash
 # 从 pyproject.toml 和 uv.lock 同步依赖
 uv sync
@@ -116,6 +100,9 @@ source .venv/bin/activate
 
 # Windows
 .venv\Scripts\activate
+
+# 安装前端依赖
+pnpm -C free-todo-frontend install
 ```
 
 ### 一键启动全部服务
@@ -125,11 +112,12 @@ source .venv/bin/activate
 **macOS/Linux**
 
 ```bash
+# bash 脚本启动暂不稳定，建议参考后文进行分步启动
 chmod +x scripts/start_all.sh
 ./scripts/start_all.sh
 ```
 
-该脚本会在后台启动所有服务，并将日志写入 `.run-logs/`。
+<!-- 该脚本会在后台启动所有服务，并将日志写入 `.run-logs/`。 -->
 
 **Windows（PowerShell）**
 
@@ -141,40 +129,39 @@ chmod +x scripts/start_all.sh
 
 ### 启动后端服务
 
-> **注意**：首次运行时，如果 `config.yaml` 不存在，系统会自动从 `default_config.yaml` 创建。您可以通过编辑 `lifetrace/config/config.yaml` 来自定义设置。
+<!-- > **注意**：首次运行时，如果 `config.yaml` 不存在，系统会自动从 `default_config.yaml` 创建。您可以通过编辑 `lifetrace/config/config.yaml` 来自定义设置。 -->
 
 **启动服务器：**
 
 ```bash
 python -m lifetrace.server
+python -m lifetrace.agent_os
 ```
 
-> **自定义提示词**：如果您想修改不同功能的 AI 提示词，可以编辑 `lifetrace/config/prompt.yaml` 文件。
+<!-- > **自定义提示词**：如果您想修改不同功能的 AI 提示词，可以编辑 `lifetrace/config/prompt.yaml` 文件。
 
 后端服务会自动从 `8001` 端口（构建版为 `8100`）开始查找可用端口。如果默认端口被占用，会自动使用下一个可用端口，并在控制台显示实际使用的端口。
 
 - **默认后端端口**: `http://localhost:8001`
-- **API 文档**: 实际 API 文档地址会在控制台显示（通常为 `http://localhost:8001/docs`）
+- **API 文档**: 实际 API 文档地址会在控制台显示（通常为 `http://localhost:8001/docs`） -->
 
 ### 启动前端服务
 
-前端是使用 FreeTodo 的必需组件。启动前端开发服务器：
+<!-- 前端是使用 FreeTodo 的必需组件。启动前端开发服务器： -->
 
 ```bash
-cd free-todo-frontend
-
-pnpm install
-pnpm dev
+# 在根目录下运行：
+pnpm -C free-todo-frontend dev
 ```
-
+<!-- 
 前端开发服务器会：
 - 自动从 `3001` 端口（开发版默认端口）开始查找可用端口
 - 通过检查 `/health` 端点自动检测运行中的 FreeTodo 后端端口
-- 自动设置 API 代理指向检测到的后端端口
+- 自动设置 API 代理指向检测到的后端端口 -->
 
 实际的前端地址和后端连接状态会在控制台显示。服务启动后，在浏览器中访问控制台显示的前端地址（通常为 `http://localhost:3001`）开始使用 FreeTodo！🎉
 
-> **注意**：如果端口被占用，前端和后端都会自动查找下一个可用端口。控制台会显示实际使用的端口。
+<!-- > **注意**：如果端口被占用，前端和后端都会自动查找下一个可用端口。控制台会显示实际使用的端口。 -->
 
 ## 📋 待办事项与路线图
 
