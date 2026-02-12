@@ -93,6 +93,9 @@ class HardwareAudioSession:
                     task = asyncio.create_task(self._update_transcription())
                     self._update_tasks.add(task)
                     task.add_done_callback(self._update_tasks.discard)
+                    perception_task = asyncio.create_task(self._publish_perception(text.strip()))
+                    self._update_tasks.add(perception_task)
+                    perception_task.add_done_callback(self._update_tasks.discard)
 
             await self.asr_client.transcribe_stream(
                 audio_stream=self._audio_generator(),
@@ -102,6 +105,34 @@ class HardwareAudioSession:
             logger.error(f"[hardware] ASR 失败: {e}", exc_info=True)
         finally:
             await self._finalize()
+
+    async def _publish_perception(self, text: str) -> None:
+        try:
+            from lifetrace.perception.manager import (  # noqa: PLC0415
+                try_get_perception_manager,
+            )
+            from lifetrace.perception.models import (  # noqa: PLC0415
+                Modality,
+                PerceptionEvent,
+                SourceType,
+            )
+
+            mgr = try_get_perception_manager()
+            if mgr is None:
+                return
+
+            event = PerceptionEvent(
+                timestamp=get_utc_now(),
+                source=SourceType.MIC_HARDWARE,
+                modality=Modality.AUDIO,
+                content_text=text,
+                metadata={"source": "hardware_audio", "uid": self.uid},
+                priority=2,
+            )
+            await mgr.publish_event(event)
+        except Exception:
+            # Perception stream is best-effort.
+            return
 
     async def _ensure_recording_created(self) -> int:
         """确保录音记录已创建（第一次调用时创建临时记录）。"""

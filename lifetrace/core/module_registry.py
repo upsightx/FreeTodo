@@ -67,6 +67,7 @@ MODULES: tuple[ModuleDefinition, ...] = (
     ModuleDefinition(id="floating_capture", router_module="lifetrace.routers.floating_capture"),
     ModuleDefinition(id="crawler", router_module="lifetrace.routers.crawler"),
     ModuleDefinition(id="audio", router_module="lifetrace.routers.audio"),
+    ModuleDefinition(id="perception", router_module="lifetrace.routers.perception_ws"),
     ModuleDefinition(id="proactive_ocr", router_module="lifetrace.routers.proactive_ocr"),
     ModuleDefinition(id="plugin", router_module="lifetrace.routers.plugin"),
 )

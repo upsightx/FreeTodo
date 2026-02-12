@@ -435,6 +435,48 @@ class ProactiveOCRService:
 
             if ocr_result_id:
                 logger.debug(f"ProactiveOCR: Saved OCR result_id={ocr_result_id}")
+
+                # Publish to Perception Stream (best-effort, threadsafe).
+                try:
+                    from lifetrace.perception.manager import (  # noqa: PLC0415
+                        try_get_perception_manager,
+                    )
+                    from lifetrace.perception.models import (  # noqa: PLC0415
+                        Modality,
+                        PerceptionEvent,
+                        SourceType,
+                    )
+                    from lifetrace.util.time_utils import get_utc_now  # noqa: PLC0415
+
+                    mgr = try_get_perception_manager()
+                    if (
+                        mgr is not None
+                        and mgr.is_ocr_enabled()
+                        and (text_content or "").strip()
+                        and screenshot_id
+                    ):
+                        event = PerceptionEvent(
+                            timestamp=get_utc_now(),
+                            source=SourceType.OCR_PROACTIVE,
+                            modality=Modality.TEXT,
+                            content_text=(text_content or "").strip(),
+                            content_raw=f"/api/screenshots/{screenshot_id}/image",
+                            metadata={
+                                "source": "proactive_ocr",
+                                "screenshot_id": screenshot_id,
+                                "ocr_result_id": ocr_result_id,
+                                "app_name": app_type.value,
+                                "window_title": window.title,
+                                "confidence": avg_confidence,
+                                "hwnd": window.hwnd,
+                                "pid": window.pid,
+                            },
+                            priority=1,
+                        )
+                        mgr.publish_event_threadsafe(event)
+                except Exception:
+                    pass
+
                 # 自动触发基于 OCR 文本的待办提取
                 # 同时检查 proactive_ocr 自身开关和全局自动待办检测开关
                 try:

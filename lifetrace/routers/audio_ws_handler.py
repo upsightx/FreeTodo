@@ -15,6 +15,38 @@ from fastapi import WebSocket, WebSocketDisconnect
 from lifetrace.util.time_utils import get_utc_now
 
 
+def _track_handler_task(task_set: set[asyncio.Task], coro) -> None:
+    task = asyncio.create_task(coro)
+    task_set.add(task)
+    task.add_done_callback(task_set.discard)
+
+
+async def _publish_perception_audio_sentence(*, text: str, logger) -> None:
+    try:
+        from lifetrace.perception.manager import try_get_perception_manager  # noqa: PLC0415
+
+        mgr = try_get_perception_manager()
+        if mgr is None:
+            return
+        adapter = mgr.get_audio_adapter()
+        if adapter is None:
+            return
+        await adapter.on_transcription(text, metadata={"source": "audio_ws"})
+    except Exception as exc:
+        logger.debug(f"Perception publish skipped: {exc}")
+
+
+def _wrap_on_final_sentence_with_perception(*, base_on_final_sentence, logger, task_set):
+    def on_final_sentence(text: str) -> None:
+        base_on_final_sentence(text)
+        _track_handler_task(
+            task_set,
+            _publish_perception_audio_sentence(text=text, logger=logger),
+        )
+
+    return on_final_sentence
+
+
 async def _handle_json_error(websocket: WebSocket, logger, e: json.JSONDecodeError) -> None:
     """处理 JSON 解析错误"""
     logger.error(f"Failed to parse WebSocket message: {e}")
@@ -437,12 +469,18 @@ async def _handle_transcribe_ws(*, websocket: WebSocket, logger, asr_client, aud
     state = await _setup_websocket_connection(websocket=websocket, logger=logger)
     segment_task: asyncio.Task | None = None
 
-    on_final_sentence, cancel_realtime_nlp = await _create_nlp_handler(
+    base_on_final_sentence, cancel_realtime_nlp = await _create_nlp_handler(
         websocket=websocket,
         logger=logger,
         audio_service=audio_service,
         state=state,
         funcs=funcs,
+    )
+
+    on_final_sentence = _wrap_on_final_sentence_with_perception(
+        base_on_final_sentence=base_on_final_sentence,
+        logger=logger,
+        task_set=state["task_set"],
     )
 
     async def stop_segment_task():
