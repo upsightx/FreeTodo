@@ -569,6 +569,104 @@ configure_hooks() {
   fi
 }
 
+# 默认端口与范围（与 install.ps1、dev-with-auto-port.js、lifetrace 配置一致）
+DEFAULT_BACKEND_PORT=8001
+DEFAULT_FRONTEND_PORT=3001
+DEFAULT_AGENTOS_PORT=8200
+BACKEND_PORT_MIN=8000
+BACKEND_PORT_MAX=8099
+FRONTEND_PORT_MIN=3001
+FRONTEND_PORT_MAX=3199
+AGENTOS_PORT_MIN=8200
+AGENTOS_PORT_MAX=8299
+
+# 检测端口是否可用（尝试绑定 127.0.0.1）
+test_port_available() {
+  local port="$1"
+  "${PYTHON_BIN:-python3}" -c "
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    s.bind(('127.0.0.1', $port))
+    s.close()
+    exit(0)
+except OSError:
+    exit(1)
+" 2>/dev/null
+}
+
+# 在指定范围内随机选取可用端口，排除指定端口，避免冲突
+get_random_available_port() {
+  local min_port="$1"
+  local max_port="$2"
+  shift 2
+  "${PYTHON_BIN:-python3}" -c "
+import socket
+import random
+import sys
+
+min_p = $min_port
+max_p = $max_port
+exclude = set()
+for a in sys.argv[1:]:
+    try:
+        exclude.add(int(a))
+    except ValueError:
+        pass
+candidates = [p for p in range(min_p, max_p + 1) if p not in exclude]
+if not candidates:
+    sys.exit(2)
+random.shuffle(candidates)
+for p in candidates[:150]:
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('127.0.0.1', p))
+        s.close()
+        print(p)
+        sys.exit(0)
+    except OSError:
+        pass
+sys.exit(1)
+" "$@" 2>/dev/null
+}
+
+# 解析 backend、frontend、AgentOS 端口，默认不可用时随机分配，保证三者互不冲突
+resolve_dev_ports() {
+  local backend_port="$DEFAULT_BACKEND_PORT"
+  local frontend_port="$DEFAULT_FRONTEND_PORT"
+  local agentos_port="$DEFAULT_AGENTOS_PORT"
+
+  local need_backend=0 need_frontend=0 need_agentos=0
+  test_port_available "$backend_port" || need_backend=1
+  test_port_available "$frontend_port" || need_frontend=1
+  test_port_available "$agentos_port" || need_agentos=1
+
+  if [ "$need_backend" -eq 1 ] || [ "$need_frontend" -eq 1 ] || [ "$need_agentos" -eq 1 ]; then
+    echo "Detected port conflict, allocating random available ports..." >&2
+    if [ "$need_backend" -eq 1 ]; then
+      local exclude_for_backend=()
+      [ "$need_frontend" -eq 0 ] && exclude_for_backend+=("$frontend_port")
+      [ "$need_agentos" -eq 0 ] && exclude_for_backend+=("$agentos_port")
+      backend_port="$(get_random_available_port $BACKEND_PORT_MIN $BACKEND_PORT_MAX "${exclude_for_backend[@]:-}")" || exit 1
+      echo "  Backend port $DEFAULT_BACKEND_PORT in use, using $backend_port" >&2
+    fi
+    if [ "$need_frontend" -eq 1 ]; then
+      frontend_port="$(get_random_available_port $FRONTEND_PORT_MIN $FRONTEND_PORT_MAX "$backend_port" "$agentos_port")" || exit 1
+      echo "  Frontend port $DEFAULT_FRONTEND_PORT in use, using $frontend_port" >&2
+    fi
+    if [ "$need_agentos" -eq 1 ]; then
+      agentos_port="$(get_random_available_port $AGENTOS_PORT_MIN $AGENTOS_PORT_MAX "$backend_port" "$frontend_port")" || exit 1
+      echo "  AgentOS port $DEFAULT_AGENTOS_PORT in use, using $agentos_port" >&2
+    fi
+    if [ "$backend_port" = "$frontend_port" ] || [ "$backend_port" = "$agentos_port" ] || [ "$frontend_port" = "$agentos_port" ]; then
+      echo "Resolved ports must differ: backend=$backend_port, frontend=$frontend_port, agentos=$agentos_port" >&2
+      exit 1
+    fi
+  fi
+
+  echo "$backend_port $frontend_port $agentos_port"
+}
+
 download() {
   local url="$1"
   if command -v curl >/dev/null 2>&1; then
@@ -733,12 +831,22 @@ if [ "$RUN_AFTER_INSTALL" != "1" ]; then
   exit 0
 fi
 
+# 解析 backend、frontend、AgentOS 端口，默认不可用时随机分配
+RESOLVED_PORTS="$(resolve_dev_ports)"
+read -r BACKEND_PORT FRONTEND_PORT AGENTOS_PORT <<< "$RESOLVED_PORTS"
+
 case "$MODE" in
   web)
     echo "Starting backend..."
-    uv run "$PYTHON_BIN" -m lifetrace.server &
+    uv run "$PYTHON_BIN" -m lifetrace.server --port "$BACKEND_PORT" &
     BACKEND_PID=$!
+    echo "Starting AgentOS..."
+    LIFETRACE__AGNO__AGENT_OS__PORT="$AGENTOS_PORT" uv run "$PYTHON_BIN" -m lifetrace.agent_os &
+    AGENTOS_PID=$!
     cleanup() {
+      if [ -n "${AGENTOS_PID:-}" ] && kill -0 "$AGENTOS_PID" >/dev/null 2>&1; then
+        kill "$AGENTOS_PID" >/dev/null 2>&1 || true
+      fi
       if kill -0 "$BACKEND_PID" >/dev/null 2>&1; then
         kill "$BACKEND_PID" >/dev/null 2>&1 || true
       fi
@@ -751,17 +859,28 @@ case "$MODE" in
     fi
 
     if [ "$FRONTEND_ACTION" = "build" ]; then
-      if [ "$REPO_READY" -eq 1 ] && [ "$DEPS_READY" -eq 1 ] && [ -d ".next" ]; then
-        echo "Next.js build is up to date. Skipping build step."
-      else
+      NEED_BUILD=0
+      if [ "$REPO_READY" -eq 0 ] || [ "$DEPS_READY" -eq 0 ] || [ ! -d ".next" ]; then
+        NEED_BUILD=1
+      fi
+      if [ "$BACKEND_PORT" != "$DEFAULT_BACKEND_PORT" ]; then
+        echo "Backend port changed, rebuilding frontend to update API URL."
+        NEED_BUILD=1
+      fi
+      if [ "$NEED_BUILD" -eq 1 ]; then
         echo "Building frontend..."
-        pnpm build
+        NEXT_PUBLIC_API_URL="http://127.0.0.1:$BACKEND_PORT" pnpm build
+      else
+        echo "Next.js build is up to date. Skipping build step."
       fi
       echo "Starting frontend (production)..."
-      pnpm start
+      PORT="$FRONTEND_PORT" NEXT_PUBLIC_API_URL="http://127.0.0.1:$BACKEND_PORT" pnpm start
     else
       echo "Starting frontend (dev)..."
-      WINDOW_MODE="$VARIANT" pnpm dev
+      export WINDOW_MODE="$VARIANT"
+      export PORT="$FRONTEND_PORT"
+      export NEXT_PUBLIC_API_URL="http://127.0.0.1:$BACKEND_PORT"
+      pnpm dev
     fi
     ;;
   tauri)
@@ -784,11 +903,17 @@ case "$MODE" in
       fi
     else
       echo "Starting backend..."
-      uv run "$PYTHON_BIN" -m lifetrace.server &
+      (cd ".." && uv run "$PYTHON_BIN" -m lifetrace.server --port "$BACKEND_PORT") &
       BACKEND_PID=$!
+      echo "Starting AgentOS..."
+      (cd ".." && LIFETRACE__AGNO__AGENT_OS__PORT="$AGENTOS_PORT" uv run "$PYTHON_BIN" -m lifetrace.agent_os) &
+      AGENTOS_PID=$!
       cleanup() {
         if [ -n "${FRONTEND_PID:-}" ] && kill -0 "$FRONTEND_PID" >/dev/null 2>&1; then
           kill "$FRONTEND_PID" >/dev/null 2>&1 || true
+        fi
+        if [ -n "${AGENTOS_PID:-}" ] && kill -0 "$AGENTOS_PID" >/dev/null 2>&1; then
+          kill "$AGENTOS_PID" >/dev/null 2>&1 || true
         fi
         if kill -0 "$BACKEND_PID" >/dev/null 2>&1; then
           kill "$BACKEND_PID" >/dev/null 2>&1 || true
@@ -797,7 +922,10 @@ case "$MODE" in
       trap cleanup EXIT
 
       echo "Starting frontend dev server..."
-      WINDOW_MODE="$VARIANT" pnpm dev &
+      export WINDOW_MODE="$VARIANT"
+      export PORT="$FRONTEND_PORT"
+      export NEXT_PUBLIC_API_URL="http://127.0.0.1:$BACKEND_PORT"
+      pnpm dev &
       FRONTEND_PID=$!
       echo "Starting Tauri app..."
       pnpm tauri:dev
@@ -822,6 +950,19 @@ case "$MODE" in
         echo "Build complete. Open the artifact under dist-artifacts/electron/."
       fi
     else
+      echo "Starting AgentOS..."
+      (cd ".." && LIFETRACE__AGNO__AGENT_OS__PORT="$AGENTOS_PORT" uv run "$PYTHON_BIN" -m lifetrace.agent_os) &
+      AGENTOS_PID=$!
+      cleanup() {
+        if [ -n "${AGENTOS_PID:-}" ] && kill -0 "$AGENTOS_PID" >/dev/null 2>&1; then
+          kill "$AGENTOS_PID" >/dev/null 2>&1 || true
+        fi
+      }
+      trap cleanup EXIT
+
+      export PORT="$FRONTEND_PORT"
+      export BACKEND_PORT="$BACKEND_PORT"
+      export NEXT_PUBLIC_API_URL="http://127.0.0.1:$BACKEND_PORT"
       if [ "$VARIANT" = "island" ]; then
         pnpm electron:dev:island
       else
