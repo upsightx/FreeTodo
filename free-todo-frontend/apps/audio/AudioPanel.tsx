@@ -21,12 +21,12 @@ import { useAudioPlayback } from "./hooks/useAudioPlayback";
 import { useAudioRecording } from "./hooks/useAudioRecording";
 import { useSegmentSync } from "./hooks/useSegmentSync";
 import { useStopRecordingConfirm } from "./hooks/useStopRecordingConfirm";
+import { getAudioApiBaseUrl } from "./utils/getAudioApiBaseUrl";
 import { parseTimeToIsoWithDate as parseTimeToIsoWithDateUtil } from "./utils/parseTimeToIsoWithDate";
 import { formatDateTime, formatTime, getSegmentDate } from "./utils/timeUtils";
 
 export function AudioPanel() {
 	const t = useTranslations("page");
-	const [activeTab, setActiveTab] = useState<"original" | "optimized">("original");
 	const [selectedDate, setSelectedDate] = useState(new Date());
 
 	// 获取录音状态和控制函数（从全局 store）
@@ -35,28 +35,23 @@ export function AudioPanel() {
 	// 从全局 store 获取实时录音数据（用于面板切换时保持状态）
 	const storeTranscriptionText = useAudioRecordingStore((state) => state.transcriptionText);
 	const storePartialText = useAudioRecordingStore((state) => state.partialText);
-	const storeOptimizedText = useAudioRecordingStore((state) => state.optimizedText);
 	const storeSegmentTimesSec = useAudioRecordingStore((state) => state.segmentTimesSec);
 	const storeSegmentTimeLabels = useAudioRecordingStore((state) => state.segmentTimeLabels);
 	const storeSegmentRecordingIds = useAudioRecordingStore((state) => state.segmentRecordingIds);
 	const storeSegmentOffsetsSec = useAudioRecordingStore((state) => state.segmentOffsetsSec);
 	const storeLiveTodos = useAudioRecordingStore((state) => state.liveTodos);
-	const storeLiveSchedules = useAudioRecordingStore((state) => state.liveSchedules);
 	const storeRecordingStartedAt = useAudioRecordingStore((state) => state.recordingStartedAt);
 
 	// 从全局 store 获取更新方法
 	const updateLastFinalEnd = useAudioRecordingStore((state) => state.updateLastFinalEnd);
 	const appendTranscriptionText = useAudioRecordingStore((state) => state.appendTranscriptionText);
 	const setStorePartialText = useAudioRecordingStore((state) => state.setPartialText);
-	const setStoreOptimizedText = useAudioRecordingStore((state) => state.setOptimizedText);
 	const appendSegmentData = useAudioRecordingStore((state) => state.appendSegmentData);
 	const setStoreLiveTodos = useAudioRecordingStore((state) => state.setLiveTodos);
-	const setStoreLiveSchedules = useAudioRecordingStore((state) => state.setLiveSchedules);
 	const clearSessionData = useAudioRecordingStore((state) => state.clearSessionData);
 
 	// 本地状态：用于回看模式（从后端加载的历史数据）
 	const [localTranscriptionText, setLocalTranscriptionText] = useState("");
-	const [localOptimizedText, setLocalOptimizedText] = useState("");
 	const [panelNotice, setPanelNotice] = useState<{
 		message: string;
 		source: "asr" | "recording";
@@ -65,7 +60,6 @@ export function AudioPanel() {
 	// 根据录音状态选择数据源：录音中使用 store 数据，回看使用本地数据
 	const transcriptionText = isRecording ? storeTranscriptionText : localTranscriptionText;
 	const partialText = isRecording ? storePartialText : "";
-	const optimizedText = isRecording ? storeOptimizedText : localOptimizedText;
 
 	const {
 		selectedRecordingId,
@@ -82,11 +76,10 @@ export function AudioPanel() {
 		segmentTimesSec: dataSegmentTimesSec,
 		setSegmentTimesSec: setDataSegmentTimesSec,
 		extractionsByRecordingId,
-		optimizedExtractionsByRecordingId,
-		setOptimizedExtractionsByRecordingId,
+		setExtractionsByRecordingId,
 		loadRecordings,
 		loadTimeline,
-	} = useAudioData(selectedDate, activeTab, setLocalTranscriptionText, setLocalOptimizedText);
+	} = useAudioData(selectedDate, setLocalTranscriptionText);
 
 	// 根据录音状态选择段落数据源
 	const segmentTimesSec = isRecording ? storeSegmentTimesSec : dataSegmentTimesSec;
@@ -94,7 +87,6 @@ export function AudioPanel() {
 	const segmentRecordingIds = isRecording ? storeSegmentRecordingIds : dataSegmentRecordingIds;
 	const segmentOffsetsSec = isRecording ? storeSegmentOffsetsSec : dataSegmentOffsetsSec;
 	const liveTodos = isRecording ? storeLiveTodos : [];
-	const liveSchedules = isRecording ? storeLiveSchedules : [];
 
 	// 停止录音确认弹窗和后续轮询逻辑
 	const {
@@ -115,7 +107,7 @@ export function AudioPanel() {
 	// 段落选择同步
 	const { selectedSegmentIndex, setSelectedSegmentIndex, currentSegmentText } = useSegmentSync({
 		isRecording, selectedRecordingId, currentTime, segmentRecordingIds,
-		segmentOffsetsSec, activeTab, transcriptionText, optimizedText,
+		segmentOffsetsSec, transcriptionText,
 	});
 
 	// 辅助函数：获取本地日期字符串（用于日期比较）
@@ -129,24 +121,20 @@ export function AudioPanel() {
 	// 用于存储实时录音的完整状态（持久化，不被清空）
 	const liveRecordingStateRef = useRef<{
 		text: string;
-		optimizedText: string;
 		partialText: string;
 		segmentTimesSec: number[];
 		segmentOffsetsSec: number[];
 		segmentRecordingIds: number[];
 		segmentTimeLabels: string[];
 		todos: Array<{ title: string; description?: string; deadline?: string; source_text?: string }>;
-		schedules: Array<{ title: string; time?: string; description?: string; source_text?: string }>;
 	}>({
 		text: "",
-		optimizedText: "",
 		partialText: "",
 		segmentTimesSec: [],
 		segmentOffsetsSec: [],
 		segmentRecordingIds: [],
 		segmentTimeLabels: [],
 		todos: [],
-		schedules: [],
 	});
 
 	// 用于手动启动录音的 ref（防止重复启动）
@@ -334,9 +322,7 @@ export function AudioPanel() {
 					}
 				},
 				(data) => {
-					if (typeof data.optimizedText === "string") setStoreOptimizedText(data.optimizedText);
 					if (Array.isArray(data.todos)) setStoreLiveTodos(data.todos);
-					if (Array.isArray(data.schedules)) setStoreLiveSchedules(data.schedules);
 				},
 				(error) => {
 					const errorMessage = error instanceof Error ? error.message : "录音过程中发生错误";
@@ -353,7 +339,7 @@ export function AudioPanel() {
 	}, [
 		isRecording, clearSessionData, startRecording, updateLastFinalEnd,
 		appendTranscriptionText, appendSegmentData, setStorePartialText,
-		setStoreOptimizedText, setStoreLiveTodos, setStoreLiveSchedules, selectedDate, setSelectedSegmentIndex,
+		setStoreLiveTodos, selectedDate, setSelectedSegmentIndex,
 		showRecordingNotice, formatAudioError, is24x7Enabled,
 	]);
 
@@ -375,22 +361,14 @@ export function AudioPanel() {
 		}
 	}, []);
 
-	const setOptimizedTextAdapter = useCallback((text: string | ((prev: string) => string)) => {
-		if (typeof text === "function") {
-			setLocalOptimizedText((prev) => text(prev));
-		} else {
-			setLocalOptimizedText(text);
-		}
-	}, []);
-
 	// 使用日期切换 hook（操作本地状态用于回看模式）
 	useAudioDateSwitching({
 		selectedDate, isRecording, isViewingCurrentDate, liveRecordingStateRef, currentLoadingDateRef,
-		setTranscriptionText: setTranscriptionTextAdapter, setOptimizedText: setOptimizedTextAdapter,
+		setTranscriptionText: setTranscriptionTextAdapter,
 		setPartialText: setStorePartialText, setSegmentTimesSec: setDataSegmentTimesSec,
 		setSegmentOffsetsSec: setDataSegmentOffsetsSec, setSegmentRecordingIds: setDataSegmentRecordingIds,
 		setSegmentTimeLabels: setDataSegmentTimeLabels, setLiveTodos: setStoreLiveTodos,
-		setLiveSchedules: setStoreLiveSchedules, setIsLoadingTimeline, loadTimeline,
+		setIsLoadingTimeline, loadTimeline,
 	});
 
 	const formatDate = (date: Date) => `${date.toLocaleDateString("zh-CN", {
@@ -398,7 +376,7 @@ export function AudioPanel() {
 	})} 录音`;
 
 	const Icon = FEATURE_ICON_MAP.audio;
-	const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
+	const apiBaseUrl = getAudioApiBaseUrl();
 
 	const handlePlayFromTranscription = useCallback(() => {
 		if (!selectedRecordingId) return;
@@ -447,12 +425,6 @@ export function AudioPanel() {
 		return ext?.todos ?? [];
 	}), [segmentRecordingIds, liveTodos, extractionsByRecordingId]);
 
-	const segmentSchedules = useMemo(() => segmentRecordingIds.map((recId) => {
-		if (recId === 0) return liveSchedules;
-		const ext = recId != null ? extractionsByRecordingId[recId] : undefined;
-		return ext?.schedules ?? [];
-	}), [segmentRecordingIds, liveSchedules, extractionsByRecordingId]);
-
 	const dateKey = useMemo(() => selectedDate.toISOString().split("T")[0], [selectedDate]);
 	const parseTimeToIsoWithDate = useCallback(
 		(raw?: string | null) => parseTimeToIsoWithDateUtil(raw, selectedDate),
@@ -467,14 +439,28 @@ export function AudioPanel() {
 			return;
 		}
 
+		let isFetching = false;
+		const pollTimelineSilently = async () => {
+			if (isFetching) return;
+			isFetching = true;
+			try {
+				// 后台轮询不应反复触发“获取中”提示，避免停录后闪烁
+				await loadTimeline(undefined, true);
+			} finally {
+				isFetching = false;
+			}
+		};
+
 		console.log("[AudioPanel] 启动自动轮询（每秒）");
-		// 立即加载一次
-		loadTimeline((loading) => setIsLoadingTimeline(loading), true);
+		// 轮询开始前清理一次 loading，避免沿用停录流程中的旧状态
+		setIsLoadingTimeline(false);
+		// 立即静默加载一次
+		void pollTimelineSilently();
 
 		// 每秒轮询
 		const interval = setInterval(() => {
 			console.log("[AudioPanel] 轮询：加载时间线");
-			loadTimeline((loading) => setIsLoadingTimeline(loading), true);
+			void pollTimelineSilently();
 		}, 1000);
 
 		return () => {
@@ -516,28 +502,19 @@ export function AudioPanel() {
 			<AudioExtractionPanel
 				dateKey={dateKey}
 				segmentRecordingIds={segmentRecordingIds}
-				extractionsByRecordingId={optimizedExtractionsByRecordingId}
-				setExtractionsByRecordingId={setOptimizedExtractionsByRecordingId}
+				extractionsByRecordingId={extractionsByRecordingId}
+				setExtractionsByRecordingId={setExtractionsByRecordingId}
 				parseTimeToIsoWithDate={parseTimeToIsoWithDate}
 				liveTodos={liveTodos}
-				liveSchedules={liveSchedules}
 				isRecording={isRecording}
 				isExtracting={isExtracting}
 			/>
 
 			<TranscriptionView
-				originalText={transcriptionText}
+				text={transcriptionText}
 				partialText={isRecording && isViewingCurrentDate ? partialText : ""}
-				optimizedText={optimizedText}
-				activeTab={activeTab}
-				onTabChange={(tab) => {
-					setActiveTab(tab);
-					setIsLoadingTimeline(true);
-					loadTimeline((loading) => setIsLoadingTimeline(loading), false);
-				}}
-				segmentTodos={segmentTodos}
-				segmentSchedules={segmentSchedules}
 				isRecording={isRecording && isViewingCurrentDate}
+				segmentTodos={segmentTodos}
 				segmentTimesSec={segmentTimesSec}
 				segmentTimeLabels={segmentTimeLabels}
 				selectedSegmentIndex={selectedSegmentIndex}

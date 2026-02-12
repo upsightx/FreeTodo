@@ -12,7 +12,7 @@ interface NotificationPopupSectionProps {
 
 /**
  * 通知弹窗设置区块组件
- * 控制系统级通知弹窗的开关和弹出频率
+ * 控制系统级通知弹窗的开关（当自动待办检测发现新待办时弹出）
  */
 export function NotificationPopupSection({
 	loading = false,
@@ -20,14 +20,8 @@ export function NotificationPopupSection({
 	const tSettings = useTranslations("page.settings");
 
 	const enabled = useUiStore((state) => state.notificationPopupEnabled);
-	const intervalSeconds = useUiStore(
-		(state) => state.notificationPopupIntervalSeconds,
-	);
 	const setEnabled = useUiStore(
 		(state) => state.setNotificationPopupEnabled,
-	);
-	const setIntervalSeconds = useUiStore(
-		(state) => state.setNotificationPopupIntervalSeconds,
 	);
 
 	const handleToggle = (newEnabled: boolean) => {
@@ -39,13 +33,6 @@ export function NotificationPopupSection({
 		);
 	};
 
-	const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = Number.parseInt(e.target.value, 10);
-		if (!Number.isNaN(value)) {
-			setIntervalSeconds(value);
-		}
-	};
-
 	return (
 		<SettingsSection
 			title={tSettings("notificationPopupTitle")}
@@ -55,8 +42,6 @@ export function NotificationPopupSection({
 				"popup",
 				"通知",
 				"弹窗",
-				"频率",
-				"interval",
 				tSettings("notificationPopupTitle"),
 			]}
 		>
@@ -76,32 +61,6 @@ export function NotificationPopupSection({
 						onToggle={handleToggle}
 						ariaLabel={tSettings("notificationPopupToggleLabel")}
 					/>
-				</div>
-
-				{/* 频率设置 */}
-				<div className="flex items-center justify-between">
-					<label
-						htmlFor="notification-popup-interval"
-						className="text-sm font-medium text-foreground"
-					>
-						{tSettings("notificationPopupIntervalLabel")}
-					</label>
-					<div className="flex items-center gap-2">
-						<input
-							id="notification-popup-interval"
-							type="number"
-							min={3}
-							max={3600}
-							step={1}
-							value={intervalSeconds}
-							onChange={handleIntervalChange}
-							disabled={loading || !enabled}
-							className="w-20 rounded-md border border-border bg-background px-3 py-1.5 text-right text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-						/>
-						<span className="text-sm text-muted-foreground">
-							{tSettings("notificationPopupIntervalUnit")}
-						</span>
-					</div>
 				</div>
 
 				{/* 提示 */}

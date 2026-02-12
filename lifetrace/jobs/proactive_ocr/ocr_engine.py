@@ -40,9 +40,10 @@ class OcrEngine:
         self,
         det_limit_side_len: int = 640,
         det_limit_type: str = "max",
-        rec_batch_num: int = 1,
+        rec_batch_num: int = 8,
         use_gpu: bool = False,
         resize_max_side: int = 0,  # 预缩放最大边长，0表示不缩放
+        use_cls: bool = False,  # 是否启用方向分类（聊天场景不需要）
     ):
         """
         初始化OCR引擎
@@ -50,9 +51,10 @@ class OcrEngine:
         Args:
             det_limit_side_len: 检测输入图像的边长限制，减小可降低内存占用
             det_limit_type: 边长限制类型，"max"限制最大边，"min"限制最小边
-            rec_batch_num: 识别批次大小，减小可降低内存峰值
+            rec_batch_num: 识别批次大小，增大可提升速度（推荐6~8）
             use_gpu: 是否使用GPU（需要安装CUDA版本onnxruntime）
             resize_max_side: 输入图像预缩放的最大边长，0表示不缩放
+            use_cls: 是否启用方向分类，关闭可省50~200ms
         """
         if not RAPIDOCR_AVAILABLE:
             raise ImportError(
@@ -78,6 +80,7 @@ class OcrEngine:
         self.det_limit_type = det_limit_type
         self.rec_batch_num = rec_batch_num
         self.resize_max_side = resize_max_side
+        self.use_cls = use_cls
 
     def _resize_image(self, image: np.ndarray, max_side: int) -> tuple:
         """
@@ -125,8 +128,8 @@ class OcrEngine:
         if self.resize_max_side > 0:
             image, scale = self._resize_image(image, self.resize_max_side)
 
-        # 执行OCR
-        result, elapse = self.engine(image)
+        # 执行OCR（use_cls=False 跳过方向分类以加速）
+        result, elapse = self.engine(image, use_cls=self.use_cls)
 
         latency_ms = (time.time() - start_time) * 1000
 
@@ -136,9 +139,15 @@ class OcrEngine:
         cls_time_ms = 0.0
 
         if elapse:
-            # elapse 可能是字符串或字典
-            if isinstance(elapse, str):
-                # 解析字符串格式
+            # elapse 格式随 RapidOCR 版本不同而不同：
+            # - v1.4.x: list[float] = [det_time, cls_time, rec_time] (秒)
+            # - 旧版本: str 或 dict
+            if isinstance(elapse, (list, tuple)) and len(elapse) >= 3:
+                det_time_ms = float(elapse[0]) * 1000
+                cls_time_ms = float(elapse[1]) * 1000
+                rec_time_ms = float(elapse[2]) * 1000
+            elif isinstance(elapse, str):
+                # 解析字符串格式（兼容旧版本）
                 det_match = re.search(r"det[:\s]+(\d+\.?\d*)s?", elapse)
                 rec_match = re.search(r"rec[:\s]+(\d+\.?\d*)s?", elapse)
                 cls_match = re.search(r"cls[:\s]+(\d+\.?\d*)s?", elapse)
@@ -206,24 +215,94 @@ class OcrEngine:
         return [(line.text, line.score) for line in result.lines]
 
 
-# 单例实例
+# 单例实例（支持多后端）
 _engine_state: dict[str, OcrEngine | None] = {"instance": None}
 
 
 def get_ocr_engine(
+    backend: str = "auto",
     det_limit_side_len: int = 640,
     det_limit_type: str = "max",
-    rec_batch_num: int = 1,
+    rec_batch_num: int = 8,
     resize_max_side: int = 0,
+    use_cls: bool = False,
+    winrt_lang: str = "zh-Hans-CN",
 ) -> OcrEngine:
-    """获取OCR引擎单例"""
+    """
+    获取 OCR 引擎单例
+
+    Args:
+        backend: OCR 后端选择
+            - "auto": 自动选择（Windows 优先 WinRT，其他用 RapidOCR）
+            - "winrt": 强制使用 WinRT（仅 Windows）
+            - "rapidocr": 强制使用 RapidOCR（跨平台）
+        det_limit_side_len: RapidOCR 检测边长限制
+        det_limit_type: RapidOCR 边长限制类型
+        rec_batch_num: RapidOCR 识别批次大小
+        resize_max_side: 图像预缩放最大边长
+        use_cls: RapidOCR 是否启用方向分类
+        winrt_lang: WinRT OCR 语言代码
+    """
     instance = _engine_state["instance"]
-    if instance is None:
+    if instance is not None:
+        return instance
+
+    # 选择后端
+    chosen_backend = _resolve_backend(backend)
+
+    if chosen_backend == "winrt":
+        from .ocr_engine_winrt import WinRtOcrEngine
+
+        instance = WinRtOcrEngine(
+            lang=winrt_lang,
+            resize_max_side=resize_max_side,
+        )
+        logger.info("OCR backend: WinRT (Windows.Media.Ocr)")
+    else:
         instance = OcrEngine(
             det_limit_side_len=det_limit_side_len,
             det_limit_type=det_limit_type,
             rec_batch_num=rec_batch_num,
             resize_max_side=resize_max_side,
+            use_cls=use_cls,
         )
-        _engine_state["instance"] = instance
+        logger.info("OCR backend: RapidOCR (ONNX Runtime)")
+
+    _engine_state["instance"] = instance
     return instance
+
+
+def _resolve_backend(backend: str) -> str:
+    """
+    解析 OCR 后端选择
+
+    Args:
+        backend: "auto", "winrt", "rapidocr"
+
+    Returns:
+        实际使用的后端名称
+    """
+    if backend == "rapidocr":
+        return "rapidocr"
+
+    if backend == "winrt":
+        from .ocr_engine_winrt import WINOCR_AVAILABLE
+
+        if WINOCR_AVAILABLE:
+            return "winrt"
+        logger.warning("WinRT OCR requested but not available, falling back to RapidOCR")
+        return "rapidocr"
+
+    # auto: Windows 上优先 WinRT
+    if backend == "auto":
+        import platform
+
+        if platform.system() == "Windows":
+            from .ocr_engine_winrt import WINOCR_AVAILABLE
+
+            if WINOCR_AVAILABLE:
+                return "winrt"
+        return "rapidocr"
+
+    logger.warning(f"Unknown OCR backend '{backend}', falling back to RapidOCR")
+    return "rapidocr"

@@ -30,11 +30,14 @@ BITS_PER_SAMPLE = 16
 PCM_SILENCE_MAX_ABS = 50
 PCM_SILENCE_RMS = 20
 
-MAX_AGC_GAIN = 4.0
-AGC_APPLY_THRESHOLD_GAIN = 1.05
 INT16_MAX = 32767
 INT16_MIN = -32768
+
+# ---- Peak-based AGC constants (V1) ----
+MAX_AGC_GAIN = 4.0
+AGC_APPLY_THRESHOLD_GAIN = 1.05
 AGC_TARGET_PEAK_RATIO = 0.85
+DURATION_PCM_WALL_RATIO_WARN_THRESHOLD = 0.7
 
 # 分段存储配置
 SEGMENT_DURATION_MINUTES = 30  # 30分钟分段
@@ -189,7 +192,7 @@ def _create_realtime_nlp_handler(  # noqa: C901
     task_set: set[asyncio.Task],
     throttle_seconds: float = 8.0,
 ):
-    """Realtime optimize/extract during recording (only on final sentences)."""
+    """Realtime todo extraction during recording (only on final sentences)."""
 
     class _RealtimeNlpThrottler:
         def __init__(self):
@@ -217,35 +220,24 @@ def _create_realtime_nlp_handler(  # noqa: C901
                 is_connected_ref[0] = False
                 logger.warning(f"Failed to send {name} to client: {e}")
 
-        async def _compute(self, text_snapshot: str) -> tuple[str, dict[str, Any]]:
-            optimized = text_snapshot
-            extracted: dict[str, Any] = {"todos": [], "schedules": []}
+        async def _compute(self, text_snapshot: str) -> dict[str, Any]:
+            extracted: dict[str, Any] = {"todos": []}
             try:
-                optimized = await audio_service.optimize_transcription_text(text_snapshot)
-            except Exception as e:
-                logger.error(f"实时优化失败: {e}")
-            try:
-                extracted = await audio_service.extraction_service.extract_todos_and_schedules(
-                    text_snapshot
-                )
+                extracted = await audio_service.extraction_service.extract_todos(text_snapshot)
             except Exception as e:
                 logger.error(f"实时提取失败: {e}")
-            return optimized, extracted
+            compat_extracted = {**extracted, "schedules": []}
+            return compat_extracted
 
         async def _run_once(self) -> None:
             text_snapshot = self._buffer.strip()
             if not text_snapshot:
                 return
-            optimized, extracted = await self._compute(text_snapshot)
-
-            preview = optimized.replace("\n", " ")[:200]
+            extracted = await self._compute(text_snapshot)
             todos_preview = extracted.get("todos", [])
-            schedules_preview = extracted.get("schedules", [])
-            logger.info("实时优化/提取完成，准备推送给前端")
-            logger.info(f"优化预览: {preview}")
-            logger.info(f"提取结果: todos={todos_preview}, schedules={schedules_preview}")
+            logger.info("实时提取完成，准备推送给前端")
+            logger.info(f"提取结果: todos={todos_preview}")
 
-            await self._send("OptimizedTextChanged", {"text": optimized})
             await self._send(
                 "ExtractionChanged",
                 {"todos": extracted.get("todos", []), "schedules": extracted.get("schedules", [])},
@@ -327,14 +319,24 @@ async def _audio_stream_generator(
         segment_timestamps_ref: 用于存储从客户端接收的时间戳数组的引用
         should_segment_ref: 用于标记是否需要分段（外部可以设置此标志来触发分段）
     """
+    chunk_count = 0
+    chunk_bytes_total = 0
+    loop_started_at = get_utc_now()
+
     while True:
         try:
             data = await websocket.receive()
+            if data.get("type") == "websocket.disconnect":
+                logger.info("WebSocket disconnected in audio stream generator")
+                break
             if "bytes" in data:
                 chunk = data["bytes"]
                 if chunk:
+                    chunk_count += 1
+                    chunk_bytes_total += len(chunk)
                     audio_chunks.append(chunk)
-                    yield chunk
+                    # 实时转写链路：对发送给 ASR 的音频做 AGC（不改动原始落盘数据）
+                    yield _apply_agc_to_pcm(logger, chunk, log_stats=False, warn_silence=False)
                 continue
             if "text" in data:
                 try:
@@ -354,13 +356,29 @@ async def _audio_stream_generator(
             logger.error(f"Error in audio stream generator: {e}")
             break
 
+    elapsed = max((get_utc_now() - loop_started_at).total_seconds(), 0.001)
+    pcm_seconds = chunk_bytes_total / (SAMPLE_RATE * 2)
+    capture_ratio = pcm_seconds / elapsed
+    logger.info(
+        "Audio stream summary: "
+        f"chunks={chunk_count}, bytes={chunk_bytes_total}, "
+        f"pcm={pcm_seconds:.2f}s, wall={elapsed:.2f}s, ratio={capture_ratio:.3f}"
+    )
+
 
 def _parse_init_message(logger, init_message: dict[str, Any]) -> bool:
     logger.info(f"Received init message: {init_message}")
     return bool(init_message.get("is_24x7", False))
 
 
-def _apply_agc_to_pcm(logger, pcm_bytes: bytes) -> bytes:
+def _apply_agc_to_pcm(  # noqa: C901
+    logger,
+    pcm_bytes: bytes,
+    *,
+    log_stats: bool = True,
+    warn_silence: bool = True,
+) -> bytes:
+    """Peak-based AGC (V1)."""
     try:
         samples = array.array("h")
         samples.frombytes(pcm_bytes)
@@ -369,10 +387,14 @@ def _apply_agc_to_pcm(logger, pcm_bytes: bytes) -> bytes:
 
         max_abs = max(abs(s) for s in samples)
         rms = (sum(s * s for s in samples) / len(samples)) ** 0.5
-        logger.info(f"录音原始PCM: samples={len(samples)}, max_abs={max_abs}, rms={rms:.2f}")
+        if log_stats:
+            logger.info(
+                f"录音原始PCM: samples={len(samples)}, max_abs={max_abs}, rms={rms:.2f}"
+            )
 
         if max_abs < PCM_SILENCE_MAX_ABS and rms < PCM_SILENCE_RMS:
-            logger.warning("录音PCM振幅极低，可能无声；请检查麦克风/权限/设备输入。")
+            if warn_silence:
+                logger.warning("录音PCM振幅极低，可能无声；请检查麦克风/权限/设备输入。")
             return pcm_bytes
 
         target_peak = AGC_TARGET_PEAK_RATIO * INT16_MAX
@@ -381,7 +403,9 @@ def _apply_agc_to_pcm(logger, pcm_bytes: bytes) -> bytes:
         if gain <= AGC_APPLY_THRESHOLD_GAIN:
             return pcm_bytes
 
-        logger.info(f"应用自动增益: x{gain:.2f}")
+        if log_stats:
+            logger.info(f"应用自动增益: x{gain:.2f}")
+
         for i in range(len(samples)):
             v = int(samples[i] * gain)
             if v > INT16_MAX:
@@ -435,7 +459,16 @@ def _persist_recording(
         return None, None
 
     pcm_bytes = b"".join(audio_chunks)
-    duration = (get_utc_now() - recording_started_at).total_seconds()
+    duration_pcm = len(pcm_bytes) / (SAMPLE_RATE * 2)  # 16-bit mono
+    duration_wall = (get_utc_now() - recording_started_at).total_seconds()
+    if (
+        duration_wall > 0
+        and (duration_pcm / duration_wall) < DURATION_PCM_WALL_RATIO_WARN_THRESHOLD
+    ):
+        logger.warning(
+            f"录音时长异常：PCM={duration_pcm:.2f}s < wall={duration_wall:.2f}s，"
+            "可能前端音频回调/发送被挂起导致严重丢帧"
+        )
 
     pcm_bytes = _apply_agc_to_pcm(logger, pcm_bytes)
     wav_bytes = _pcm16le_to_wav(pcm_bytes)
@@ -447,11 +480,11 @@ def _persist_recording(
     recording_id = audio_service.create_recording(
         file_path=str(file_path),
         file_size=len(wav_bytes),
-        duration=duration,
+        duration=duration_pcm,
         is_24x7=is_24x7,
     )
     audio_service.complete_recording(recording_id)
-    return recording_id, duration
+    return recording_id, duration_pcm
 
 
 async def _save_transcription_if_any(
@@ -466,7 +499,6 @@ async def _save_transcription_if_any(
     await audio_service.save_transcription(
         recording_id=recording_id,
         original_text=text,
-        auto_optimize=True,
         segment_timestamps=segment_timestamps,
     )
 

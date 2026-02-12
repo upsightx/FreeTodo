@@ -89,13 +89,26 @@ class AppRouter:
                 else:
                     return AppType.FEISHU, f"process_match:{proc}"
 
-        # 通过标题识别（兜底）
+        # 通过标题识别（兜底，仅当进程名不可用时）
+        # 使用前缀匹配而非子串包含，避免文件名含 "wechat" 的图片查看器被误判
+        # 例如：标题 "微信" 或 "微信 - 聊天" 会匹配，
+        #       但 "proactive_wechat_xxx.png" 不会匹配
         for keyword in self.wechat_titles:
-            if keyword in title:
+            if title == keyword or (
+                title.startswith(keyword)
+                and len(title) > len(keyword)
+                and not title[len(keyword)].isalnum()
+                and title[len(keyword)] != "_"
+            ):
                 return AppType.WECHAT, f"title_match:{keyword}"
 
         for keyword in self.feishu_titles:
-            if keyword in title:
+            if title == keyword or (
+                title.startswith(keyword)
+                and len(title) > len(keyword)
+                and not title[len(keyword)].isalnum()
+                and title[len(keyword)] != "_"
+            ):
                 return AppType.FEISHU, f"title_match:{keyword}"
 
         return AppType.UNKNOWN, "no_match"

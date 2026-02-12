@@ -8,14 +8,14 @@ import hashlib
 import json
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from lifetrace.llm.llm_client import LLMClient
 from lifetrace.storage import ocr_mgr, todo_mgr
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.prompt_loader import get_prompt
-from lifetrace.util.time_parser import calculate_scheduled_time
+from lifetrace.util.settings import settings
 from lifetrace.util.time_utils import get_utc_now
 
 logger = get_logger()
@@ -42,7 +42,7 @@ class OCRTodoExtractor:
         # key: text_hash, value: {"timestamp": float, "todos_raw": list[dict[str, Any]]}
         self._ocr_text_cache: dict[str, dict[str, Any]] = {}
         # 同一 text_hash 的最小 LLM 调用间隔（秒），用于限流
-        self._ocr_text_min_interval_sec: float = 60.0
+        self._ocr_text_min_interval_sec: float = 3.0
         # 纯内存缓存的有效期（秒），过期后即便有缓存仍会重新调用 LLM
         self._ocr_text_cache_ttl_sec: float = 3600.0
         # 记录每个 text_hash 上一次真实调用 LLM 的时间戳
@@ -98,23 +98,21 @@ class OCRTodoExtractor:
             existing_todos = todo_mgr.get_active_todos_for_prompt(limit=100)
             existing_todos_json = json.dumps(existing_todos, ensure_ascii=False)
 
+            current_time = get_utc_now().strftime("%Y-%m-%d %H:%M:%S")
             system_prompt = get_prompt("auto_todo_detection", "system_assistant")
             user_prompt = get_prompt(
                 "auto_todo_detection",
                 "user_prompt",
                 existing_todos_json=existing_todos_json,
+                current_time=current_time,
             )
 
-            # 将 OCR 文本附加在用户提示词后面，并在提示中强调不要重复已有待办
+            # 将 OCR 文本附加在用户提示词后面
             user_content = (
                 f"{user_prompt}\n\n"
-                "重要规则：\n"
-                "1. 如果候选待办在当前已有待办列表中已经存在（尤其是标题和时间信息相同或非常相似），"
-                "请不要重复输出这些待办，仅输出真正新的待办。\n"
-                "2. 可以适当润色标题，但不要把同一条待办拆分成多条含义相同的待办。\n\n"
                 f"当前应用：{app_name}\n"
                 f"窗口标题：{window_title}\n"
-                f"OCR 文本内容如下，请仅基于这些文本提取新的待办事项：\n{text_content}"
+                f"OCR 文本：\n{text_content}"
             )
 
             messages = [
@@ -161,11 +159,17 @@ class OCRTodoExtractor:
                             "created_todos": [],
                         }
                 else:
-                    logger.info("开始基于 OCR 文本调用 LLM 进行待办提取")
+                    # 读取待办提取专用模型配置，留空则回退到主模型
+                    todo_model = settings.get("llm.todo_extraction_model", "") or None
+                    if todo_model:
+                        logger.info(f"开始基于 OCR 文本调用 LLM 进行待办提取 (model={todo_model})")
+                    else:
+                        logger.info("开始基于 OCR 文本调用 LLM 进行待办提取")
                     response_text = self.llm_client.chat(
                         messages=messages,
                         temperature=0.3,
                         max_tokens=1500,
+                        model=todo_model,
                         log_meta={
                             "endpoint": "ocr_todo_extraction",
                             "feature_type": "ocr_todo_extraction",
@@ -248,19 +252,19 @@ class OCRTodoExtractor:
                             logger.warning("跳过标题为空的待办（OCR 文本提取）")
                             continue
 
-                        description = todo_data.get("description")
-                        if isinstance(description, str):
-                            description = description.strip() or None
-                        else:
-                            description = None
-
-                        time_info = todo_data.get("time_info") or {}
+                        # 直接解析 LLM 返回的 ISO 时间字符串
+                        # LLM 输出的时间默认视为北京时间（UTC+8）
+                        _beijing_tz = timezone(timedelta(hours=8))
                         scheduled_time = None
-                        if isinstance(time_info, dict) and time_info:
+                        raw_scheduled = todo_data.get("scheduled_time")
+                        if raw_scheduled and isinstance(raw_scheduled, str):
                             try:
-                                scheduled_time = calculate_scheduled_time(time_info, get_utc_now())
-                            except Exception as e:
-                                logger.warning(f"计算 OCR 文本待办 scheduled_time 失败: {e}")
+                                scheduled_time = datetime.fromisoformat(raw_scheduled)
+                                # 如果是 naive datetime（无时区），视为北京时间
+                                if scheduled_time.tzinfo is None:
+                                    scheduled_time = scheduled_time.replace(tzinfo=_beijing_tz)
+                            except (ValueError, TypeError) as e:
+                                logger.warning(f"解析 scheduled_time 失败: {raw_scheduled!r}, {e}")
 
                         # 使用 (标题 + 时间) 进行本地去重，避免重复创建同一待办
                         try:
@@ -282,27 +286,11 @@ class OCRTodoExtractor:
                             logger.warning(f"本地去重检查失败，仍然尝试创建待办: {e}")
 
                         source_text = (todo_data.get("source_text") or "").strip()
-                        confidence = todo_data.get("confidence")
-
-                        # 构建 user_notes，记录来源信息
-                        user_notes_parts = [
-                            f"OCR 结果 ID: {ocr_result_id}",
-                            f"应用: {app_name}",
-                        ]
-                        if window_title:
-                            user_notes_parts.append(f"窗口: {window_title}")
-                        if source_text:
-                            user_notes_parts.append(f"来源文本: {source_text}")
-                        if isinstance(time_info, dict) and time_info.get("raw_text"):
-                            user_notes_parts.append(f"时间: {time_info.get('raw_text')}")
-                        if isinstance(confidence, int | float):
-                            user_notes_parts.append(f"置信度: {float(confidence):.2%}")
-
-                        user_notes = "\n".join(user_notes_parts)
+                        user_notes = f"来源文本: {source_text}" if source_text else None
 
                         todo_id = todo_mgr.create_todo(
                             name=title,
-                            description=description,
+                            description=None,
                             user_notes=user_notes,
                             start_time=scheduled_time,
                             status="draft",

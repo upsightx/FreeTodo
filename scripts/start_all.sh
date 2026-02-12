@@ -14,11 +14,14 @@ run_bg() {
   echo $! >"$log_dir/$name.pid"
 }
 
-run_bg "lifetrace.server" "uv run python -m lifetrace.server"
-sleep 1
+run_bg "phoenix" "uv run phoenix serve"
+sleep 2
 run_bg "lifetrace.agent_os" "uv run python -m lifetrace.agent_os"
+sleep 2
+run_bg "lifetrace.server" "uv run python -m lifetrace.server"
 sleep 1
 run_bg "frontend.dev" "pnpm -C free-todo-frontend dev"
 
 echo "All processes started."
 echo "Logs: $log_dir"
+echo "Phoenix UI: http://localhost:6006"

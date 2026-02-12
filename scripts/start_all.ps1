@@ -9,15 +9,15 @@ $shell = if ($pwsh) { "pwsh" } else { "powershell" }
 Start-Process -FilePath $shell -WorkingDirectory $repoRoot -ArgumentList @(
     "-NoExit",
     "-Command",
-    "uv run python -m lifetrace.server"
+    "uv run python -m lifetrace.agent_os"
 )
 
-Start-Sleep -Seconds 1
+Start-Sleep -Seconds 2
 
 Start-Process -FilePath $shell -WorkingDirectory $repoRoot -ArgumentList @(
     "-NoExit",
     "-Command",
-    "uv run python -m lifetrace.agent_os"
+    "uv run python -m lifetrace.server"
 )
 
 Start-Sleep -Seconds 1

@@ -20,12 +20,6 @@ def _execute_capture_task():
     return execute_capture_task()
 
 
-def _execute_todo_capture_task():
-    from lifetrace.jobs.todo_recorder import execute_todo_capture_task
-
-    return execute_todo_capture_task()
-
-
 def _execute_ocr_task():
     from lifetrace.jobs.ocr import execute_ocr_task
 
@@ -122,9 +116,6 @@ class JobManager:
         # 启动录制器任务（事件处理已集成到录制器中，截图后立即处理）
         self._start_recorder_job()
 
-        # 启动 Todo 专用录制器任务（与自动待办检测联动）
-        self._start_todo_recorder_job()
-
         # 启动OCR任务
         self._start_ocr_job()
 
@@ -213,50 +204,6 @@ class JobManager:
                 logger.info("录制器服务未启用，已暂停")
         except Exception as e:
             logger.error(f"启动录制器任务失败: {e}", exc_info=True)
-
-    def _start_todo_recorder_job(self):
-        """启动 Todo 专用录制器任务
-
-        此任务与自动待办检测功能联动：
-        - 仅在白名单应用激活时截图
-        - 截图后直接触发自动待办检测
-        - 与通用录制器完全独立
-        """
-        if not self._is_module_active("todo_extraction", "todo"):
-            logger.info("待办提取模块未启用，跳过 Todo 录制器任务")
-            return
-        enabled = settings.get("jobs.todo_recorder.enabled", False)
-
-        try:
-            # 仅在启用时预先初始化
-            if enabled:
-                from lifetrace.jobs.todo_recorder import get_todo_recorder_instance
-
-                get_todo_recorder_instance()
-                logger.info("Todo 录制器实例已初始化")
-
-            scheduler = self._get_scheduler()
-            if not scheduler:
-                return
-
-            # 添加 Todo 录制器定时任务（无论是否启用都添加）
-            todo_recorder_interval = settings.get("jobs.todo_recorder.interval", 5)
-            todo_recorder_id = settings.get("jobs.todo_recorder.id", "todo_recorder")
-            scheduler.add_interval_job(
-                func=_execute_todo_capture_task,
-                job_id="todo_recorder_job",
-                name=todo_recorder_id,
-                seconds=todo_recorder_interval,
-                replace_existing=True,
-            )
-            logger.info(f"Todo 录制器定时任务已添加，间隔: {todo_recorder_interval}秒")
-
-            # 如果未启用，则暂停任务
-            if not enabled:
-                scheduler.pause_job("todo_recorder_job")
-                logger.info("Todo 录制器服务未启用，已暂停")
-        except Exception as e:
-            logger.error(f"启动 Todo 录制器任务失败: {e}", exc_info=True)
 
     def _start_ocr_job(self):
         """启动OCR任务"""

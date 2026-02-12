@@ -1,6 +1,6 @@
 /**
  * 系统级通知弹窗管理器
- * 每 10 秒从屏幕左下角弹出通知，停留 3 秒后自动消失
+ * 事件驱动：当自动待办检测发现新待办时弹出通知，停留 3 秒后自动消失
  * 完全独立于主应用逻辑，不影响现有功能
  */
 
@@ -9,8 +9,6 @@ import path from "node:path";
 import { app, BrowserWindow, screen } from "electron";
 import { logger } from "./logger";
 
-/** 默认通知间隔（秒） */
-const DEFAULT_INTERVAL_SECONDS = 10;
 /** 通知显示持续时间（毫秒）- 3 秒 */
 const NOTIFICATION_DURATION_MS = 3_000;
 /** 弹窗窗口尺寸 */
@@ -22,19 +20,26 @@ const MARGIN = 16;
 /** 配置文件接口 */
 interface PopupConfig {
 	enabled: boolean;
-	intervalSeconds: number;
 }
+
+/** 弹窗内容数据 */
+interface PopupData {
+	title?: string;
+	message?: string;
+}
+
+/** 默认弹窗文案 */
+const DEFAULT_TITLE = "待办提醒";
+const DEFAULT_MESSAGE = "检测到新的待办事项";
 
 /**
  * 系统级通知弹窗管理器
  */
 export class NotificationPopupManager {
 	private popupWindow: BrowserWindow | null = null;
-	private intervalId: ReturnType<typeof setInterval> | null = null;
 	private hideTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	private fadeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	private avatarBase64 = "";
-	private currentIntervalMs = DEFAULT_INTERVAL_SECONDS * 1000;
 
 	/**
 	 * 读取配置文件
@@ -47,18 +52,12 @@ export class NotificationPopupManager {
 				const cfg = JSON.parse(raw) as Partial<PopupConfig>;
 				return {
 					enabled: typeof cfg.enabled === "boolean" ? cfg.enabled : true,
-					intervalSeconds:
-						typeof cfg.intervalSeconds === "number" &&
-						cfg.intervalSeconds >= 3 &&
-						cfg.intervalSeconds <= 3600
-							? cfg.intervalSeconds
-							: DEFAULT_INTERVAL_SECONDS,
 				};
 			}
 		} catch {
 			// 配置文件不存在或解析失败，使用默认值
 		}
-		return { enabled: true, intervalSeconds: DEFAULT_INTERVAL_SECONDS };
+		return { enabled: true };
 	}
 
 	/**
@@ -199,8 +198,8 @@ export class NotificationPopupManager {
 				<img src="${this.avatarBase64}" alt="Avatar" />
 			</div>
 			<div class="text">
-				<div class="title">Cool Doge</div>
-				<div class="message">Hey! Don't forget to check your tasks 🐾</div>
+				<div class="title" id="notif-title">${DEFAULT_TITLE}</div>
+				<div class="message" id="notif-message">${DEFAULT_MESSAGE}</div>
 			</div>
 		</div>
 		<div class="progress" id="progress"></div>
@@ -267,9 +266,22 @@ export class NotificationPopupManager {
 	}
 
 	/**
-	 * 显示一次通知
+	 * 安全转义字符串，用于嵌入到 JS 字符串字面量中
 	 */
-	private showNotification(): void {
+	private static escapeForJs(str: string): string {
+		return str
+			.replace(/\\/g, "\\\\")
+			.replace(/'/g, "\\'")
+			.replace(/"/g, '\\"')
+			.replace(/\n/g, "\\n")
+			.replace(/\r/g, "\\r");
+	}
+
+	/**
+	 * 显示一次通知
+	 * @param data 可选的弹窗内容数据
+	 */
+	private showNotification(data?: PopupData): void {
 		if (!this.popupWindow || this.popupWindow.isDestroyed()) {
 			this.createWindow();
 		}
@@ -283,12 +295,23 @@ export class NotificationPopupManager {
 			workArea.y + workArea.height - POPUP_HEIGHT - MARGIN,
 		);
 
-		// 重置动画状态并播放入场动画
+		const title = NotificationPopupManager.escapeForJs(
+			data?.title || DEFAULT_TITLE,
+		);
+		const message = NotificationPopupManager.escapeForJs(
+			data?.message || DEFAULT_MESSAGE,
+		);
+
+		// 更新文本内容、重置动画状态并播放入场动画
 		this.popupWindow.webContents
 			.executeJavaScript(
 				`(function(){
 				var p=document.getElementById('popup');
 				var b=document.getElementById('progress');
+				var t=document.getElementById('notif-title');
+				var m=document.getElementById('notif-message');
+				if(t) t.textContent='${title}';
+				if(m) m.textContent='${message}';
 				p.className='popup-wrapper';
 				b.className='progress';
 				void p.offsetHeight;
@@ -329,54 +352,36 @@ export class NotificationPopupManager {
 	}
 
 	/**
-	 * 每次 tick 检查配置后决定是否弹窗
+	 * 初始化弹窗管理器（加载资源，预创建窗口）
 	 */
-	private tick(): void {
-		const cfg = this.readConfig();
-
-		// 如果关闭了弹窗，跳过本次
-		if (!cfg.enabled) return;
-
-		// 如果间隔变了，重新设置定时器
-		const newIntervalMs = cfg.intervalSeconds * 1000;
-		if (newIntervalMs !== this.currentIntervalMs) {
-			this.currentIntervalMs = newIntervalMs;
-			if (this.intervalId) clearInterval(this.intervalId);
-			this.intervalId = setInterval(() => this.tick(), this.currentIntervalMs);
-			logger.info(`Notification popup interval changed to ${cfg.intervalSeconds}s`);
-		}
-
-		this.showNotification();
-	}
-
-	/**
-	 * 启动定时通知
-	 * 每隔指定间隔弹出一次通知
-	 */
-	start(): void {
+	init(): void {
 		this.loadAvatar();
 		this.createWindow();
 
 		const cfg = this.readConfig();
-		this.currentIntervalMs = cfg.intervalSeconds * 1000;
-
-		this.intervalId = setInterval(() => {
-			this.tick();
-		}, this.currentIntervalMs);
-
 		logger.info(
-			`Notification popup manager started (interval: ${cfg.intervalSeconds}s, duration: ${NOTIFICATION_DURATION_MS}ms, enabled: ${cfg.enabled})`,
+			`Notification popup manager initialized (event-driven, duration: ${NOTIFICATION_DURATION_MS}ms, enabled: ${cfg.enabled})`,
 		);
+	}
+
+	/**
+	 * 触发一次通知弹窗（由外部事件调用，如自动待办检测）
+	 * 会检查配置中的 enabled 开关
+	 * @param data 可选的弹窗内容数据
+	 */
+	trigger(data?: PopupData): void {
+		const cfg = this.readConfig();
+		if (!cfg.enabled) {
+			logger.info("Notification popup is disabled, skipping trigger");
+			return;
+		}
+		this.showNotification(data);
 	}
 
 	/**
 	 * 停止并清理所有资源
 	 */
 	stop(): void {
-		if (this.intervalId) {
-			clearInterval(this.intervalId);
-			this.intervalId = null;
-		}
 		if (this.hideTimeoutId) {
 			clearTimeout(this.hideTimeoutId);
 			this.hideTimeoutId = null;

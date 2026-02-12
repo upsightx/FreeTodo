@@ -19,19 +19,10 @@ interface TodoItem {
 	source_text?: string;
 }
 
-interface ScheduleItem {
-	title: string;
-	time?: string;
-	description?: string;
-	source_text?: string;
-}
-
 type TranscriptionCallback = (text: string, isFinal: boolean) => void
 
 type RealtimeNlpCallback = (data: {
-		optimizedText?: string;
 		todos?: TodoItem[];
-		schedules?: ScheduleItem[];
 	}) => void
 
 type ErrorCallback = (error: Error) => void
@@ -51,8 +42,6 @@ interface AudioRecordingState {
 	transcriptionText: string;
 	/** 正在识别的部分文本（未确认） */
 	partialText: string;
-	/** 优化后的文本 */
-	optimizedText: string;
 	/** 段落时间（秒） */
 	segmentTimesSec: number[];
 	/** 段落时间标签 */
@@ -63,8 +52,6 @@ interface AudioRecordingState {
 	segmentOffsetsSec: number[];
 	/** 实时提取的待办 */
 	liveTodos: TodoItem[];
-	/** 实时提取的日程 */
-	liveSchedules: ScheduleItem[];
 }
 
 interface AudioRecordingActions {
@@ -87,8 +74,6 @@ interface AudioRecordingActions {
 	appendTranscriptionText: (text: string) => void;
 	/** 设置部分文本 */
 	setPartialText: (text: string) => void;
-	/** 设置优化文本 */
-	setOptimizedText: (text: string) => void;
 	/** 追加段落数据 */
 	appendSegmentData: (data: {
 		timeSec: number;
@@ -98,8 +83,6 @@ interface AudioRecordingActions {
 	}) => void;
 	/** 设置实时待办 */
 	setLiveTodos: (todos: TodoItem[]) => void;
-	/** 设置实时日程 */
-	setLiveSchedules: (schedules: ScheduleItem[]) => void;
 	/** 清空录音会话数据（开始新录音时调用） */
 	clearSessionData: () => void;
 }
@@ -108,10 +91,42 @@ type AudioRecordingStore = AudioRecordingState & AudioRecordingActions;
 
 // ========== 模块级资源存储（不可序列化） ==========
 
+const TARGET_SAMPLE_RATE = 16000;
+const MAX_BUFFERED_SECONDS = 10;
+const MAX_BUFFERED_PCM_BYTES = TARGET_SAMPLE_RATE * 2 * MAX_BUFFERED_SECONDS; // PCM16 mono
+const WORKLET_MODULE_PATH = "/audio/pcm16-capture-worklet.js";
+const WORKLET_PROCESSOR_NAME = "pcm16-capture";
+const WORKLET_CHUNK_SAMPLES = 1024;
+const SCRIPT_PROCESSOR_BUFFER_SIZE = 4096;
+const DIAGNOSTIC_LOG_INTERVAL_MS = 5000;
+const AUDIO_DIAGNOSTICS_ENABLED = process.env.NEXT_PUBLIC_AUDIO_DIAGNOSTICS === "1";
+
 let wsRef: WebSocket | null = null;
 let audioContextRef: AudioContext | null = null;
 let processorRef: ScriptProcessorNode | null = null;
+let sourceNodeRef: MediaStreamAudioSourceNode | null = null;
+let silentGainNodeRef: GainNode | null = null;
+let workletNodeRef: AudioWorkletNode | null = null;
 let mediaStreamRef: MediaStream | null = null;
+let bufferedPcmQueue: ArrayBuffer[] = [];
+let bufferedPcmBytes = 0;
+let diagnosticsIntervalRef: ReturnType<typeof setInterval> | null = null;
+
+interface AudioTransportMetrics {
+	capturedBytes: number;
+	sentBytes: number;
+	droppedBytes: number;
+	chunksCaptured: number;
+	chunksSent: number;
+	queuedBytesPeak: number;
+	wsBufferedAmountPeak: number;
+	startedAtMs: number;
+	lastCaptureAtMs: number;
+	lastSendAtMs: number;
+	usedWorklet: boolean;
+}
+
+let transportMetricsRef: AudioTransportMetrics | null = null;
 
 // 回调函数引用（用于在 WebSocket 消息中调用）
 let currentOnTranscription: TranscriptionCallback | null = null;
@@ -141,6 +156,221 @@ function getApiBaseUrl(): string {
 	);
 }
 
+function resetTransportMetrics(usedWorklet: boolean): void {
+	const now = Date.now();
+	transportMetricsRef = {
+		capturedBytes: 0,
+		sentBytes: 0,
+		droppedBytes: 0,
+		chunksCaptured: 0,
+		chunksSent: 0,
+		queuedBytesPeak: 0,
+		wsBufferedAmountPeak: 0,
+		startedAtMs: now,
+		lastCaptureAtMs: now,
+		lastSendAtMs: now,
+		usedWorklet,
+	};
+}
+
+function stopDiagnosticsLoop(): void {
+	if (diagnosticsIntervalRef) {
+		clearInterval(diagnosticsIntervalRef);
+		diagnosticsIntervalRef = null;
+	}
+}
+
+function startDiagnosticsLoop(): void {
+	stopDiagnosticsLoop();
+	if (!AUDIO_DIAGNOSTICS_ENABLED) return;
+
+	diagnosticsIntervalRef = setInterval(() => {
+		const metrics = transportMetricsRef;
+		if (!metrics) return;
+		const ws = wsRef;
+		const elapsedMs = Math.max(1, Date.now() - metrics.startedAtMs);
+		const capturedKbps = (metrics.capturedBytes * 8) / elapsedMs;
+		const sentKbps = (metrics.sentBytes * 8) / elapsedMs;
+		console.info("[AudioRecordingStore] capture diagnostics", {
+			usedWorklet: metrics.usedWorklet,
+			wsState: ws?.readyState,
+			capturedBytes: metrics.capturedBytes,
+			sentBytes: metrics.sentBytes,
+			droppedBytes: metrics.droppedBytes,
+			bufferedQueueBytes: bufferedPcmBytes,
+			queuedBytesPeak: metrics.queuedBytesPeak,
+			wsBufferedAmount: ws?.bufferedAmount ?? 0,
+			wsBufferedAmountPeak: metrics.wsBufferedAmountPeak,
+			capturedKbps: Number(capturedKbps.toFixed(2)),
+			sentKbps: Number(sentKbps.toFixed(2)),
+			chunksCaptured: metrics.chunksCaptured,
+			chunksSent: metrics.chunksSent,
+		});
+	}, DIAGNOSTIC_LOG_INTERVAL_MS);
+}
+
+function updateWsBufferedAmountPeak(ws: WebSocket): void {
+	const metrics = transportMetricsRef;
+	if (!metrics) return;
+	metrics.wsBufferedAmountPeak = Math.max(metrics.wsBufferedAmountPeak, ws.bufferedAmount);
+}
+
+function sendPcmChunk(ws: WebSocket, chunk: ArrayBuffer): boolean {
+	try {
+		ws.send(chunk);
+		const metrics = transportMetricsRef;
+		if (metrics) {
+			metrics.sentBytes += chunk.byteLength;
+			metrics.chunksSent += 1;
+			metrics.lastSendAtMs = Date.now();
+			updateWsBufferedAmountPeak(ws);
+		}
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+function queuePcmChunk(chunk: ArrayBuffer): void {
+	bufferedPcmQueue.push(chunk);
+	bufferedPcmBytes += chunk.byteLength;
+	const metrics = transportMetricsRef;
+	if (metrics) {
+		metrics.queuedBytesPeak = Math.max(metrics.queuedBytesPeak, bufferedPcmBytes);
+	}
+
+	while (bufferedPcmBytes > MAX_BUFFERED_PCM_BYTES && bufferedPcmQueue.length > 0) {
+		const dropped = bufferedPcmQueue.shift();
+		if (dropped) {
+			bufferedPcmBytes -= dropped.byteLength;
+			if (metrics) {
+				metrics.droppedBytes += dropped.byteLength;
+			}
+		}
+	}
+}
+
+function flushBufferedPcmQueue(ws: WebSocket): void {
+	while (bufferedPcmQueue.length > 0 && ws.readyState === WebSocket.OPEN) {
+		if (ws.bufferedAmount > MAX_BUFFERED_PCM_BYTES * 2) {
+			break;
+		}
+
+		const nextChunk = bufferedPcmQueue[0];
+		if (!sendPcmChunk(ws, nextChunk)) {
+			break;
+		}
+		bufferedPcmQueue.shift();
+		bufferedPcmBytes -= nextChunk.byteLength;
+	}
+}
+
+function handleCapturedPcmChunk(chunk: ArrayBuffer): void {
+	const metrics = transportMetricsRef;
+	if (metrics) {
+		metrics.capturedBytes += chunk.byteLength;
+		metrics.chunksCaptured += 1;
+		metrics.lastCaptureAtMs = Date.now();
+	}
+
+	const ws = wsRef;
+	if (ws && ws.readyState === WebSocket.OPEN) {
+		// 保证发送顺序：优先把历史缓冲清掉，再尝试发送当前块
+		flushBufferedPcmQueue(ws);
+		if (bufferedPcmQueue.length === 0 && ws.bufferedAmount <= MAX_BUFFERED_PCM_BYTES * 2) {
+			if (sendPcmChunk(ws, chunk)) {
+				return;
+			}
+		}
+	}
+
+	queuePcmChunk(chunk);
+	if (ws && ws.readyState === WebSocket.OPEN) {
+		flushBufferedPcmQueue(ws);
+	}
+}
+
+function float32ToPcm16Buffer(input: Float32Array): ArrayBuffer {
+	const buffer = new ArrayBuffer(input.length * 2);
+	const view = new DataView(buffer);
+	for (let i = 0; i < input.length; i++) {
+		const sample = Math.max(-1, Math.min(1, input[i]));
+		view.setInt16(i * 2, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+	}
+	return buffer;
+}
+
+async function setupCapturePipeline(
+	audioContext: AudioContext,
+	source: MediaStreamAudioSourceNode,
+	silentGain: GainNode,
+): Promise<boolean> {
+	if (typeof AudioWorkletNode === "undefined" || !audioContext.audioWorklet) {
+		return false;
+	}
+
+	try {
+		await audioContext.audioWorklet.addModule(WORKLET_MODULE_PATH);
+		const workletNode = new AudioWorkletNode(audioContext, WORKLET_PROCESSOR_NAME, {
+			numberOfInputs: 1,
+			numberOfOutputs: 1,
+			outputChannelCount: [1],
+			channelCount: 1,
+			channelCountMode: "explicit",
+			processorOptions: {
+				chunkSamples: WORKLET_CHUNK_SAMPLES,
+			},
+		});
+
+		workletNodeRef = workletNode;
+		if (transportMetricsRef) {
+			transportMetricsRef.usedWorklet = true;
+		}
+
+		workletNode.port.onmessage = (event: MessageEvent<unknown>) => {
+			if (typeof event.data !== "object" || event.data === null) return;
+			const message = event.data as {
+				type?: string;
+				payload?: ArrayBuffer;
+				droppedFrames?: number;
+			};
+
+			if (message.type === "pcm16" && message.payload instanceof ArrayBuffer) {
+				handleCapturedPcmChunk(message.payload);
+				return;
+			}
+
+			if (
+				message.type === "telemetry" &&
+				typeof message.droppedFrames === "number" &&
+				message.droppedFrames > 0
+			) {
+				console.warn("[AudioRecordingStore] AudioWorklet dropped frames", {
+					droppedFrames: message.droppedFrames,
+				});
+			}
+		};
+
+		source.connect(workletNode);
+		workletNode.connect(silentGain);
+		return true;
+	} catch (error) {
+		console.warn("[AudioRecordingStore] AudioWorklet unavailable, fallback to ScriptProcessor", error);
+		if (workletNodeRef) {
+			try {
+				workletNodeRef.disconnect();
+			} catch {
+				// ignore
+			}
+			workletNodeRef = null;
+		}
+		if (transportMetricsRef) {
+			transportMetricsRef.usedWorklet = false;
+		}
+		return false;
+	}
+}
+
 /**
  * 清理录音资源
  * @param segmentTimestamps 段落时间戳数组
@@ -148,6 +378,18 @@ function getApiBaseUrl(): string {
  */
 function cleanupRecordingResources(segmentTimestamps?: number[], isReconnecting = false): void {
 	// 停止 WebAudio
+	stopDiagnosticsLoop();
+
+	if (workletNodeRef) {
+		try {
+			workletNodeRef.port.onmessage = null;
+			workletNodeRef.disconnect();
+		} catch {
+			// ignore
+		}
+		workletNodeRef = null;
+	}
+
 	if (processorRef) {
 		try {
 			processorRef.disconnect();
@@ -157,6 +399,25 @@ function cleanupRecordingResources(segmentTimestamps?: number[], isReconnecting 
 		processorRef.onaudioprocess = null;
 		processorRef = null;
 	}
+
+	if (sourceNodeRef) {
+		try {
+			sourceNodeRef.disconnect();
+		} catch {
+			// ignore
+		}
+		sourceNodeRef = null;
+	}
+
+	if (silentGainNodeRef) {
+		try {
+			silentGainNodeRef.disconnect();
+		} catch {
+			// ignore
+		}
+		silentGainNodeRef = null;
+	}
+
 	if (audioContextRef) {
 		try {
 			audioContextRef.close();
@@ -188,6 +449,10 @@ function cleanupRecordingResources(segmentTimestamps?: number[], isReconnecting 
 		wsRef = null;
 	}
 
+	bufferedPcmQueue = [];
+	bufferedPcmBytes = 0;
+	transportMetricsRef = null;
+
 	// 如果不是重连，清理回调引用和重连状态
 	if (!isReconnecting) {
 		currentOnTranscription = null;
@@ -216,87 +481,116 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 	// ===== 转录数据 =====
 	transcriptionText: "",
 	partialText: "",
-	optimizedText: "",
 	segmentTimesSec: [],
 	segmentTimeLabels: [],
 	segmentRecordingIds: [],
 	segmentOffsetsSec: [],
 	liveTodos: [],
-	liveSchedules: [],
 
 	// ===== Actions =====
 
-	startRecording: async (onTranscription, onRealtimeNlp, onError, is24x7 = false) => {
-		// 如果已经在录音且不是内部重连，直接返回
-		if (get().isRecording && !isReconnectingInternally) {
-			console.warn("[AudioRecordingStore] Already recording, ignoring start request");
-			return;
-		}
-
-		try {
-			// 设置 7×24 模式标志
-			currentIs24x7 = is24x7;
-			shouldReconnectRef = is24x7; // 7×24 模式启用自动重连
-
-			// 如果是重连成功，重置重连计数
-			if (reconnectAttemptsRef > 0) {
-				reconnectAttemptsRef = 0;
-				console.log("[AudioRecordingStore] WebSocket 重连成功");
+		startRecording: async (onTranscription, onRealtimeNlp, onError, is24x7 = false) => {
+			// 如果已经在录音且不是内部重连，直接返回
+			if (get().isRecording && !isReconnectingInternally) {
+				console.warn("[AudioRecordingStore] Already recording, ignoring start request");
+				return;
 			}
 
-			// 获取麦克风权限
-			console.log("[AudioRecordingStore] 请求麦克风权限...");
-			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-			console.log("[AudioRecordingStore] ✅ 麦克风权限已获取");
-			mediaStreamRef = stream;
+			try {
+				// 设置 7×24 模式标志
+				currentIs24x7 = is24x7;
+				shouldReconnectRef = is24x7; // 7×24 模式启用自动重连
 
-			// 保存回调引用
-			currentOnTranscription = onTranscription;
-			currentOnRealtimeNlp = onRealtimeNlp || null;
-			currentOnError = onError || null;
-
-			// 连接到后端 WebSocket
-			const apiBaseUrl = getApiBaseUrl();
-			const wsUrl = apiBaseUrl.replace("http://", "ws://").replace("https://", "wss://");
-			const wsEndpoint = `${wsUrl}/api/audio/transcribe`;
-			const ws = new WebSocket(wsEndpoint);
-			ws.binaryType = "arraybuffer";
-
-			ws.onopen = () => {
-				// 发送初始化消息
-				ws.send(JSON.stringify({ is_24x7: is24x7 }));
-
-				// 使用 WebAudio 直接发送 PCM16(16k) 到后端
+				// 重要：AudioContext 需要尽可能在用户手势（点击）触发的调用栈内创建/恢复，
+				// 否则某些浏览器/环境会将其保持为 suspended，导致长时间无音频回调 → 录音严重丢帧。
 				type AudioContextCtor = typeof AudioContext & {
 					webkitAudioContext?: typeof AudioContext;
 				};
 				const AudioCtx = (window.AudioContext ||
 					(window as unknown as { webkitAudioContext?: typeof AudioContext })
 						.webkitAudioContext) as AudioContextCtor;
-				const audioContext = new AudioCtx({ sampleRate: 16000 });
+				const audioContext = new AudioCtx({ sampleRate: TARGET_SAMPLE_RATE });
 				audioContextRef = audioContext;
+				void audioContext.resume().catch((e) => {
+					console.warn("[AudioRecordingStore] AudioContext resume failed:", e);
+				});
+
+				// 如果是重连成功，重置重连计数
+				if (reconnectAttemptsRef > 0) {
+					reconnectAttemptsRef = 0;
+					console.log("[AudioRecordingStore] WebSocket 重连成功");
+				}
+
+				// 获取麦克风权限
+				console.log("[AudioRecordingStore] 请求麦克风权限...");
+				const stream = await navigator.mediaDevices.getUserMedia({
+					audio: {
+						echoCancellation: true,
+						noiseSuppression: true,
+						autoGainControl: true,
+						channelCount: 1,
+					},
+				});
+				console.log("[AudioRecordingStore] ✅ 麦克风权限已获取");
+				mediaStreamRef = stream;
+
+			// 保存回调引用
+				currentOnTranscription = onTranscription;
+				currentOnRealtimeNlp = onRealtimeNlp || null;
+				currentOnError = onError || null;
+
+				// 初始化本地缓冲（WebSocket 尚未 OPEN 时先暂存一小段 PCM）
+				bufferedPcmQueue = [];
+				bufferedPcmBytes = 0;
+				resetTransportMetrics(false);
+				startDiagnosticsLoop();
 
 				const source = audioContext.createMediaStreamSource(stream);
-				const processor = audioContext.createScriptProcessor(4096, 1, 1);
-				processorRef = processor;
+				sourceNodeRef = source;
+				const silentGain = audioContext.createGain();
+				silentGain.gain.value = 0;
+				silentGainNodeRef = silentGain;
 
-				processor.onaudioprocess = (e) => {
-					if (ws.readyState !== WebSocket.OPEN) return;
-					const input = e.inputBuffer.getChannelData(0); // Float32 [-1, 1]
-					// 转 Int16 little-endian
-					const buffer = new ArrayBuffer(input.length * 2);
-					const view = new DataView(buffer);
-					for (let i = 0; i < input.length; i++) {
-						const s = Math.max(-1, Math.min(1, input[i]));
-						view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+				const workletReady = await setupCapturePipeline(audioContext, source, silentGain);
+				if (!workletReady) {
+					const processor = audioContext.createScriptProcessor(
+						SCRIPT_PROCESSOR_BUFFER_SIZE,
+						1,
+						1,
+					);
+					processorRef = processor;
+					if (transportMetricsRef) {
+						transportMetricsRef.usedWorklet = false;
 					}
-					ws.send(buffer);
+
+					processor.onaudioprocess = (e) => {
+						const input = e.inputBuffer.getChannelData(0); // Float32 [-1, 1]
+						handleCapturedPcmChunk(float32ToPcm16Buffer(input));
+					};
+
+					source.connect(processor);
+					processor.connect(silentGain);
+				}
+
+				silentGain.connect(audioContext.destination);
+
+				// 连接到后端 WebSocket
+				const apiBaseUrl = getApiBaseUrl();
+				const wsUrl = apiBaseUrl.replace("http://", "ws://").replace("https://", "wss://");
+				const wsEndpoint = `${wsUrl}/api/audio/transcribe`;
+				const ws = new WebSocket(wsEndpoint);
+				ws.binaryType = "arraybuffer";
+				wsRef = ws;
+
+				ws.onopen = () => {
+					// 发送初始化消息
+					ws.send(JSON.stringify({ is_24x7: is24x7 }));
+
+					// 刷新缓冲：把 WebSocket 建连期间缓存的音频补发出去（最多 MAX_BUFFERED_SECONDS）
+					flushBufferedPcmQueue(ws);
 				};
 
-				source.connect(processor);
-				processor.connect(audioContext.destination);
-
-				// 记录开始时间并更新状态
+				// 记录开始时间并更新状态（不等待 ws.onopen，避免 UI/逻辑误判“未录音”）
 				const now = Date.now();
 				set({
 					isRecording: true,
@@ -304,9 +598,8 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 					recordingStartedDate: new Date(),
 					lastFinalEndMs: null,
 				});
-			};
 
-			ws.onmessage = (event) => {
+				ws.onmessage = (event) => {
 				try {
 					if (typeof event.data === "string") {
 						const data = JSON.parse(event.data);
@@ -339,23 +632,12 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 							return;
 						}
 
-						// 实时优化文本
-						if (data.header?.name === "OptimizedTextChanged") {
-							const text = data.payload?.text;
-							if (currentOnRealtimeNlp && typeof text === "string") {
-								currentOnRealtimeNlp({ optimizedText: text });
-							}
-							return;
-						}
-
 						// 实时提取结果
 						if (data.header?.name === "ExtractionChanged") {
 							const todos = data.payload?.todos;
-							const schedules = data.payload?.schedules;
 							if (currentOnRealtimeNlp) {
 								currentOnRealtimeNlp({
 									todos: Array.isArray(todos) ? todos : [],
-									schedules: Array.isArray(schedules) ? schedules : [],
 								});
 							}
 							return;
@@ -389,7 +671,7 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 				// 这样可以避免在自动重连场景下 UI 闪烁
 			};
 
-			ws.onclose = (event) => {
+				ws.onclose = (event) => {
 				// 正常关闭（用户主动停止或服务器正常关闭）
 				if (event.wasClean) {
 					set({
@@ -403,13 +685,14 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 					return;
 				}
 
-				// 如果已经被标记为不应该重连（用户主动关闭），直接设置为停止状态
-				if (!shouldReconnectRef) {
-					console.log("[AudioRecordingStore] 已禁用自动重连，跳过重连");
-					set({
-						isRecording: false,
-						recordingStartedAt: null,
-						recordingStartedDate: null,
+					// 如果已经被标记为不应该重连（用户主动关闭），直接设置为停止状态
+					if (!shouldReconnectRef) {
+						console.log("[AudioRecordingStore] 已禁用自动重连，跳过重连");
+						cleanupRecordingResources();
+						set({
+							isRecording: false,
+							recordingStartedAt: null,
+							recordingStartedDate: null,
 						lastFinalEndMs: null,
 					});
 					return;
@@ -461,12 +744,13 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 					return;
 				}
 
-				// 超过最大重连次数或非 7×24 模式：彻底停止
-				set({
-					isRecording: false,
-					recordingStartedAt: null,
-					recordingStartedDate: null,
-					lastFinalEndMs: null,
+					// 超过最大重连次数或非 7×24 模式：彻底停止
+					cleanupRecordingResources();
+					set({
+						isRecording: false,
+						recordingStartedAt: null,
+						recordingStartedDate: null,
+						lastFinalEndMs: null,
 				});
 
 				// 异常关闭提供详细错误信息
@@ -524,13 +808,20 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 			};
 
 			wsRef = ws;
-		} catch (error) {
-			console.error("Failed to start recording:", error);
-			if (onError) {
-				onError(error as Error);
+			} catch (error) {
+				console.error("Failed to start recording:", error);
+				cleanupRecordingResources();
+				set({
+					isRecording: false,
+					recordingStartedAt: null,
+					recordingStartedDate: null,
+					lastFinalEndMs: null,
+				});
+				if (onError) {
+					onError(error as Error);
+				}
 			}
-		}
-	},
+		},
 
 	stopRecording: (segmentTimestamps) => {
 		// 停止自动重连
@@ -576,10 +867,6 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 		set({ partialText: text });
 	},
 
-	setOptimizedText: (text) => {
-		set({ optimizedText: text });
-	},
-
 	appendSegmentData: (data) => {
 		set((state) => ({
 			segmentTimesSec: [...state.segmentTimesSec, data.timeSec],
@@ -593,21 +880,15 @@ export const useAudioRecordingStore = create<AudioRecordingStore>((set, get) => 
 		set({ liveTodos: todos });
 	},
 
-	setLiveSchedules: (schedules) => {
-		set({ liveSchedules: schedules });
-	},
-
 	clearSessionData: () => {
 		set({
 			transcriptionText: "",
 			partialText: "",
-			optimizedText: "",
 			segmentTimesSec: [],
 			segmentTimeLabels: [],
 			segmentRecordingIds: [],
 			segmentOffsetsSec: [],
 			liveTodos: [],
-			liveSchedules: [],
 		});
 	},
 }));

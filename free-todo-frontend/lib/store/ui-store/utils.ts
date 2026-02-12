@@ -82,7 +82,6 @@ export const DEFAULT_PANEL_STATE = {
 	customLayouts: [],
 	// 通知弹窗设置
 	notificationPopupEnabled: true,
-	notificationPopupIntervalSeconds: 10,
 };
 
 /**

@@ -1,23 +1,41 @@
 /**
  * 独立 Electron 系统级通知弹窗进程
  * 由 dev-with-auto-port.js 在 pnpm dev 启动时自动附带启动
- * 每 10 秒从屏幕左下角弹出通知，停留 3 秒后自动消失
+ * 事件驱动：轮询后端检测新的 draft todo，发现新待办时弹出通知
  * 完全独立，不影响 Next.js 或主应用的任何逻辑
  */
 
-const { app, BrowserWindow, screen } = require("electron");
+const { app, BrowserWindow, screen, net } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 
 // ─── 默认配置 ────────────────────────────────────────
-const DEFAULT_INTERVAL_S = 10;
+const POLL_INTERVAL_MS = 3_000; // 3 秒轮询一次后端
 const DURATION_MS = 3_000; // 显示 3 秒
 const WIDTH = 360;
 const HEIGHT = 120;
 const MARGIN = 16;
+const BACKEND_PORT = process.env.LIFETRACE_BACKEND_PORT || 8001;
+const BACKEND_URL = `http://127.0.0.1:${BACKEND_PORT}`;
 
 // 配置文件路径（由前端 API 写入）
 const CONFIG_PATH = path.join(__dirname, "..", ".notification-popup.json");
+
+// 默认弹窗文案
+const DEFAULT_TITLE = "待办提醒";
+const DEFAULT_MESSAGE = "检测到新的待办事项";
+
+/**
+ * 安全转义字符串，用于嵌入到 JS 字符串字面量中
+ */
+function escapeForJs(str) {
+	return str
+		.replace(/\\/g, "\\\\")
+		.replace(/'/g, "\\'")
+		.replace(/"/g, '\\"')
+		.replace(/\n/g, "\\n")
+		.replace(/\r/g, "\\r");
+}
 
 // ─── 初始化 ─────────────────────────────────────────
 // 减少资源占用：关闭 GPU 加速
@@ -31,8 +49,8 @@ let popupWindow = null;
 let avatarBase64 = "";
 let hideTimeout = null;
 let fadeTimeout = null;
-let currentIntervalMs = DEFAULT_INTERVAL_S * 1000;
 let intervalHandle = null;
+let lastSeenDraftTodoId = null; // 记录上次看到的 draft todo ID
 
 // ─── 读取配置 ────────────────────────────────────────
 function readConfig() {
@@ -42,18 +60,12 @@ function readConfig() {
 			const cfg = JSON.parse(raw);
 			return {
 				enabled: typeof cfg.enabled === "boolean" ? cfg.enabled : true,
-				intervalSeconds:
-					typeof cfg.intervalSeconds === "number" &&
-					cfg.intervalSeconds >= 3 &&
-					cfg.intervalSeconds <= 3600
-						? cfg.intervalSeconds
-						: DEFAULT_INTERVAL_S,
 			};
 		}
 	} catch {
 		// 配置文件不存在或解析失败，使用默认值
 	}
-	return { enabled: true, intervalSeconds: DEFAULT_INTERVAL_S };
+	return { enabled: true };
 }
 
 // ─── 加载头像 ───────────────────────────────────────
@@ -182,8 +194,8 @@ function getNotificationHtml() {
 				<img src="${avatarBase64}" alt="Avatar" />
 			</div>
 			<div class="text">
-				<div class="title">Cool Doge</div>
-				<div class="message">Hey! Don\u2019t forget to check your tasks \ud83d\udc3e</div>
+				<div class="title" id="notif-title">${DEFAULT_TITLE}</div>
+				<div class="message" id="notif-message">${DEFAULT_MESSAGE}</div>
 			</div>
 		</div>
 		<div class="progress" id="progress"></div>
@@ -239,7 +251,12 @@ function createWindow() {
 }
 
 // ─── 显示通知 ───────────────────────────────────────
-function showNotification() {
+/**
+ * @param {Object} [data] 可选的弹窗内容
+ * @param {string} [data.title] 标题
+ * @param {string} [data.message] 消息内容
+ */
+function showNotification(data) {
 	if (!popupWindow || popupWindow.isDestroyed()) {
 		createWindow();
 	}
@@ -252,12 +269,19 @@ function showNotification() {
 		workArea.y + workArea.height - HEIGHT - MARGIN,
 	);
 
-	// 重置动画并播放
+	const title = escapeForJs((data && data.title) || DEFAULT_TITLE);
+	const message = escapeForJs((data && data.message) || DEFAULT_MESSAGE);
+
+	// 更新文本内容、重置动画并播放
 	popupWindow.webContents
 		.executeJavaScript(
 			`(function(){
 			var p=document.getElementById('popup');
 			var b=document.getElementById('progress');
+			var t=document.getElementById('notif-title');
+			var m=document.getElementById('notif-message');
+			if(t) t.textContent='${title}';
+			if(m) m.textContent='${message}';
 			p.className='popup-wrapper';
 			b.className='progress';
 			void p.offsetHeight;
@@ -296,25 +320,51 @@ function showNotification() {
 	}, DURATION_MS);
 }
 
-// ─── 每次 tick 检查配置后决定是否弹窗 ─────────────────
-function tick() {
+// ─── 轮询后端检测新 draft todo ─────────────────────────
+function pollDraftTodos() {
 	const cfg = readConfig();
-
-	// 如果关闭了弹窗，跳过本次
 	if (!cfg.enabled) return;
 
-	// 如果间隔变了，重新设置定时器
-	const newIntervalMs = cfg.intervalSeconds * 1000;
-	if (newIntervalMs !== currentIntervalMs) {
-		currentIntervalMs = newIntervalMs;
-		if (intervalHandle) clearInterval(intervalHandle);
-		intervalHandle = setInterval(tick, currentIntervalMs);
-		console.log(
-			`[notification-popup] Interval changed to ${cfg.intervalSeconds}s`,
-		);
-	}
+	const url = `${BACKEND_URL}/api/todos?status=draft&limit=1`;
 
-	showNotification();
+	try {
+		const request = net.request(url);
+		request.on("response", (response) => {
+			let body = "";
+			response.on("data", (chunk) => {
+				body += chunk.toString();
+			});
+			response.on("end", () => {
+				try {
+					const data = JSON.parse(body);
+					const todos = data?.todos ?? [];
+					if (todos.length > 0) {
+						const latestId = todos[0].id;
+						const todoName = todos[0].name || "";
+						// 仅在检测到新的 draft todo 时弹窗
+						if (latestId !== lastSeenDraftTodoId) {
+							lastSeenDraftTodoId = latestId;
+							showNotification({
+								title: "待办提醒",
+								message: `检测到：${todoName || "新的待办事项"}`,
+							});
+							console.log(
+								`[notification-popup] New draft todo detected: ${todoName || latestId}`,
+							);
+						}
+					}
+				} catch {
+					// 解析失败，静默忽略
+				}
+			});
+		});
+		request.on("error", () => {
+			// 后端不可用，静默忽略
+		});
+		request.end();
+	} catch {
+		// 请求失败，静默忽略
+	}
 }
 
 // ─── 启动 ───────────────────────────────────────────
@@ -323,11 +373,9 @@ app.whenReady().then(() => {
 	createWindow();
 
 	const cfg = readConfig();
-	currentIntervalMs = cfg.intervalSeconds * 1000;
-
-	intervalHandle = setInterval(tick, currentIntervalMs);
+	intervalHandle = setInterval(pollDraftTodos, POLL_INTERVAL_MS);
 	console.log(
-		`[notification-popup] Started (interval: ${cfg.intervalSeconds}s, duration: ${DURATION_MS}ms, enabled: ${cfg.enabled})`,
+		`[notification-popup] Started (event-driven, poll: ${POLL_INTERVAL_MS}ms, duration: ${DURATION_MS}ms, enabled: ${cfg.enabled})`,
 	);
 });
 

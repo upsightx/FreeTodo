@@ -4,9 +4,7 @@
 """
 
 import hashlib
-import importlib
 import os
-import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -18,7 +16,6 @@ from PIL import Image
 
 from lifetrace.storage import event_mgr, screenshot_mgr
 from lifetrace.util.logging_config import get_logger
-from lifetrace.util.settings import settings
 from lifetrace.util.time_utils import get_utc_now
 from lifetrace.util.utils import get_screenshot_filename
 
@@ -259,63 +256,3 @@ def extract_screen_id_from_path(file_path: str) -> int:
     except (ValueError, IndexError):
         pass
     return 0
-
-
-def should_detect_todos(app_name: str) -> bool:
-    """判断是否需要触发待办检测
-
-    Args:
-        app_name: 应用名称
-
-    Returns:
-        是否需要检测
-    """
-    try:
-        enabled = settings.get("jobs.auto_todo_detection.enabled")
-        if not enabled:
-            logger.debug(f"自动待办检测已禁用，跳过应用: {app_name}")
-            return False
-    except KeyError:
-        logger.debug("自动待办检测配置项不存在，跳过检测")
-        return False
-
-    if not app_name:
-        return False
-    auto_module = importlib.import_module("lifetrace.llm.auto_todo_detection_service")
-    whitelist_apps = auto_module.get_whitelist_apps()
-    app_name_lower = app_name.lower()
-    is_whitelist = any(whitelist_app.lower() in app_name_lower for whitelist_app in whitelist_apps)
-
-    if is_whitelist:
-        logger.info(f"🔍 检测到白名单应用: {app_name}，将触发自动待办检测")
-    else:
-        logger.debug(f"应用 {app_name} 不在白名单中，跳过自动待办检测")
-
-    return is_whitelist
-
-
-def trigger_todo_detection_async(screenshot_id: int, _app_name: str):
-    """异步触发待办检测
-
-    Args:
-        screenshot_id: 截图ID
-        app_name: 应用名称
-    """
-
-    def _detect_todos():
-        try:
-            auto_module = importlib.import_module("lifetrace.llm.auto_todo_detection_service")
-            auto_todo_detection_service_class = auto_module.AutoTodoDetectionService
-            service = auto_todo_detection_service_class()
-            result = service.detect_and_create_todos_from_screenshot(screenshot_id)
-            logger.info(
-                f"截图 {screenshot_id} 待办检测完成，创建 {result.get('created_count', 0)} 个draft待办"
-            )
-        except Exception as e:
-            logger.error(
-                f"截图 {screenshot_id} 待办检测失败: {e}",
-                exc_info=True,
-            )
-
-    thread = threading.Thread(target=_detect_todos, daemon=True)
-    thread.start()

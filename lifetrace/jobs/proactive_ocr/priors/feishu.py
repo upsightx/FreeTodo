@@ -1,5 +1,7 @@
 """
 飞书先验配置
+
+严格参照 ref_project/proactive_key_method/src/priors/feishu.py 实现
 """
 
 import numpy as np
@@ -24,7 +26,7 @@ class FeishuPrior(AppPrior):
             ),
             ThemeConfig(
                 name="dark",
-                chat_bg_color=(30, 30, 30),  # 估计值，需要根据实际调整
+                chat_bg_color=(30, 30, 30),
                 color_tolerance=10,
             ),
         ]
@@ -53,7 +55,7 @@ class FeishuPrior(AppPrior):
             )
 
         # 兜底
-        if split_x is None:
+        if split_x is None or split_x > int(w * 0.7):
             split_x = int(w * 0.35)
 
         chat_region = image[:, split_x:, :]

@@ -109,14 +109,14 @@ async def _stop_all_crawler_processes() -> None:
     import asyncio
 
     try:
+        import lifetrace.routers.crawler as _crawler_mod
         from lifetrace.routers.crawler import (
+            _crawler_status,
+            _loop_crawler_task,
+            _stop_loop_flag,
             stop_crawler_process,
             stop_sign_service,
-            _stop_loop_flag,
-            _loop_crawler_task,
-            _crawler_status,
         )
-        import lifetrace.routers.crawler as _crawler_mod
 
         # 1. 设置停止标志，停止循环爬取
         _crawler_mod._stop_loop_flag = True
@@ -131,7 +131,7 @@ async def _stop_all_crawler_processes() -> None:
         if task is not None and not task.done():
             try:
                 await asyncio.wait_for(asyncio.shield(task), timeout=5.0)
-            except (asyncio.TimeoutError, asyncio.CancelledError):
+            except (TimeoutError, asyncio.CancelledError):
                 task.cancel()
 
         # 4. 停止签名服务

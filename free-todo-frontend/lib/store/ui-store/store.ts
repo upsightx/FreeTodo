@@ -16,13 +16,12 @@ import {
  */
 async function syncNotificationPopupConfig(
 	enabled: boolean,
-	intervalSeconds: number,
 ): Promise<void> {
 	try {
 		await fetch("/api/notification-popup-config", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ enabled, intervalSeconds }),
+			body: JSON.stringify({ enabled }),
 		});
 	} catch {
 		// 静默失败：API 不可用时（如纯静态部署）不影响 UI
@@ -460,19 +459,11 @@ export const useUiStore = create<UiStoreState>()(
 
 		// 通知弹窗设置
 		notificationPopupEnabled: DEFAULT_PANEL_STATE.notificationPopupEnabled,
-		notificationPopupIntervalSeconds:
-			DEFAULT_PANEL_STATE.notificationPopupIntervalSeconds,
 
 		setNotificationPopupEnabled: (enabled) => {
 			set(() => ({ notificationPopupEnabled: enabled }));
 			// 同步到配置文件，供独立弹窗进程读取
-			void syncNotificationPopupConfig(enabled, get().notificationPopupIntervalSeconds);
-		},
-
-		setNotificationPopupIntervalSeconds: (seconds) => {
-			const clamped = Math.max(3, Math.min(3600, Math.round(seconds)));
-			set(() => ({ notificationPopupIntervalSeconds: clamped }));
-			void syncNotificationPopupConfig(get().notificationPopupEnabled, clamped);
+			void syncNotificationPopupConfig(enabled);
 		},
 
 			setBackendDisabledFeatures: (features) =>

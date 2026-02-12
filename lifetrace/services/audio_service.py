@@ -13,7 +13,6 @@ from sqlmodel import select
 
 from lifetrace.llm.llm_client import LLMClient
 from lifetrace.services.audio_extraction_service import AudioExtractionService
-from lifetrace.services.audio_llm_utils import optimize_transcription_text as _optimize_text
 from lifetrace.storage import get_session
 from lifetrace.storage.models import AudioRecording, Transcription
 from lifetrace.storage.sql_utils import col
@@ -47,9 +46,10 @@ class AudioService:
         Returns:
             音频目录路径（格式：audio/2025/01/17/）
         """
-        year = date.strftime("%Y")
-        month = date.strftime("%m")
-        day = date.strftime("%d")
+        local_date = to_local(date) or date
+        year = local_date.strftime("%Y")
+        month = local_date.strftime("%m")
+        day = local_date.strftime("%d")
         audio_dir = self.audio_base_dir / year / month / day
         audio_dir.mkdir(parents=True, exist_ok=True)
         return audio_dir
@@ -64,11 +64,12 @@ class AudioService:
         Returns:
             音频文件路径
         """
-        audio_dir = self.get_audio_dir_for_date(date)
+        local_date = to_local(date) or date
+        audio_dir = self.get_audio_dir_for_date(local_date)
         if filename:
             return audio_dir / filename
         # 自动生成文件名：HHMMSS.wav
-        timestamp = date.strftime("%H%M%S")
+        timestamp = local_date.strftime("%H%M%S")
         return audio_dir / f"{timestamp}.wav"
 
     def create_recording(
@@ -188,46 +189,22 @@ class AudioService:
             是否有提取结果
         """
         return bool(
-            (
-                transcription.extracted_todos
-                and transcription.extracted_todos.strip()
-                and transcription.extracted_todos.strip() != "[]"
-            )
-            or (
-                transcription.extracted_schedules
-                and transcription.extracted_schedules.strip()
-                and transcription.extracted_schedules.strip() != "[]"
-            )
-            or (
-                transcription.extracted_todos_optimized
-                and transcription.extracted_todos_optimized.strip()
-                and transcription.extracted_todos_optimized.strip() != "[]"
-            )
-            or (
-                transcription.extracted_schedules_optimized
-                and transcription.extracted_schedules_optimized.strip()
-                and transcription.extracted_schedules_optimized.strip() != "[]"
-            )
+            transcription.extracted_todos
+            and transcription.extracted_todos.strip()
+            and transcription.extracted_todos.strip() != "[]"
         )
 
-    def _check_text_changes(
-        self, existing: Transcription, segmented_text: str, optimized_text: str | None
-    ) -> tuple[bool, bool]:
+    def _check_text_changes(self, existing: Transcription, segmented_text: str) -> bool:
         """检查文本是否变化
 
         Args:
             existing: 现有转录记录
             segmented_text: 新的分段文本
-            optimized_text: 新的优化文本
 
         Returns:
-            (original_changed, optimized_changed) 元组
+            原文是否变化
         """
-        original_changed = (existing.original_text or "").strip() != (segmented_text or "").strip()
-        optimized_changed = (existing.optimized_text or "").strip() != (
-            optimized_text or ""
-        ).strip()
-        return original_changed, optimized_changed
+        return (existing.original_text or "").strip() != (segmented_text or "").strip()
 
     def _cleanup_duplicate_transcriptions(
         self, session, recording_id: int, existing: Transcription
@@ -267,7 +244,6 @@ class AudioService:
         existing: Transcription,
         recording_id: int,
         segmented_text: str,
-        optimized_text: str | None,
         segment_timestamps_json: str | None = None,
     ) -> tuple[Transcription, bool]:
         """更新现有转录记录
@@ -277,15 +253,11 @@ class AudioService:
             existing: 现有记录
             recording_id: 录音ID
             segmented_text: 分段文本
-            optimized_text: 优化文本
 
         Returns:
             (transcription, should_auto_extract) 元组
         """
-        original_changed, optimized_changed = self._check_text_changes(
-            existing, segmented_text, optimized_text
-        )
-        text_changed = original_changed or optimized_changed
+        text_changed = self._check_text_changes(existing, segmented_text)
 
         if not text_changed:
             logger.debug(f"[save_transcription] 录音 {recording_id} 文本未变化，跳过更新")
@@ -293,7 +265,6 @@ class AudioService:
 
         # 文本变化了，更新文本字段（保留提取结果）
         existing.original_text = segmented_text
-        existing.optimized_text = optimized_text
         # 如果提供了新的时间戳，也更新
         if segment_timestamps_json is not None:
             existing.segment_timestamps = segment_timestamps_json
@@ -340,22 +311,11 @@ class AudioService:
 
         return display_text, segment_timestamps_json
 
-    async def _optimize_text_if_needed(self, display_text: str, auto_optimize: bool) -> str | None:
-        """如果需要，优化文本"""
-        if not auto_optimize or not display_text:
-            return None
-        try:
-            return await self.optimize_transcription_text(display_text)
-        except Exception as e:
-            logger.error(f"自动优化文本失败: {e}")
-            return None
-
     def _create_or_update_transcription(
         self,
         session: Any,
         recording_id: int,
         display_text: str,
-        optimized_text: str | None,
         segment_timestamps_json: str | None,
     ) -> tuple[Transcription, bool]:
         """创建或更新转录记录
@@ -381,7 +341,6 @@ class AudioService:
                 existing,
                 recording_id,
                 display_text,
-                optimized_text,
                 segment_timestamps_json,
             )
         else:
@@ -389,7 +348,6 @@ class AudioService:
             transcription = Transcription(
                 audio_recording_id=recording_id,
                 original_text=display_text,
-                optimized_text=optimized_text,
                 extraction_status="pending",
                 segment_timestamps=segment_timestamps_json,
             )
@@ -405,23 +363,11 @@ class AudioService:
             recording.transcription_status = "completed"
             session.commit()
 
-    def _trigger_auto_extraction(
-        self, transcription_id: int, display_text: str, optimized_text: str | None
-    ) -> None:
-        """触发自动提取待办和日程（异步执行，不阻塞）"""
+    def _trigger_auto_extraction(self, transcription_id: int, display_text: str) -> None:
+        """触发自动提取待办（异步执行，不阻塞）"""
         if display_text:
             task = asyncio.create_task(
-                self._auto_extract_todos_and_schedules(
-                    transcription_id, display_text, optimized=False
-                )
-            )
-            self._background_tasks.add(task)
-            task.add_done_callback(self._background_tasks.discard)
-        if optimized_text:
-            task = asyncio.create_task(
-                self._auto_extract_todos_and_schedules(
-                    transcription_id, optimized_text, optimized=True
-                )
+                self._auto_extract_todos(transcription_id, display_text)
             )
             self._background_tasks.add(task)
             task.add_done_callback(self._background_tasks.discard)
@@ -430,15 +376,13 @@ class AudioService:
         self,
         recording_id: int,
         original_text: str,
-        auto_optimize: bool = True,
         segment_timestamps: list[float] | None = None,
     ) -> Transcription:
-        """保存转录文本（自动优化和提取）
+        """保存转录文本并触发待办提取。
 
         Args:
             recording_id: 录音ID
             original_text: 原始转录文本（前端展示用文本，final 一句一行）
-            auto_optimize: 是否自动优化文本
             segment_timestamps: 每段文本的精确时间戳（秒），相对于录音开始时间
 
         Returns:
@@ -449,13 +393,10 @@ class AudioService:
             original_text, segment_timestamps, recording_id
         )
 
-        # 优化文本
-        optimized_text = await self._optimize_text_if_needed(display_text, auto_optimize)
-
         with get_session() as session:
             # 创建或更新转录记录
             transcription, should_auto_extract = self._create_or_update_transcription(
-                session, recording_id, display_text, optimized_text, segment_timestamps_json
+                session, recording_id, display_text, segment_timestamps_json
             )
 
             session.commit()
@@ -468,38 +409,43 @@ class AudioService:
             if should_auto_extract:
                 if transcription.id is None:
                     raise ValueError("Transcription must have an id before extraction.")
-                self._trigger_auto_extraction(transcription.id, display_text, optimized_text)
+                self._trigger_auto_extraction(transcription.id, display_text)
 
             return transcription
 
-    async def _auto_extract_todos_and_schedules(
-        self, transcription_id: int, text: str, optimized: bool = False
-    ) -> None:
-        """自动提取待办和日程（后台任务）
+    async def _auto_extract_todos(self, transcription_id: int, text: str) -> None:
+        """自动提取待办（后台任务）
 
         Args:
             transcription_id: 转录ID
             text: 要提取的文本
-            optimized: 是否为优化文本的提取
         """
         try:
-            result = await self.extraction_service.extract_todos_and_schedules(text)
+            segment_timestamps: list[float] | None = None
+            with get_session() as session:
+                transcription = session.get(Transcription, transcription_id)
+                if transcription and transcription.segment_timestamps:
+                    try:
+                        parsed = json.loads(transcription.segment_timestamps)
+                        if isinstance(parsed, list) and parsed and isinstance(parsed[0], (int, float)):
+                            segment_timestamps = [float(item) for item in parsed]
+                    except Exception:
+                        segment_timestamps = None
+
+            result = await self.extraction_service.extract_todos(
+                text,
+                segment_timestamps=segment_timestamps,
+            )
             self.extraction_service.update_extraction(
                 transcription_id=transcription_id,
                 todos=result.get("todos", []),
-                schedules=result.get("schedules", []),
-                optimized=optimized,
             )
         except Exception as e:
-            logger.error(f"自动提取待办和日程失败 (optimized={optimized}): {e}")
-
-    async def optimize_transcription_text(self, text: str) -> str:
-        """使用LLM优化转录文本。"""
-        return await _optimize_text(self.llm_client, text)
+            logger.error(f"自动提取待办失败: {e}")
 
     @property
     def extract_todos_and_schedules(self):
-        """委托给 extraction_service"""
+        """兼容旧接口：委托给 extraction_service"""
         return self.extraction_service.extract_todos_and_schedules
 
     @property
@@ -539,11 +485,8 @@ class AudioService:
                 "id": transcription.id,
                 "audio_recording_id": transcription.audio_recording_id,
                 "original_text": transcription.original_text,
-                "optimized_text": transcription.optimized_text,
                 "extracted_todos": transcription.extracted_todos,
                 "extracted_schedules": transcription.extracted_schedules,
-                "extracted_todos_optimized": transcription.extracted_todos_optimized,
-                "extracted_schedules_optimized": transcription.extracted_schedules_optimized,
                 "extraction_status": transcription.extraction_status,
                 "segment_timestamps": transcription.segment_timestamps,
                 "created_at": transcription.created_at,

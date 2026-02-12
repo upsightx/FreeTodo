@@ -18,7 +18,17 @@ from lifetrace.util.time_utils import get_utc_now
 logger = get_logger()
 
 # 默认白名单应用列表（当配置不存在时使用）
-DEFAULT_WHITELIST_APPS = ["微信", "WeChat", "飞书", "Feishu", "Lark", "钉钉", "DingTalk"]
+# 注意：Windows 上 app_name 是进程名（如 weixin.exe、Feishu.exe），需要包含进程名关键词
+DEFAULT_WHITELIST_APPS = [
+    "微信",
+    "WeChat",
+    "weixin",  # 微信新版进程名为 weixin.exe
+    "飞书",
+    "Feishu",
+    "Lark",
+    "钉钉",
+    "DingTalk",
+]
 
 
 def get_whitelist_apps() -> list[str]:

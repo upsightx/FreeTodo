@@ -112,7 +112,13 @@ declare global {
 				error?: string;
 			}>;
 
-			// ========== Island 动态岛相关 API ==========
+			/**
+		 * 触发通知弹窗（由自动待办检测等事件调用）
+		 * @param data 可选的弹窗内容数据
+		 */
+		triggerNotificationPopup?: (data?: { title?: string; message?: string }) => void;
+
+		// ========== Island 动态岛相关 API ==========
 
 		/**
 		 * 调整 Island 窗口大小（切换模式）
