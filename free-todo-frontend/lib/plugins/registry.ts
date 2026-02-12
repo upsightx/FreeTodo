@@ -165,6 +165,17 @@ const panelRegistry: Record<PanelFeature, PanelPlugin> = {
 				default: mod.PreviewPanel,
 			})),
 	},
+	perceptionStream: {
+		id: "perceptionStream",
+		labelKey: "perceptionStreamLabel",
+		placeholderKey: "perceptionStreamPlaceholder",
+		icon: FEATURE_ICON_MAP.perceptionStream,
+		backendModules: ["perception"],
+		loader: () =>
+			import("@/apps/perception-stream/PerceptionStreamPanel").then((mod) => ({
+				default: mod.PerceptionStreamPanel,
+			})),
+	},
 };
 
 const lazyPanelCache = new Map<PanelFeature, LazyExoticComponent<ComponentType>>();
