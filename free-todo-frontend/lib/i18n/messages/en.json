@@ -246,6 +246,18 @@
 				"saveFailed": "Failed to save, please retry",
 				"howToGetCookies": "How to get Cookies? ",
 				"howToGetCookiesDesc": "After logging into the platform in browser, press F12 to open developer tools, switch to 'Network' tab, refresh the page, find any request, and copy the Cookie field value from request headers."
+			},
+			"kdl": {
+				"title": "KuaiDaiLi (KDL) Proxy Config",
+				"description": "Configure KDL Secert ID, Signature, username and password for crawler IP proxy",
+				"secertIdPlaceholder": "Enter Secert ID",
+				"signaturePlaceholder": "Enter Signature",
+				"userNamePlaceholder": "Enter username",
+				"userPwdPlaceholder": "Enter password",
+				"save": "Save",
+				"saving": "Saving...",
+				"saveSuccess": "KDL proxy config saved",
+				"saveFailed": "Failed to save, please retry"
 			}
 		},
 		"costTracking": {

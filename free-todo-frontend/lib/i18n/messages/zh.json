@@ -235,6 +235,18 @@
 				"howToGetCookies": "如何获取 Cookies？",
 				"howToGetCookiesDesc": "在浏览器中登录对应平台后，按 F12 打开开发者工具，切换到「网络/Network」标签页，刷新页面，找到任意请求，在请求头中复制 Cookie 字段的值。"
 			},
+			"kdl": {
+				"title": "快代理 (KDL) 配置",
+				"description": "配置快代理 IP 的 Secert ID、Signature、用户名和密码，用于爬虫 IP 代理",
+				"secertIdPlaceholder": "输入 Secert ID",
+				"signaturePlaceholder": "输入 Signature",
+				"userNamePlaceholder": "输入用户名",
+				"userPwdPlaceholder": "输入密码",
+				"save": "保存",
+				"saving": "保存中...",
+				"saveSuccess": "快代理配置已保存",
+				"saveFailed": "保存失败，请重试"
+			},
 			"defaultChatModeLabel": "默认聊天模式",
 			"defaultChatModeHint": "页面刷新时将自动进入此模式",
 			"defaultChatModeChanged": "默认聊天模式已更新",
