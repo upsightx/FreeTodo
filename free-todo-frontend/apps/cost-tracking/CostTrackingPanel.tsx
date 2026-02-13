@@ -55,14 +55,6 @@ export function CostTrackingPanel() {
 	};
 
 	const featureName = (featureId: string) => {
-		const fallback = () => {
-			try {
-				return t("featureNames.unknown");
-			} catch {
-				return "Unknown";
-			}
-		};
-
 		// 将 camelCase 转换回 snake_case（因为 fetcher 会转换字段名，但翻译 key 是 snake_case）
 		const toSnakeCase = (str: string) =>
 			str.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
@@ -73,17 +65,12 @@ export function CostTrackingPanel() {
 			typeof t
 		>[0];
 
-		// 尝试获取翻译（next-intl 缺 key 时会抛异常）
-		let translation: string | null = null;
-		try {
-			translation = t(translationKey);
-		} catch {
-			translation = null;
-		}
+		// 尝试获取翻译
+		const translation = t(translationKey);
 
 		// 如果翻译结果包含完整的命名空间路径（说明翻译不存在），返回原始 ID
-		if (!translation || translation.includes("page.costTracking.featureNames.")) {
-			return featureId || fallback();
+		if (translation.includes("page.costTracking.featureNames.")) {
+			return featureId || t("featureNames.unknown");
 		}
 
 		return translation;
