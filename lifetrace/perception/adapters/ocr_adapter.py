@@ -26,7 +26,7 @@ class OCRAdapter:
             content_text=content,
             content_raw=content_raw,
             metadata=metadata or {},
-            priority=1,
+            priority=0,
         )
 
     async def on_screen_ocr(
