@@ -17,8 +17,8 @@ import {
 	ListTodo,
 	type LucideIcon,
 	MessageSquare,
-	Network,
 	Mic,
+	Network,
 	Radio,
 	Settings,
 } from "lucide-react";

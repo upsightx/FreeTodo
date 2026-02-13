@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import threading
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from lifetrace.perception.adapters.audio_adapter import AudioAdapter
 from lifetrace.perception.adapters.input_adapter import InputAdapter
@@ -260,8 +260,8 @@ class PerceptionStreamManager:
         except Exception:
             return False
 
-    def get_status(self) -> dict[str, object]:
-        status: dict[str, dict[str, object]] = {
+    def get_status(self) -> dict[str, Any]:
+        status = {
             st.value: {
                 "enabled": self._enabled_sources.get(st, False),
                 "online": False,

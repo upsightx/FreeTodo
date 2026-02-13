@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
 from collections import deque
@@ -61,10 +62,11 @@ class PerceptionStream:
             if self._stopped:
                 return
 
-            if len(self._pending) >= self._max_pending_events:
-                if not self._try_make_room_for(incoming=event):
-                    self._record_drop(event, reason="pending_full_drop_incoming")
-                    return
+            if len(self._pending) >= self._max_pending_events and not self._try_make_room_for(
+                incoming=event
+            ):
+                self._record_drop(event, reason="pending_full_drop_incoming")
+                return
 
             self._sequence_counter += 1
             event.sequence_id = self._sequence_counter
@@ -98,10 +100,8 @@ class PerceptionStream:
             return
 
         task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await task
-        except asyncio.CancelledError:
-            pass
 
     def subscribe(self, callback: Callable[[PerceptionEvent], Awaitable[None]]) -> None:
         self._subscribers.append(callback)
