@@ -33,14 +33,9 @@ async def _publish_perception_user_input(text: str) -> None:
         )
 
         mgr = try_get_perception_manager()
-        adapter = mgr.get_input_adapter() if mgr is not None else None
-        if adapter is None:
+        if mgr is None:
             return
-
-        event = adapter.build_user_input_event(content, metadata={"source": "chat"})
-        if event is None:
-            return
-        await mgr.publish_event(event)
+        await mgr.try_publish_user_input(content, metadata={"source": "chat"})
     except Exception:
         return
 

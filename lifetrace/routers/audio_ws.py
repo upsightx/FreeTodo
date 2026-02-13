@@ -9,7 +9,6 @@ import array
 import asyncio
 import importlib
 import json
-import struct
 import time
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any
@@ -17,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 
+from lifetrace.util.audio_utils import apply_agc_to_pcm, pcm16le_to_wav
 from lifetrace.util.time_utils import get_utc_now
 
 if TYPE_CHECKING:
@@ -69,33 +69,12 @@ def _pcm16le_to_wav(
     num_channels: int = NUM_CHANNELS,
     bits_per_sample: int = BITS_PER_SAMPLE,
 ) -> bytes:
-    """Wrap raw PCM16LE bytes into WAV container bytes."""
-    byte_rate = sample_rate * num_channels * bits_per_sample // 8
-    block_align = num_channels * bits_per_sample // 8
-    data_size = len(pcm_data)
-
-    fmt_chunk_size = 16
-    riff_chunk_size = 4 + (8 + fmt_chunk_size) + (8 + data_size)
-
-    header = b"RIFF"
-    header += struct.pack("<I", riff_chunk_size)
-    header += b"WAVE"
-
-    header += b"fmt "
-    header += struct.pack(
-        "<IHHIIHH",
-        fmt_chunk_size,
-        1,  # PCM
-        num_channels,
-        sample_rate,
-        byte_rate,
-        block_align,
-        bits_per_sample,
+    return pcm16le_to_wav(
+        pcm_data,
+        sample_rate=sample_rate,
+        num_channels=num_channels,
+        bits_per_sample=bits_per_sample,
     )
-
-    header += b"data"
-    header += struct.pack("<I", data_size)
-    return header + pcm_data
 
 
 def _create_result_callback(
@@ -371,52 +350,24 @@ def _parse_init_message(logger, init_message: dict[str, Any]) -> bool:
     return bool(init_message.get("is_24x7", False))
 
 
-def _apply_agc_to_pcm(  # noqa: C901
+def _apply_agc_to_pcm(
     logger,
     pcm_bytes: bytes,
     *,
     log_stats: bool = True,
     warn_silence: bool = True,
 ) -> bytes:
-    """Peak-based AGC (V1)."""
-    try:
-        samples = array.array("h")
-        samples.frombytes(pcm_bytes)
-        if not samples:
-            return pcm_bytes
-
-        max_abs = max(abs(s) for s in samples)
-        rms = (sum(s * s for s in samples) / len(samples)) ** 0.5
-        if log_stats:
-            logger.info(
-                f"录音原始PCM: samples={len(samples)}, max_abs={max_abs}, rms={rms:.2f}"
-            )
-
-        if max_abs < PCM_SILENCE_MAX_ABS and rms < PCM_SILENCE_RMS:
-            if warn_silence:
-                logger.warning("录音PCM振幅极低，可能无声；请检查麦克风/权限/设备输入。")
-            return pcm_bytes
-
-        target_peak = AGC_TARGET_PEAK_RATIO * INT16_MAX
-        gain = target_peak / max_abs if max_abs > 0 else 1.0
-        gain = min(gain, MAX_AGC_GAIN)
-        if gain <= AGC_APPLY_THRESHOLD_GAIN:
-            return pcm_bytes
-
-        if log_stats:
-            logger.info(f"应用自动增益: x{gain:.2f}")
-
-        for i in range(len(samples)):
-            v = int(samples[i] * gain)
-            if v > INT16_MAX:
-                v = INT16_MAX
-            elif v < INT16_MIN:
-                v = INT16_MIN
-            samples[i] = v
-        return samples.tobytes()
-    except Exception as e:
-        logger.debug(f"音量检测失败: {e}")
-        return pcm_bytes
+    return apply_agc_to_pcm(
+        logger,
+        pcm_bytes,
+        log_stats=log_stats,
+        warn_silence=warn_silence,
+        silence_max_abs=PCM_SILENCE_MAX_ABS,
+        silence_rms=PCM_SILENCE_RMS,
+        max_gain=MAX_AGC_GAIN,
+        apply_threshold_gain=AGC_APPLY_THRESHOLD_GAIN,
+        target_peak_ratio=AGC_TARGET_PEAK_RATIO,
+    )
 
 
 def _detect_silence(

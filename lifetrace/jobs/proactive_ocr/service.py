@@ -443,13 +443,8 @@ class ProactiveOCRService:
                     )
 
                     mgr = try_get_perception_manager()
-                    adapter = mgr.get_ocr_adapter() if mgr is not None else None
-                    if (
-                        adapter is not None
-                        and (text_content or "").strip()
-                        and screenshot_id
-                    ):
-                        event = adapter.build_proactive_ocr_event(
+                    if mgr is not None and screenshot_id:
+                        mgr.try_publish_proactive_ocr_threadsafe(
                             text_content,
                             content_raw=f"/api/screenshots/{screenshot_id}/image",
                             metadata={
@@ -463,8 +458,6 @@ class ProactiveOCRService:
                                 "pid": window.pid,
                             },
                         )
-                        if event is not None:
-                            mgr.publish_event_threadsafe(event)
                 except Exception as exc:
                     logger.debug(f"Perception publish skipped: {exc}")
 

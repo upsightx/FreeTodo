@@ -117,17 +117,11 @@ class HardwareAudioSession:
             if mgr is None:
                 return
 
-            adapter = mgr.get_audio_adapter()
-            if adapter is None:
-                return
-            event = adapter.build_transcription_event(
+            await mgr.try_publish_audio_transcription(
                 text,
                 metadata={"source": "hardware_audio", "uid": self.uid},
                 source=SourceType.MIC_HARDWARE,
             )
-            if event is None:
-                return
-            await mgr.publish_event(event)
         except Exception:
             # Perception stream is best-effort.
             return
@@ -169,16 +163,13 @@ class HardwareAudioSession:
                 logger.info(f"[hardware] 设备 {self.uid} 无音频数据，跳过保存")
                 return
 
-            from lifetrace.routers.audio_ws import (  # noqa: PLC0415
-                _apply_agc_to_pcm,
-                _pcm16le_to_wav,
-            )
+            from lifetrace.util.audio_utils import apply_agc_to_pcm, pcm16le_to_wav  # noqa: PLC0415
 
             pcm_bytes = b"".join(self.audio_chunks)
             duration = len(pcm_bytes) / (self.sample_rate * 2)  # 16-bit mono
 
-            pcm_bytes = _apply_agc_to_pcm(logger, pcm_bytes)
-            wav_bytes = _pcm16le_to_wav(pcm_bytes, sample_rate=self.sample_rate)
+            pcm_bytes = apply_agc_to_pcm(logger, pcm_bytes)
+            wav_bytes = pcm16le_to_wav(pcm_bytes, sample_rate=self.sample_rate)
 
             # 保存 WAV 文件
             file_path = self.audio_service.generate_audio_file_path(self.started_at)

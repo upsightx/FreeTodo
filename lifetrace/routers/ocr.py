@@ -41,9 +41,8 @@ async def process_ocr(screenshot_id: int):
             )
 
             mgr = try_get_perception_manager()
-            adapter = mgr.get_ocr_adapter() if mgr is not None else None
-            if adapter is not None and (ocr_result["text_content"] or "").strip():
-                event = adapter.build_screen_ocr_event(
+            if mgr is not None:
+                await mgr.try_publish_screen_ocr(
                     ocr_result["text_content"],
                     content_raw=f"/api/screenshots/{screenshot['id']}/image",
                     metadata={
@@ -54,8 +53,6 @@ async def process_ocr(screenshot_id: int):
                         "confidence": ocr_result.get("confidence"),
                     },
                 )
-                if event is not None:
-                    await mgr.publish_event(event)
 
             return {
                 "success": True,

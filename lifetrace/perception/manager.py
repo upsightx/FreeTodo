@@ -74,12 +74,191 @@ class PerceptionStreamManager:
         self.record_seen(event.source)
         await self.stream.publish(event)
 
-    def publish_event_threadsafe(self, event: PerceptionEvent) -> None:
+    def publish_event_threadsafe(self, event: PerceptionEvent) -> bool:
         loop = self._loop
         if loop is None or not loop.is_running():
-            return
+            return False
         self.record_seen(event.source)
         asyncio.run_coroutine_threadsafe(self.stream.publish(event), loop)
+        return True
+
+    async def try_publish_audio_transcription(
+        self,
+        text: str,
+        *,
+        metadata: dict | None = None,
+        source: SourceType | None = None,
+    ) -> bool:
+        """Best-effort publish for audio transcription events."""
+        try:
+            adapter = self.get_audio_adapter()
+            if adapter is None:
+                return False
+            event = adapter.build_transcription_event(
+                text,
+                metadata=metadata,
+                source=source,
+            )
+            if event is None:
+                return False
+            await self.publish_event(event)
+            return True
+        except Exception:
+            return False
+
+    async def try_publish_user_input(
+        self,
+        text: str,
+        *,
+        metadata: dict | None = None,
+    ) -> bool:
+        """Best-effort publish for user input events."""
+        try:
+            adapter = self.get_input_adapter()
+            if adapter is None:
+                return False
+            event = adapter.build_user_input_event(text, metadata=metadata)
+            if event is None:
+                return False
+            await self.publish_event(event)
+            return True
+        except Exception:
+            return False
+
+    async def try_publish_screen_ocr(
+        self,
+        text: str,
+        *,
+        content_raw: str,
+        metadata: dict | None = None,
+    ) -> bool:
+        """Best-effort publish for screen OCR events."""
+        try:
+            adapter = self.get_ocr_adapter()
+            if adapter is None:
+                return False
+            event = adapter.build_screen_ocr_event(
+                text,
+                content_raw=content_raw,
+                metadata=metadata,
+            )
+            if event is None:
+                return False
+            await self.publish_event(event)
+            return True
+        except Exception:
+            return False
+
+    async def try_publish_proactive_ocr(
+        self,
+        text: str,
+        *,
+        content_raw: str | None = None,
+        metadata: dict | None = None,
+    ) -> bool:
+        """Best-effort publish for proactive OCR events."""
+        try:
+            adapter = self.get_ocr_adapter()
+            if adapter is None:
+                return False
+            event = adapter.build_proactive_ocr_event(
+                text,
+                content_raw=content_raw,
+                metadata=metadata,
+            )
+            if event is None:
+                return False
+            await self.publish_event(event)
+            return True
+        except Exception:
+            return False
+
+    def try_publish_screen_ocr_threadsafe(
+        self,
+        text: str,
+        *,
+        content_raw: str,
+        metadata: dict | None = None,
+    ) -> bool:
+        """Best-effort publish for screen OCR events from non-async contexts."""
+        try:
+            adapter = self.get_ocr_adapter()
+            if adapter is None:
+                return False
+            event = adapter.build_screen_ocr_event(
+                text,
+                content_raw=content_raw,
+                metadata=metadata,
+            )
+            if event is None:
+                return False
+            return self.publish_event_threadsafe(event)
+        except Exception:
+            return False
+
+    def try_publish_proactive_ocr_threadsafe(
+        self,
+        text: str,
+        *,
+        content_raw: str | None = None,
+        metadata: dict | None = None,
+    ) -> bool:
+        """Best-effort publish for proactive OCR events from non-async contexts."""
+        try:
+            adapter = self.get_ocr_adapter()
+            if adapter is None:
+                return False
+            event = adapter.build_proactive_ocr_event(
+                text,
+                content_raw=content_raw,
+                metadata=metadata,
+            )
+            if event is None:
+                return False
+            return self.publish_event_threadsafe(event)
+        except Exception:
+            return False
+
+    def try_publish_audio_transcription_threadsafe(
+        self,
+        text: str,
+        *,
+        metadata: dict | None = None,
+        source: SourceType | None = None,
+    ) -> bool:
+        """Best-effort publish for audio transcription events from non-async contexts."""
+        try:
+            adapter = self.get_audio_adapter()
+            if adapter is None:
+                return False
+            event = adapter.build_transcription_event(
+                text,
+                metadata=metadata,
+                source=source,
+            )
+            if event is None:
+                return False
+            return self.publish_event_threadsafe(event)
+        except Exception:
+            return False
+
+    def try_publish_user_input_threadsafe(
+        self,
+        text: str,
+        *,
+        metadata: dict | None = None,
+    ) -> bool:
+        """Best-effort publish for user input events from non-async contexts."""
+        try:
+            adapter = self.get_input_adapter()
+            if adapter is None:
+                return False
+            event = adapter.build_user_input_event(text, metadata=metadata)
+            if event is None:
+                return False
+            return self.publish_event_threadsafe(event)
+        except Exception:
+            return False
 
     def get_status(self) -> dict[str, object]:
         status: dict[str, dict[str, object]] = {

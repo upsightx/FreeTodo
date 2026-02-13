@@ -114,10 +114,9 @@ def process_screenshot_ocr(screenshot_info, ocr_engine, vector_service):
             from lifetrace.storage import screenshot_mgr  # noqa: PLC0415
 
             mgr = try_get_perception_manager()
-            adapter = mgr.get_ocr_adapter() if mgr is not None else None
-            if adapter is not None and (ocr_text or "").strip():
+            if mgr is not None:
                 screenshot = screenshot_mgr.get_screenshot_by_id(screenshot_id) or {}
-                event = adapter.build_screen_ocr_event(
+                mgr.try_publish_screen_ocr_threadsafe(
                     ocr_text,
                     content_raw=f"/api/screenshots/{screenshot_id}/image",
                     metadata={
@@ -128,8 +127,6 @@ def process_screenshot_ocr(screenshot_info, ocr_engine, vector_service):
                         "confidence": ocr_result.get("confidence"),
                     },
                 )
-                if event is not None:
-                    mgr.publish_event_threadsafe(event)
         except Exception as exc:
             logger.debug(f"Perception publish skipped: {exc}")
 

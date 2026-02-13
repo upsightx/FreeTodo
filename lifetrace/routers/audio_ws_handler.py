@@ -28,10 +28,7 @@ async def _publish_perception_audio_sentence(*, text: str, logger) -> None:
         mgr = try_get_perception_manager()
         if mgr is None:
             return
-        adapter = mgr.get_audio_adapter()
-        if adapter is None:
-            return
-        await adapter.on_transcription(text, metadata={"source": "audio_ws"})
+        await mgr.try_publish_audio_transcription(text, metadata={"source": "audio_ws"})
     except Exception as exc:
         logger.debug(f"Perception publish skipped: {exc}")
 
