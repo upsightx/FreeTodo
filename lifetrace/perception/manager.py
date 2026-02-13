@@ -134,6 +134,10 @@ class PerceptionStreamManager:
         adapter = self._adapters.get("input")
         return adapter if isinstance(adapter, InputAdapter) else None
 
+    def get_ocr_adapter(self) -> OCRAdapter | None:
+        adapter = self._adapters.get("ocr")
+        return adapter if isinstance(adapter, OCRAdapter) else None
+
 
 _manager: PerceptionStreamManager | None = None
 

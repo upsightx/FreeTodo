@@ -111,22 +111,14 @@ def process_screenshot_ocr(screenshot_info, ocr_engine, vector_service):
 
         try:
             from lifetrace.perception.manager import try_get_perception_manager  # noqa: PLC0415
-            from lifetrace.perception.models import (  # noqa: PLC0415
-                Modality,
-                PerceptionEvent,
-                SourceType,
-            )
             from lifetrace.storage import screenshot_mgr  # noqa: PLC0415
-            from lifetrace.util.time_utils import get_utc_now  # noqa: PLC0415
 
             mgr = try_get_perception_manager()
-            if mgr is not None and mgr.is_ocr_enabled() and (ocr_text or "").strip():
+            adapter = mgr.get_ocr_adapter() if mgr is not None else None
+            if adapter is not None and (ocr_text or "").strip():
                 screenshot = screenshot_mgr.get_screenshot_by_id(screenshot_id) or {}
-                event = PerceptionEvent(
-                    timestamp=get_utc_now(),
-                    source=SourceType.OCR_SCREEN,
-                    modality=Modality.IMAGE,
-                    content_text=(ocr_text or "").strip(),
+                event = adapter.build_screen_ocr_event(
+                    ocr_text,
                     content_raw=f"/api/screenshots/{screenshot_id}/image",
                     metadata={
                         "source": "ocr_job",
@@ -135,11 +127,11 @@ def process_screenshot_ocr(screenshot_info, ocr_engine, vector_service):
                         "window_title": screenshot.get("window_title"),
                         "confidence": ocr_result.get("confidence"),
                     },
-                    priority=1,
                 )
-                mgr.publish_event_threadsafe(event)
-        except Exception:
-            pass
+                if event is not None:
+                    mgr.publish_event_threadsafe(event)
+        except Exception as exc:
+            logger.debug(f"Perception publish skipped: {exc}")
 
         logger.info(f"OCR处理完成 ID {screenshot_id}, 用时: {elapsed_time:.2f}秒")
         return True

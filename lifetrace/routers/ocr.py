@@ -4,10 +4,8 @@ from fastapi import APIRouter, HTTPException
 
 from lifetrace.core.dependencies import get_ocr_processor
 from lifetrace.perception.manager import try_get_perception_manager
-from lifetrace.perception.models import Modality, PerceptionEvent, SourceType
 from lifetrace.storage import ocr_mgr, screenshot_mgr
 from lifetrace.util.logging_config import get_logger
-from lifetrace.util.time_utils import get_utc_now
 
 logger = get_logger()
 
@@ -43,16 +41,10 @@ async def process_ocr(screenshot_id: int):
             )
 
             mgr = try_get_perception_manager()
-            if (
-                mgr is not None
-                and mgr.is_ocr_enabled()
-                and (ocr_result["text_content"] or "").strip()
-            ):
-                event = PerceptionEvent(
-                    timestamp=get_utc_now(),
-                    source=SourceType.OCR_SCREEN,
-                    modality=Modality.IMAGE,
-                    content_text=(ocr_result["text_content"] or "").strip(),
+            adapter = mgr.get_ocr_adapter() if mgr is not None else None
+            if adapter is not None and (ocr_result["text_content"] or "").strip():
+                event = adapter.build_screen_ocr_event(
+                    ocr_result["text_content"],
                     content_raw=f"/api/screenshots/{screenshot['id']}/image",
                     metadata={
                         "source": "ocr_route",
@@ -61,9 +53,9 @@ async def process_ocr(screenshot_id: int):
                         "window_title": screenshot.get("window_title"),
                         "confidence": ocr_result.get("confidence"),
                     },
-                    priority=1,
                 )
-                await mgr.publish_event(event)
+                if event is not None:
+                    await mgr.publish_event(event)
 
             return {
                 "success": True,

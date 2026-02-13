@@ -31,25 +31,15 @@ async def _publish_perception_user_input(text: str) -> None:
         from lifetrace.perception.manager import (  # noqa: PLC0415
             try_get_perception_manager,
         )
-        from lifetrace.perception.models import (  # noqa: PLC0415
-            Modality,
-            PerceptionEvent,
-            SourceType,
-        )
-        from lifetrace.util.time_utils import get_utc_now  # noqa: PLC0415
 
         mgr = try_get_perception_manager()
-        if mgr is None or not mgr.is_input_enabled():
+        adapter = mgr.get_input_adapter() if mgr is not None else None
+        if adapter is None:
             return
 
-        event = PerceptionEvent(
-            timestamp=get_utc_now(),
-            source=SourceType.USER_INPUT,
-            modality=Modality.TEXT,
-            content_text=content,
-            metadata={"source": "chat"},
-            priority=3,
-        )
+        event = adapter.build_user_input_event(content, metadata={"source": "chat"})
+        if event is None:
+            return
         await mgr.publish_event(event)
     except Exception:
         return

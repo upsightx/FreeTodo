@@ -22,17 +22,28 @@ class AudioAdapter:
     def source(self) -> SourceType:
         return self._source
 
-    async def on_transcription(self, text: str, metadata: dict | None = None) -> None:
+    def build_transcription_event(
+        self,
+        text: str,
+        metadata: dict | None = None,
+        *,
+        source: SourceType | None = None,
+    ) -> PerceptionEvent | None:
         content = (text or "").strip()
         if not content:
-            return
-
-        event = PerceptionEvent(
+            return None
+        resolved_source = source or self._source
+        return PerceptionEvent(
             timestamp=get_utc_now(),
-            source=self._source,
+            source=resolved_source,
             modality=Modality.AUDIO,
             content_text=content,
             metadata=metadata or {},
             priority=2,
         )
+
+    async def on_transcription(self, text: str, metadata: dict | None = None) -> None:
+        event = self.build_transcription_event(text, metadata=metadata)
+        if event is None:
+            return
         await self._publish(event)

@@ -441,25 +441,16 @@ class ProactiveOCRService:
                     from lifetrace.perception.manager import (  # noqa: PLC0415
                         try_get_perception_manager,
                     )
-                    from lifetrace.perception.models import (  # noqa: PLC0415
-                        Modality,
-                        PerceptionEvent,
-                        SourceType,
-                    )
-                    from lifetrace.util.time_utils import get_utc_now  # noqa: PLC0415
 
                     mgr = try_get_perception_manager()
+                    adapter = mgr.get_ocr_adapter() if mgr is not None else None
                     if (
-                        mgr is not None
-                        and mgr.is_ocr_enabled()
+                        adapter is not None
                         and (text_content or "").strip()
                         and screenshot_id
                     ):
-                        event = PerceptionEvent(
-                            timestamp=get_utc_now(),
-                            source=SourceType.OCR_PROACTIVE,
-                            modality=Modality.TEXT,
-                            content_text=(text_content or "").strip(),
+                        event = adapter.build_proactive_ocr_event(
+                            text_content,
                             content_raw=f"/api/screenshots/{screenshot_id}/image",
                             metadata={
                                 "source": "proactive_ocr",
@@ -471,11 +462,11 @@ class ProactiveOCRService:
                                 "hwnd": window.hwnd,
                                 "pid": window.pid,
                             },
-                            priority=1,
                         )
-                        mgr.publish_event_threadsafe(event)
-                except Exception:
-                    pass
+                        if event is not None:
+                            mgr.publish_event_threadsafe(event)
+                except Exception as exc:
+                    logger.debug(f"Perception publish skipped: {exc}")
 
                 # 自动触发基于 OCR 文本的待办提取
                 # 同时检查 proactive_ocr 自身开关和全局自动待办检测开关

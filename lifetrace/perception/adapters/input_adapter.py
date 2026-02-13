@@ -13,12 +13,13 @@ class InputAdapter:
     def __init__(self, publisher: Callable[[PerceptionEvent], Awaitable[None]]):
         self._publish = publisher
 
-    async def on_user_input(self, text: str, metadata: dict | None = None) -> None:
+    def build_user_input_event(
+        self, text: str, metadata: dict | None = None
+    ) -> PerceptionEvent | None:
         content = (text or "").strip()
         if not content:
-            return
-
-        event = PerceptionEvent(
+            return None
+        return PerceptionEvent(
             timestamp=get_utc_now(),
             source=SourceType.USER_INPUT,
             modality=Modality.TEXT,
@@ -26,4 +27,9 @@ class InputAdapter:
             metadata=metadata or {},
             priority=3,
         )
+
+    async def on_user_input(self, text: str, metadata: dict | None = None) -> None:
+        event = self.build_user_input_event(text, metadata=metadata)
+        if event is None:
+            return
         await self._publish(event)

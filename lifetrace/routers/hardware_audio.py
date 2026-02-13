@@ -111,24 +111,22 @@ class HardwareAudioSession:
             from lifetrace.perception.manager import (  # noqa: PLC0415
                 try_get_perception_manager,
             )
-            from lifetrace.perception.models import (  # noqa: PLC0415
-                Modality,
-                PerceptionEvent,
-                SourceType,
-            )
+            from lifetrace.perception.models import SourceType  # noqa: PLC0415
 
             mgr = try_get_perception_manager()
             if mgr is None:
                 return
 
-            event = PerceptionEvent(
-                timestamp=get_utc_now(),
-                source=SourceType.MIC_HARDWARE,
-                modality=Modality.AUDIO,
-                content_text=text,
+            adapter = mgr.get_audio_adapter()
+            if adapter is None:
+                return
+            event = adapter.build_transcription_event(
+                text,
                 metadata={"source": "hardware_audio", "uid": self.uid},
-                priority=2,
+                source=SourceType.MIC_HARDWARE,
             )
+            if event is None:
+                return
             await mgr.publish_event(event)
         except Exception:
             # Perception stream is best-effort.
