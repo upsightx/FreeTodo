@@ -435,6 +435,32 @@ class ProactiveOCRService:
 
             if ocr_result_id:
                 logger.debug(f"ProactiveOCR: Saved OCR result_id={ocr_result_id}")
+
+                # Publish to Perception Stream (best-effort, threadsafe).
+                try:
+                    from lifetrace.perception.manager import (  # noqa: PLC0415
+                        try_get_perception_manager,
+                    )
+
+                    mgr = try_get_perception_manager()
+                    if mgr is not None and screenshot_id:
+                        mgr.try_publish_proactive_ocr_threadsafe(
+                            text_content,
+                            content_raw=f"/api/screenshots/{screenshot_id}/image",
+                            metadata={
+                                "source": "proactive_ocr",
+                                "screenshot_id": screenshot_id,
+                                "ocr_result_id": ocr_result_id,
+                                "app_name": app_type.value,
+                                "window_title": window.title,
+                                "confidence": avg_confidence,
+                                "hwnd": window.hwnd,
+                                "pid": window.pid,
+                            },
+                        )
+                except Exception as exc:
+                    logger.debug(f"Perception publish skipped: {exc}")
+
                 # 自动触发基于 OCR 文本的待办提取
                 # 同时检查 proactive_ocr 自身开关和全局自动待办检测开关
                 try:

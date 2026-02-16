@@ -109,6 +109,27 @@ def process_screenshot_ocr(screenshot_info, ocr_engine, vector_service):
         }
         save_to_database(file_path, ocr_result, vector_service)
 
+        try:
+            from lifetrace.perception.manager import try_get_perception_manager  # noqa: PLC0415
+            from lifetrace.storage import screenshot_mgr  # noqa: PLC0415
+
+            mgr = try_get_perception_manager()
+            if mgr is not None:
+                screenshot = screenshot_mgr.get_screenshot_by_id(screenshot_id) or {}
+                mgr.try_publish_screen_ocr_threadsafe(
+                    ocr_text,
+                    content_raw=f"/api/screenshots/{screenshot_id}/image",
+                    metadata={
+                        "source": "ocr_job",
+                        "screenshot_id": screenshot_id,
+                        "app_name": screenshot.get("app_name"),
+                        "window_title": screenshot.get("window_title"),
+                        "confidence": ocr_result.get("confidence"),
+                    },
+                )
+        except Exception as exc:
+            logger.debug(f"Perception publish skipped: {exc}")
+
         logger.info(f"OCR处理完成 ID {screenshot_id}, 用时: {elapsed_time:.2f}秒")
         return True
 

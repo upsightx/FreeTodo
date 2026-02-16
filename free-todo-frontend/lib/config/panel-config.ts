@@ -17,8 +17,9 @@ import {
 	ListTodo,
 	type LucideIcon,
 	MessageSquare,
-	Network,
 	Mic,
+	Network,
+	Radio,
 	Settings,
 } from "lucide-react";
 
@@ -37,6 +38,7 @@ export type PanelFeature =
 	| "crawler"
 	| "crawlerDetail"
 	| "audio"
+	| "perceptionStream"
 	| "preview";
 
 /**
@@ -50,6 +52,7 @@ export const DEV_IN_PROGRESS_FEATURES: PanelFeature[] = [
 	"debugShots",
 	"achievements",
 	"audio",
+	"perceptionStream",
 ];
 
 /**
@@ -69,6 +72,7 @@ export const ALL_PANEL_FEATURES: PanelFeature[] = [
 	"crawler",
 	"crawlerDetail",
 	"audio",
+	"perceptionStream",
 	"preview",
 ];
 
@@ -89,5 +93,6 @@ export const FEATURE_ICON_MAP: Record<PanelFeature, LucideIcon> = {
 	crawler: Bug,
 	crawlerDetail: Network,
 	audio: Mic,
+	perceptionStream: Radio,
 	preview: Eye,
 };
