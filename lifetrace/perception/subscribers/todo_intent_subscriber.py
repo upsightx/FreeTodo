@@ -47,6 +47,7 @@ class TodoIntentSubscriber:
             "gate_passed_context_total": 0,
             "gate_blocked_context_total": 0,
             "created_total": 0,
+            "updated_total": 0,
             "queued_review_total": 0,
             "skipped_total": 0,
         }
@@ -224,6 +225,8 @@ class TodoIntentSubscriber:
             action = item.get("action")
             if action == "created":
                 self._stats["created_total"] += 1
+            elif action == "updated":
+                self._stats["updated_total"] += 1
             elif action == "queued_review":
                 self._stats["queued_review_total"] += 1
             elif action == "skipped":

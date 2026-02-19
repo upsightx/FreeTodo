@@ -91,6 +91,43 @@ def test_integration_updates_existing_todo(monkeypatch) -> None:
     assert fake_mgr.updated[0][0] == _UPDATED_TODO_ID
 
 
+def test_integration_updates_existing_with_naive_due(monkeypatch) -> None:
+    fake_mgr = _FakeTodoMgr()
+    fake_mgr.active_rows = [
+        {
+            "id": _UPDATED_TODO_ID,
+            "name": "Send proposal",
+            "description": "old",
+            "user_notes": "",
+            "priority": "none",
+            "tags": ["work"],
+            "due": "2026-02-20T07:00:00",
+        }
+    ]
+    monkeypatch.setattr(integration_module, "todo_mgr", fake_mgr)
+
+    integration = TodoIntentIntegration(
+        mode="active",
+        config={
+            "create_confidence_threshold": 0.7,
+            "update_confidence_threshold": 0.75,
+            "update_time_tolerance_seconds": 7200,
+        },
+    )
+    candidate = ExtractedTodoCandidate(
+        name="Send proposal",
+        due=datetime(2026, 2, 20, 7, 30, tzinfo=UTC),
+        confidence=0.9,
+        source_text="send proposal at 7:30",
+    )
+
+    results = integration.integrate(context=_build_context(), candidates=[candidate])
+
+    assert results[0].action == "updated"
+    assert fake_mgr.updated
+    assert fake_mgr.created == []
+
+
 def test_integration_creates_when_no_existing_match(monkeypatch) -> None:
     fake_mgr = _FakeTodoMgr()
     monkeypatch.setattr(integration_module, "todo_mgr", fake_mgr)

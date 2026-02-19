@@ -10,7 +10,7 @@ from lifetrace.schemas.perception_todo_intent import (
 from lifetrace.services.perception_todo_intent.dedupe import TTLDedupeCache, canonicalize_text
 from lifetrace.storage import todo_mgr
 from lifetrace.util.logging_config import get_logger
-from lifetrace.util.time_utils import to_utc
+from lifetrace.util.time_utils import naive_as_utc, to_utc
 
 logger = get_logger()
 
@@ -273,7 +273,7 @@ class TodoIntentIntegration:
 
     def _coerce_datetime(self, value: object) -> datetime | None:
         if isinstance(value, datetime):
-            return to_utc(value)
+            return naive_as_utc(value) if value.tzinfo is None else to_utc(value)
         if not isinstance(value, str):
             return None
 
@@ -283,7 +283,8 @@ class TodoIntentIntegration:
         if raw.endswith("Z"):
             raw = f"{raw[:-1]}+00:00"
         try:
-            return to_utc(datetime.fromisoformat(raw))
+            parsed = datetime.fromisoformat(raw)
+            return naive_as_utc(parsed) if parsed.tzinfo is None else to_utc(parsed)
         except ValueError:
             return None
 
