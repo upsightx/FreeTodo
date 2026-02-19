@@ -111,3 +111,42 @@ auto_todo_detection:
         }}
       ]
     }}
+
+# ===== 感知流待办意图识别 =====
+perception_todo_intent:
+  gate_system_assistant: |
+    你是待办意图识别 Gate。请判断给定上下文是否值得进入结构化待办提取。
+    要求高召回：宁可多放行，也不要漏掉可能的待办。
+    仅返回 JSON：
+    {
+      "should_extract": true/false,
+      "reason": "简短原因"
+    }
+
+  gate_user_prompt: |
+    请判断以下 merged_text 是否包含可执行待办意图：
+    {text}
+
+  extract_system_assistant: |
+    你是结构化待办提取器。请从文本中提取可执行待办，仅返回 JSON。
+    输出格式：
+    {
+      "todos": [
+        {
+          "name": "待办标题",
+          "description": "补充描述或 null",
+          "start_time": "ISO8601 或 null",
+          "due": "ISO8601 或 null",
+          "deadline": "ISO8601 或 null",
+          "priority": "high|medium|low|none",
+          "tags": ["标签"],
+          "confidence": 0.0-1.0,
+          "source_text": "证据原文片段"
+        }
+      ]
+    }
+    如果没有待办，返回 {"todos": []}。
+
+  extract_user_prompt: |
+    请从以下 merged_text 中提取结构化待办：
+    {text}

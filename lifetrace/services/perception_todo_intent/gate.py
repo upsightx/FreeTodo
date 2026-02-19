@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 from lifetrace.schemas.perception_todo_intent import IntentGateDecision, TodoIntentContext
 from lifetrace.services.audio_extraction.gate import coerce_gate_decision, parse_gate_response
 from lifetrace.util.logging_config import get_logger
+from lifetrace.util.prompt_loader import get_prompt
 
 if TYPE_CHECKING:
     from lifetrace.llm.llm_client import LLMClient
@@ -45,13 +46,22 @@ class TodoIntentGate:
         return self._decision_from_data(data)
 
     def _request_gate(self, text: str) -> str:
+        system_prompt = (
+            get_prompt("perception_todo_intent", "gate_system_assistant") or _GATE_SYSTEM_PROMPT
+        )
+        user_prompt_template = (
+            get_prompt("perception_todo_intent", "gate_user_prompt")
+            or _GATE_USER_PROMPT_TEMPLATE
+        )
+        user_prompt = self._render_user_prompt(user_prompt_template, text)
+
         self._llm_client._initialize_client()
         client = self._llm_client._get_client()
         response = client.chat.completions.create(
             model=self._model or self._llm_client.model,
             messages=[
-                {"role": "system", "content": _GATE_SYSTEM_PROMPT},
-                {"role": "user", "content": _GATE_USER_PROMPT_TEMPLATE.format(text=text)},
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
             ],
             temperature=self._temperature,
             max_tokens=self._max_tokens,
@@ -101,3 +111,9 @@ class TodoIntentGate:
             reason="unknown_format",
             data=self._sanitize_data(data),
         )
+
+    def _render_user_prompt(self, prompt_template: str, text: str) -> str:
+        try:
+            return prompt_template.format(text=text)
+        except Exception:
+            return _GATE_USER_PROMPT_TEMPLATE.format(text=text)

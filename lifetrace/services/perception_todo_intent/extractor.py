@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from lifetrace.schemas.perception_todo_intent import ExtractedTodoCandidate, TodoIntentContext
 from lifetrace.util.logging_config import get_logger
+from lifetrace.util.prompt_loader import get_prompt
 from lifetrace.util.time_utils import to_utc
 
 if TYPE_CHECKING:
@@ -68,13 +69,23 @@ class TodoIntentExtractor:
         return output
 
     def _request_extract(self, text: str) -> str:
+        system_prompt = (
+            get_prompt("perception_todo_intent", "extract_system_assistant")
+            or _EXTRACT_SYSTEM_PROMPT
+        )
+        user_prompt_template = (
+            get_prompt("perception_todo_intent", "extract_user_prompt")
+            or _EXTRACT_USER_PROMPT_TEMPLATE
+        )
+        user_prompt = self._render_user_prompt(user_prompt_template, text)
+
         self._llm_client._initialize_client()
         client = self._llm_client._get_client()
         response = client.chat.completions.create(
             model=self._model or self._llm_client.model,
             messages=[
-                {"role": "system", "content": _EXTRACT_SYSTEM_PROMPT},
-                {"role": "user", "content": _EXTRACT_USER_PROMPT_TEMPLATE.format(text=text)},
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
             ],
             temperature=self._temperature,
             max_tokens=self._max_tokens,
@@ -189,3 +200,9 @@ class TodoIntentExtractor:
             return to_utc(datetime.fromisoformat(raw))
         except ValueError:
             return None
+
+    def _render_user_prompt(self, prompt_template: str, text: str) -> str:
+        try:
+            return prompt_template.format(text=text)
+        except Exception:
+            return _EXTRACT_USER_PROMPT_TEMPLATE.format(text=text)

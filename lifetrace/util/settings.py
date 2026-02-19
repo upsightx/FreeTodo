@@ -216,6 +216,16 @@ settings = Dynaconf(
             "perception.todo_intent.integration.update_confidence_threshold",
             default=0.75,
         ),
+        Validator(
+            "perception.todo_intent.integration.update_time_tolerance_seconds",
+            default=7200,
+            is_type_of=int,
+        ),
+        Validator(
+            "perception.todo_intent.integration.lookup_limit",
+            default=500,
+            is_type_of=int,
+        ),
     ],
 )
 
