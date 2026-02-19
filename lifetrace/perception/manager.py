@@ -14,6 +14,7 @@ from lifetrace.util.time_utils import get_utc_now
 
 if TYPE_CHECKING:
     from lifetrace.perception.models import PerceptionEvent
+    from lifetrace.perception.subscribers.todo_intent_subscriber import TodoIntentSubscriber
 
 
 class PerceptionStreamManager:
@@ -38,6 +39,7 @@ class PerceptionStreamManager:
             self._loop = asyncio.get_running_loop()
         except RuntimeError:
             self._loop = None
+        self._todo_intent_subscriber: TodoIntentSubscriber | None = None
 
     async def start(self) -> None:
         await self.stream.start()
@@ -56,7 +58,12 @@ class PerceptionStreamManager:
         if self._config.get("input_enabled", False):
             self._adapters["input"] = InputAdapter(self.publish_event)
 
+        await self._start_todo_intent_subscriber()
+
     async def stop(self) -> None:
+        if self._todo_intent_subscriber is not None:
+            await self._todo_intent_subscriber.stop()
+            self._todo_intent_subscriber = None
         self._adapters.clear()
         await self.stream.stop()
 
@@ -282,7 +289,31 @@ class PerceptionStreamManager:
                 status_entry["online"] = True
 
         status["_stream"] = self.stream.get_queue_stats()
+        if self._todo_intent_subscriber is not None:
+            status["_todo_intent"] = self._todo_intent_subscriber.get_stats()
         return status
+
+    async def _start_todo_intent_subscriber(self) -> None:
+        todo_intent_config = self._normalize_mapping(self._config.get("todo_intent"))
+        if not bool(todo_intent_config.get("enabled", False)):
+            return
+
+        from lifetrace.perception.subscribers.todo_intent_subscriber import (  # noqa: PLC0415
+            TodoIntentSubscriber,
+        )
+
+        self._todo_intent_subscriber = TodoIntentSubscriber(self.stream, todo_intent_config)
+        await self._todo_intent_subscriber.start()
+
+    def _normalize_mapping(self, value: object) -> dict[str, object]:
+        if isinstance(value, dict):
+            return dict(value)
+        if value is None:
+            return {}
+        try:
+            return dict(value)  # type: ignore[arg-type]
+        except Exception:
+            return {}
 
     def _build_enabled_sources(self) -> dict[SourceType, bool]:
         enabled_sources: dict[SourceType, bool] = dict.fromkeys(SourceType, False)
