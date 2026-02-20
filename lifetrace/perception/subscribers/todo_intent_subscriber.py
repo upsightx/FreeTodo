@@ -26,16 +26,29 @@ logger = get_logger()
 class TodoIntentSubscriber:
     """PerceptionStream subscriber with internal queue + worker loop."""
 
+    @staticmethod
+    def _modality_sort_key(modality: str) -> int:
+        order = {
+            "audio": 0,
+            "image": 1,
+            "text": 2,
+        }
+        return order.get(modality, 99)
+
     def __init__(
         self,
         *,
         orchestrator: TodoIntentOrchestrator,
         queue_maxsize: int = 200,
         max_recent_records: int = 200,
+        aggregation_window_seconds: float = 20.0,
+        max_events_per_context: int = 32,
         enabled: bool = True,
     ):
         self._orchestrator = orchestrator
         self._enabled = bool(enabled)
+        self._aggregation_window_seconds = max(0.0, float(aggregation_window_seconds))
+        self._max_events_per_context = max(1, int(max_events_per_context))
         self._queue: asyncio.Queue[PerceptionEvent] = asyncio.Queue(
             maxsize=max(1, int(queue_maxsize))
         )
@@ -57,8 +70,9 @@ class TodoIntentSubscriber:
         stream.subscribe(self.on_event)
         self._worker_task = asyncio.create_task(self._worker_loop())
         logger.info(
-            "TodoIntentSubscriber started: queue_maxsize=%s",
+            "TodoIntentSubscriber started: queue_maxsize=%s aggregation_window_seconds=%s",
             self._queue.maxsize,
+            self._aggregation_window_seconds,
         )
 
     async def stop(self, stream) -> None:
@@ -106,32 +120,136 @@ class TodoIntentSubscriber:
             return
         await asyncio.gather(*(cb(record) for cb in subscribers), return_exceptions=True)
 
+    @staticmethod
+    def _dedupe_events_within_batch(events: list[PerceptionEvent]) -> list[PerceptionEvent]:
+        seen: set[tuple[str, str]] = set()
+        deduped: list[PerceptionEvent] = []
+        for event in events:
+            text = " ".join((event.content_text or "").strip().lower().split())
+            if not text:
+                continue
+            key = (event.source.value, text)
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(event)
+        return deduped
+
+    async def _collect_batch(self, first_event: PerceptionEvent) -> list[PerceptionEvent]:
+        if self._aggregation_window_seconds <= 0:
+            return [first_event]
+
+        loop = asyncio.get_running_loop()
+        started_at = loop.time()
+        batch = [first_event]
+
+        while len(batch) < self._max_events_per_context:
+            elapsed = loop.time() - started_at
+            remaining = self._aggregation_window_seconds - elapsed
+            if remaining <= 0:
+                break
+
+            try:
+                event = await asyncio.wait_for(self._queue.get(), timeout=remaining)
+            except TimeoutError:
+                break
+            batch.append(event)
+
+        deduped_batch = self._dedupe_events_within_batch(batch)
+        return deduped_batch or [first_event]
+
+    @staticmethod
+    def _resolve_error_code(exc: Exception) -> str:
+        message = " ".join(str(exc).strip().split())
+        if message:
+            return message[:120]
+        return f"orchestrator_{exc.__class__.__name__.lower()}"
+
+    @staticmethod
+    def _build_failed_record(
+        events: list[PerceptionEvent],
+        *,
+        error_code: str = "orchestrator_error",
+    ) -> TodoIntentProcessingRecord:
+        ordered = list(events)
+        first_event = ordered[0]
+        event_ids = [event.event_id for event in ordered]
+        source_set: list = []
+        seen_sources = set()
+        for event in ordered:
+            if event.source in seen_sources:
+                continue
+            seen_sources.add(event.source)
+            source_set.append(event.source)
+        merged_text = "\n".join(
+            (event.content_text or "").strip()
+            for event in ordered
+            if (event.content_text or "").strip()
+        )
+        time_window_start = min(event.timestamp for event in ordered)
+        time_window_end = max(event.timestamp for event in ordered)
+        metadata = dict(ordered[-1].metadata or {})
+        metadata["batch_size"] = len(ordered)
+        event_refs = [
+            {
+                "event_id": event.event_id,
+                "source": event.source.value,
+                "modality": event.modality.value,
+                "sequence_id": int(event.sequence_id),
+                "timestamp": event.timestamp.isoformat(),
+            }
+            for event in ordered
+        ]
+        event_refs.sort(
+            key=lambda item: (
+                TodoIntentSubscriber._modality_sort_key(str(item.get("modality", ""))),
+                int(item.get("sequence_id", 0)),
+                str(item.get("timestamp", "")),
+                str(item.get("event_id", "")),
+            )
+        )
+        metadata["event_refs"] = event_refs
+
+        return TodoIntentProcessingRecord(
+            record_id=f"tir_{uuid4().hex}",
+            context_id=f"ctx_err_{uuid4().hex}",
+            status=TodoIntentProcessingStatus.FAILED,
+            created_at=get_utc_now(),
+            event_ids=event_ids,
+            source_set=source_set,
+            merged_text=merged_text or (first_event.content_text or "").strip(),
+            time_window_start=time_window_start,
+            time_window_end=time_window_end,
+            metadata=metadata,
+            error=error_code,
+        )
+
     async def _worker_loop(self) -> None:
         while True:
             event = await self._queue.get()
+            batch = await self._collect_batch(event)
             try:
-                record = await self._orchestrator.process_event(event)
+                if len(batch) == 1:
+                    record = await self._orchestrator.process_event(batch[0])
+                else:
+                    context = self._orchestrator.build_context_from_events(batch)
+                    record = await self._orchestrator.process_context(context)
                 await self._publish_record(record)
-                self._processed_total += 1
+                self._processed_total += len(batch)
             except asyncio.CancelledError:
                 raise
-            except Exception:
-                self._failed_total += 1
-                fallback = TodoIntentProcessingRecord(
-                    record_id=f"tir_{uuid4().hex}",
-                    context_id=f"ctx_err_{uuid4().hex}",
-                    status=TodoIntentProcessingStatus.FAILED,
-                    created_at=get_utc_now(),
-                    event_ids=[event.event_id],
-                    source_set=[event.source],
-                    merged_text=(event.content_text or "").strip(),
-                    time_window_start=event.timestamp,
-                    time_window_end=event.timestamp,
-                    metadata=dict(event.metadata or {}),
-                    error="orchestrator_error",
+            except Exception as exc:
+                self._failed_total += len(batch)
+                fallback = self._build_failed_record(
+                    batch,
+                    error_code=self._resolve_error_code(exc),
                 )
                 await self._publish_record(fallback)
-                logger.exception("TodoIntentSubscriber worker failed for event=%s", event.event_id)
+                logger.exception(
+                    "TodoIntentSubscriber worker failed for event=%s batch_size=%s",
+                    event.event_id,
+                    len(batch),
+                )
 
     def get_status(self) -> TodoIntentSubscriberStatusResponse:
         return TodoIntentSubscriberStatusResponse(

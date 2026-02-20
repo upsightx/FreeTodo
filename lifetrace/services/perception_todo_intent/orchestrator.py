@@ -83,14 +83,43 @@ class TodoIntentOrchestrator:
         self._counters: Counter[str] = Counter()
 
     @staticmethod
-    def _source_prefix(source: SourceType) -> str:
+    def _modality_sort_key(modality: str) -> int:
+        order = {
+            "audio": 0,
+            "image": 1,
+            "text": 2,
+        }
+        return order.get(modality, 99)
+
+    @staticmethod
+    def _source_label(source: SourceType) -> str:
         if source in {SourceType.MIC_PC, SourceType.MIC_HARDWARE}:
-            return "[音频]"
+            return "音频"
         if source in {SourceType.OCR_SCREEN, SourceType.OCR_PROACTIVE}:
-            return "[OCR]"
+            return "OCR"
         if source == SourceType.USER_INPUT:
-            return "[输入]"
-        return "[文本]"
+            return "输入"
+        return "文本"
+
+    def _format_event_markdown(self, event: PerceptionEvent, text: str) -> str:
+        label = self._source_label(event.source)
+        metadata = event.metadata if isinstance(event.metadata, dict) else {}
+        app_name = str(metadata.get("app_name") or "").strip()
+        window_title = str(metadata.get("window_title") or "").strip()
+        speaker = str(metadata.get("speaker") or "").strip()
+        meta_parts: list[str] = []
+        if app_name:
+            meta_parts.append(f"应用: {app_name}")
+        if window_title:
+            meta_parts.append(f"窗口: {window_title}")
+        if speaker:
+            meta_parts.append(f"说话人: {speaker}")
+
+        lines = [f"### {label}"]
+        if meta_parts:
+            lines.append(" | ".join(meta_parts))
+        lines.append(text)
+        return "\n".join(lines)
 
     def _build_record(  # noqa: PLR0913
         self,
@@ -124,19 +153,74 @@ class TodoIntentOrchestrator:
         )
 
     def build_context_from_event(self, event: PerceptionEvent) -> TodoIntentContext:
-        text = (event.content_text or "").strip()
-        merged_text = f"{self._source_prefix(event.source)} {text}".strip()
-        if len(merged_text) > self._max_context_chars:
-            merged_text = merged_text[: self._max_context_chars]
+        return self.build_context_from_events([event])
+
+    def build_context_from_events(self, events: list[PerceptionEvent]) -> TodoIntentContext:
+        if not events:
+            raise ValueError("empty_todo_intent_events")
+
+        ordered_events = list(events)
+        ordered_events.sort(key=lambda item: (int(item.sequence_id), item.timestamp))
+
+        event_ids: list[str] = []
+        source_set: list[SourceType] = []
+        source_seen: set[SourceType] = set()
+        metadata: dict[str, Any] = {}
+        merged_blocks: list[str] = []
+        event_refs: list[dict[str, Any]] = []
+
+        time_window_start = min(event.timestamp for event in ordered_events)
+        time_window_end = max(event.timestamp for event in ordered_events)
+
+        for event in ordered_events:
+            text = (event.content_text or "").strip()
+            if text:
+                merged_blocks.append(self._format_event_markdown(event, text))
+
+            event_ids.append(event.event_id)
+            if event.source not in source_seen:
+                source_seen.add(event.source)
+                source_set.append(event.source)
+
+            raw_metadata = event.metadata if isinstance(event.metadata, dict) else {}
+            for key, value in raw_metadata.items():
+                if value is None:
+                    continue
+                if isinstance(value, str) and not value.strip():
+                    continue
+                metadata[key] = value
+
+            event_refs.append(
+                {
+                    "event_id": event.event_id,
+                    "source": event.source.value,
+                    "modality": event.modality.value,
+                    "sequence_id": int(event.sequence_id),
+                    "timestamp": event.timestamp.isoformat(),
+                }
+            )
+
+        event_refs.sort(
+            key=lambda item: (
+                self._modality_sort_key(str(item.get("modality", ""))),
+                int(item.get("sequence_id", 0)),
+                str(item.get("timestamp", "")),
+                str(item.get("event_id", "")),
+            )
+        )
+
+        merged_text = "\n\n".join(merged_blocks).strip()
+        metadata["event_count"] = len(event_ids)
+        metadata["event_refs"] = event_refs
 
         return TodoIntentContext(
             context_id=f"ctx_{uuid4().hex}",
-            event_ids=[event.event_id],
+            event_ids=event_ids,
             merged_text=merged_text,
-            source_set=[event.source],
-            time_window_start=event.timestamp,
-            time_window_end=event.timestamp,
-            metadata=dict(event.metadata or {}),
+            source_set=source_set,
+            time_window_start=time_window_start,
+            time_window_end=time_window_end,
+            metadata=metadata,
         )
 
     async def process_event(self, event: PerceptionEvent) -> TodoIntentProcessingRecord:

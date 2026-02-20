@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import re
 from collections import OrderedDict
-from datetime import UTC
 from typing import TYPE_CHECKING
 
 from lifetrace.util.time_utils import get_utc_now
@@ -30,11 +29,9 @@ class PreGateDedupeCache:
         *,
         ttl_seconds: int = 90,
         max_cache_size: int = 5000,
-        time_bucket_seconds: int = 10,
     ):
         self._ttl_seconds = max(1, int(ttl_seconds))
         self._max_cache_size = max(1, int(max_cache_size))
-        self._time_bucket_seconds = max(1, int(time_bucket_seconds))
         self._cache: OrderedDict[str, float] = OrderedDict()
         self._hit_count = 0
         self._miss_count = 0
@@ -48,9 +45,7 @@ class PreGateDedupeCache:
                 str(context.metadata.get("speaker") or ""),
             ]
         )
-        end_ts = context.time_window_end.astimezone(UTC).timestamp()
-        bucket = int(end_ts // self._time_bucket_seconds)
-        raw = f"{canonical_text}|{anchor}|{bucket}"
+        raw = f"{canonical_text}|{anchor}"
         return hashlib.sha1(raw.encode("utf-8"), usedforsecurity=False).hexdigest()
 
     def _evict_expired(self, now_ts: float) -> None:

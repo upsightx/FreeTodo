@@ -353,11 +353,17 @@ class PerceptionStreamManager:
 
         queue_maxsize = max(1, int(self._todo_intent_config.get("internal_queue_maxsize", 200)))
         max_recent_records = max(1, int(self._todo_intent_config.get("max_recent_records", 200)))
+        aggregation_window_seconds = self._todo_intent_config.get("window_seconds", 20)
+        try:
+            aggregation_window_seconds = float(aggregation_window_seconds)
+        except (TypeError, ValueError):
+            aggregation_window_seconds = 20.0
         orchestrator = TodoIntentOrchestrator(config=self._todo_intent_config)
         subscriber = TodoIntentSubscriber(
             orchestrator=orchestrator,
             queue_maxsize=queue_maxsize,
             max_recent_records=max_recent_records,
+            aggregation_window_seconds=aggregation_window_seconds,
             enabled=True,
         )
         await subscriber.start(self.stream)
