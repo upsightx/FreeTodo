@@ -894,6 +894,7 @@
 	},
 	"todoIntentPanel": {
 		"title": "Todo Intent",
+		"jumpToLatest": "Jump to latest",
 		"loadRecent": "Load recent",
 		"loadMore": "Load more",
 		"clear": "Clear",

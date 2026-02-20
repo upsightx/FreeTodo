@@ -2,7 +2,7 @@
 
 import { BrainCircuit } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PanelHeader } from "@/components/common/layout/PanelHeader";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,12 @@ import {
 	useTodoIntentStreamStore,
 } from "@/lib/store/todo-intent-stream-store";
 import { cn, formatDateTime } from "@/lib/utils";
+
+const BOTTOM_THRESHOLD_PX = 40;
+
+function isNearBottom(el: HTMLDivElement): boolean {
+	return el.scrollHeight - el.clientHeight - el.scrollTop <= BOTTOM_THRESHOLD_PX;
+}
 
 function ConnectionStatus({
 	connectionState,
@@ -182,11 +188,37 @@ export function TodoIntentPanel() {
 	const disconnect = useTodoIntentStreamStore((s) => s.disconnect);
 	const loadRecent = useTodoIntentStreamStore((s) => s.loadRecent);
 	const clearRecords = useTodoIntentStreamStore((s) => s.clearRecords);
+	const scrollRef = useRef<HTMLDivElement>(null);
+	const [pinnedToBottom, setPinnedToBottom] = useState(true);
+
+	const latestRecordId = records.length > 0 ? records[records.length - 1].record_id : null;
 
 	useEffect(() => {
 		connect();
 		return () => disconnect();
 	}, [connect, disconnect]);
+
+	useEffect(() => {
+		if (!latestRecordId) return;
+		const el = scrollRef.current;
+		if (!el) return;
+		if (!pinnedToBottom) return;
+		el.scrollTop = el.scrollHeight;
+	}, [latestRecordId, pinnedToBottom]);
+
+	const handleScroll = () => {
+		const el = scrollRef.current;
+		if (!el) return;
+		const nextPinned = isNearBottom(el);
+		setPinnedToBottom((prev) => (prev === nextPinned ? prev : nextPinned));
+	};
+
+	const jumpToLatest = () => {
+		const el = scrollRef.current;
+		if (!el) return;
+		el.scrollTop = el.scrollHeight;
+		setPinnedToBottom(true);
+	};
 
 	return (
 		<div className="flex h-full flex-col overflow-hidden bg-background">
@@ -232,12 +264,25 @@ export function TodoIntentPanel() {
 					{t("noRecords")}
 				</div>
 			) : (
-				<div className="flex-1 overflow-y-auto">
-					<div className="flex flex-col gap-2 p-4">
-						{records.map((record) => (
-							<RecordCard key={record.record_id} record={record} />
-						))}
+				<div className="relative flex-1 overflow-hidden">
+					<div
+						ref={scrollRef}
+						className="h-full overflow-y-auto"
+						onScroll={handleScroll}
+					>
+						<div className="flex flex-col gap-2 p-4">
+							{records.map((record) => (
+								<RecordCard key={record.record_id} record={record} />
+							))}
+						</div>
 					</div>
+					{!pinnedToBottom && (
+						<div className="absolute right-4 bottom-4">
+							<Button type="button" variant="outline" size="sm" onClick={jumpToLatest}>
+								{t("jumpToLatest")}
+							</Button>
+						</div>
+					)}
 				</div>
 			)}
 		</div>

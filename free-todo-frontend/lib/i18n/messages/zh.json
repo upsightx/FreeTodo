@@ -894,6 +894,7 @@
 	},
 	"todoIntentPanel": {
 		"title": "意图识别",
+		"jumpToLatest": "跳到最新",
 		"loadRecent": "加载最近",
 		"loadMore": "加载更多",
 		"clear": "清空",
