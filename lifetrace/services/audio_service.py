@@ -12,6 +12,7 @@ from typing import Any
 from sqlmodel import select
 
 from lifetrace.llm.llm_client import LLMClient
+from lifetrace.perception.todo_intent_flags import should_disable_legacy_auto_extraction
 from lifetrace.services.audio_extraction_service import AudioExtractionService
 from lifetrace.storage import get_session
 from lifetrace.storage.models import AudioRecording, Transcription
@@ -365,10 +366,11 @@ class AudioService:
 
     def _trigger_auto_extraction(self, transcription_id: int, display_text: str) -> None:
         """触发自动提取待办（异步执行，不阻塞）"""
+        if should_disable_legacy_auto_extraction():
+            logger.info("跳过旧音频自动提取链路，统一走 perception.todo_intent")
+            return
         if display_text:
-            task = asyncio.create_task(
-                self._auto_extract_todos(transcription_id, display_text)
-            )
+            task = asyncio.create_task(self._auto_extract_todos(transcription_id, display_text))
             self._background_tasks.add(task)
             task.add_done_callback(self._background_tasks.discard)
 
@@ -427,7 +429,11 @@ class AudioService:
                 if transcription and transcription.segment_timestamps:
                     try:
                         parsed = json.loads(transcription.segment_timestamps)
-                        if isinstance(parsed, list) and parsed and isinstance(parsed[0], (int, float)):
+                        if (
+                            isinstance(parsed, list)
+                            and parsed
+                            and isinstance(parsed[0], (int, float))
+                        ):
                             segment_timestamps = [float(item) for item in parsed]
                     except Exception:
                         segment_timestamps = None

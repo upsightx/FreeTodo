@@ -70,6 +70,8 @@
 		"audioPlaceholder": "Placeholder: plug an audio recording component here",
 		"perceptionStreamLabel": "Perception Stream",
 		"perceptionStreamPlaceholder": "Real-time perception events",
+		"todoIntentLabel": "Todo Intent",
+		"todoIntentPlaceholder": "Real-time gate and extraction preview",
 		"previewLabel": "Preview",
 		"previewPlaceholder": "Placeholder: open a file to preview",
 		"backendUnavailableBadge": "Backend unavailable",
@@ -394,6 +396,7 @@
 		"crawlerDetail": "Crawl Detail",
 		"audio": "Audio",
 		"perceptionStream": "Perception Stream",
+		"todoIntent": "Todo Intent",
 		"preview": "Preview",
 		"unassigned": "Unassigned"
 	},
@@ -888,6 +891,41 @@
 		"audio": "Audio",
 		"image": "Image",
 		"text": "Text"
+	},
+	"todoIntentPanel": {
+		"title": "Todo Intent",
+		"loadRecent": "Load recent",
+		"loadMore": "Load more",
+		"clear": "Clear",
+		"connected": "Connected",
+		"disconnected": "Disconnected",
+		"reconnecting": "Reconnecting...",
+		"noRecords": "No intent records yet",
+		"app": "App",
+		"window": "Window",
+		"speaker": "Speaker",
+		"sources": "Sources",
+		"timeWindow": "Time Window",
+		"mergedText": "Merged text",
+		"gateReason": "Gate reason",
+		"todos": "Todo candidates",
+		"due": "Due",
+		"confidence": "Confidence",
+		"priority": "Priority",
+		"sourceText": "Source text",
+		"integration": "Integration",
+		"error": "Error",
+		"gate": {
+			"pass": "Gate pass",
+			"skip": "Gate skip"
+		},
+		"status": {
+			"dedupe_hit": "Dedupe hit",
+			"gate_skipped": "Gate skipped",
+			"extracted": "Extracted",
+			"processed": "Processed",
+			"failed": "Failed"
+		}
 	},
 	"debugCapture": {
 		"title": "Screenshot Management (Debug)",

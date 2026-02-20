@@ -70,6 +70,8 @@
 		"audioPlaceholder": "占位：在这里接入音频录制组件",
 		"perceptionStreamLabel": "感知流",
 		"perceptionStreamPlaceholder": "实时感知事件流",
+		"todoIntentLabel": "意图识别",
+		"todoIntentPlaceholder": "实时展示 Gate 与待办提取结果",
 		"previewLabel": "预览",
 		"previewPlaceholder": "占位：打开文件后显示预览",
 		"backendUnavailableBadge": "后端不可用",
@@ -394,6 +396,7 @@
 		"crawlerDetail": "爬取详情",
 		"audio": "音频",
 		"perceptionStream": "感知流",
+		"todoIntent": "意图识别",
 		"preview": "预览",
 		"unassigned": "未分配"
 	},
@@ -888,6 +891,41 @@
 		"audio": "音频",
 		"image": "图片",
 		"text": "文本"
+	},
+	"todoIntentPanel": {
+		"title": "意图识别",
+		"loadRecent": "加载最近",
+		"loadMore": "加载更多",
+		"clear": "清空",
+		"connected": "已连接",
+		"disconnected": "未连接",
+		"reconnecting": "重连中...",
+		"noRecords": "暂无识别记录",
+		"app": "应用",
+		"window": "窗口",
+		"speaker": "说话人",
+		"sources": "来源",
+		"timeWindow": "时间窗口",
+		"mergedText": "聚合文本",
+		"gateReason": "Gate 原因",
+		"todos": "待办候选",
+		"due": "截止时间",
+		"confidence": "置信度",
+		"priority": "优先级",
+		"sourceText": "证据文本",
+		"integration": "集成结果",
+		"error": "错误",
+		"gate": {
+			"pass": "Gate 通过",
+			"skip": "Gate 跳过"
+		},
+		"status": {
+			"dedupe_hit": "去重命中",
+			"gate_skipped": "Gate 跳过",
+			"extracted": "已提取",
+			"processed": "已处理",
+			"failed": "失败"
+		}
 	},
 	"debugCapture": {
 		"title": "截图管理（开发调试）",

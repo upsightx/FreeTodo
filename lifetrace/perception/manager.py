@@ -10,11 +10,15 @@ from lifetrace.perception.adapters.input_adapter import InputAdapter
 from lifetrace.perception.adapters.ocr_adapter import OCRAdapter
 from lifetrace.perception.models import SourceType
 from lifetrace.perception.stream import PerceptionStream
+from lifetrace.perception.subscribers.todo_intent_subscriber import TodoIntentSubscriber
+from lifetrace.services.perception_todo_intent.orchestrator import TodoIntentOrchestrator
+from lifetrace.util.logging_config import get_logger
 from lifetrace.util.time_utils import get_utc_now
 
 if TYPE_CHECKING:
     from lifetrace.perception.models import PerceptionEvent
-    from lifetrace.perception.subscribers.todo_intent_subscriber import TodoIntentSubscriber
+
+logger = get_logger()
 
 
 class PerceptionStreamManager:
@@ -31,6 +35,12 @@ class PerceptionStreamManager:
         self._status_online_window_seconds = max(
             1, int(config.get("status_online_window_seconds", 60))
         )
+        todo_intent_config = config.get("todo_intent", {}) if isinstance(config, dict) else {}
+        self._todo_intent_config = (
+            dict(todo_intent_config) if isinstance(todo_intent_config, dict) else {}
+        )
+        self._todo_intent_enabled = bool(self._todo_intent_config.get("enabled", True))
+        self._todo_intent_subscriber: TodoIntentSubscriber | None = None
         self._enabled_sources = self._build_enabled_sources()
         self._status_lock = threading.Lock()
         self._last_seen: dict[SourceType, datetime] = {}
@@ -39,7 +49,6 @@ class PerceptionStreamManager:
             self._loop = asyncio.get_running_loop()
         except RuntimeError:
             self._loop = None
-        self._todo_intent_subscriber: TodoIntentSubscriber | None = None
 
     async def start(self) -> None:
         await self.stream.start()
@@ -61,9 +70,10 @@ class PerceptionStreamManager:
         await self._start_todo_intent_subscriber()
 
     async def stop(self) -> None:
-        if self._todo_intent_subscriber is not None:
-            await self._todo_intent_subscriber.stop()
-            self._todo_intent_subscriber = None
+        subscriber = self._todo_intent_subscriber
+        self._todo_intent_subscriber = None
+        if subscriber is not None:
+            await subscriber.stop(self.stream)
         self._adapters.clear()
         await self.stream.stop()
 
@@ -289,31 +299,15 @@ class PerceptionStreamManager:
                 status_entry["online"] = True
 
         status["_stream"] = self.stream.get_queue_stats()
-        if self._todo_intent_subscriber is not None:
-            status["_todo_intent"] = self._todo_intent_subscriber.get_stats()
+        subscriber = self._todo_intent_subscriber
+        if subscriber is not None:
+            status["_todo_intent"] = subscriber.get_status().model_dump(mode="json")
+        else:
+            status["_todo_intent"] = {
+                "enabled": self._todo_intent_enabled,
+                "running": False,
+            }
         return status
-
-    async def _start_todo_intent_subscriber(self) -> None:
-        todo_intent_config = self._normalize_mapping(self._config.get("todo_intent"))
-        if not bool(todo_intent_config.get("enabled", False)):
-            return
-
-        from lifetrace.perception.subscribers.todo_intent_subscriber import (  # noqa: PLC0415
-            TodoIntentSubscriber,
-        )
-
-        self._todo_intent_subscriber = TodoIntentSubscriber(self.stream, todo_intent_config)
-        await self._todo_intent_subscriber.start()
-
-    def _normalize_mapping(self, value: object) -> dict[str, object]:
-        if isinstance(value, dict):
-            return dict(value)
-        if value is None:
-            return {}
-        try:
-            return dict(value)  # type: ignore[arg-type]
-        except Exception:
-            return {}
 
     def _build_enabled_sources(self) -> dict[SourceType, bool]:
         enabled_sources: dict[SourceType, bool] = dict.fromkeys(SourceType, False)
@@ -347,6 +341,28 @@ class PerceptionStreamManager:
     def get_ocr_adapter(self) -> OCRAdapter | None:
         adapter = self._adapters.get("ocr")
         return adapter if isinstance(adapter, OCRAdapter) else None
+
+    def get_todo_intent_subscriber(self) -> TodoIntentSubscriber | None:
+        return self._todo_intent_subscriber
+
+    async def _start_todo_intent_subscriber(self) -> None:
+        if not self._todo_intent_enabled:
+            return
+        if self._todo_intent_subscriber is not None:
+            return
+
+        queue_maxsize = max(1, int(self._todo_intent_config.get("internal_queue_maxsize", 200)))
+        max_recent_records = max(1, int(self._todo_intent_config.get("max_recent_records", 200)))
+        orchestrator = TodoIntentOrchestrator(config=self._todo_intent_config)
+        subscriber = TodoIntentSubscriber(
+            orchestrator=orchestrator,
+            queue_maxsize=queue_maxsize,
+            max_recent_records=max_recent_records,
+            enabled=True,
+        )
+        await subscriber.start(self.stream)
+        self._todo_intent_subscriber = subscriber
+        logger.info("Perception todo-intent subscriber initialized")
 
 
 _manager: PerceptionStreamManager | None = None

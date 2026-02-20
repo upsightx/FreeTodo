@@ -1,119 +1,120 @@
 from __future__ import annotations
 
-import asyncio
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+from lifetrace.llm.llm_client import LLMClient
 from lifetrace.schemas.perception_todo_intent import IntentGateDecision, TodoIntentContext
-from lifetrace.services.audio_extraction.gate import coerce_gate_decision, parse_gate_response
-from lifetrace.util.logging_config import get_logger
+from lifetrace.services.audio_extraction.gate import (
+    coerce_gate_decision,
+    parse_gate_response,
+)
 from lifetrace.util.prompt_loader import get_prompt
-
-if TYPE_CHECKING:
-    from lifetrace.llm.llm_client import LLMClient
-
-logger = get_logger()
-
-_GATE_SYSTEM_PROMPT = (
-    "You are a todo-intent gate. Decide if the text should be sent to a structured todo extractor. "
-    'Return strict JSON: {"should_extract": boolean, "reason": string}.'
-)
-_GATE_USER_PROMPT_TEMPLATE = (
-    "Decide if this context likely contains actionable todos.\nText:\n{text}"
-)
+from lifetrace.util.settings import settings
+from lifetrace.util.token_usage_logger import log_token_usage
 
 
 class TodoIntentGate:
-    def __init__(self, llm_client: LLMClient, config: dict[str, object] | None = None):
-        cfg = dict(config or {})
-        self._llm_client = llm_client
-        self._enabled = bool(cfg.get("enabled", True))
-        self._model = str(cfg.get("model") or "").strip()
-        self._temperature = float(cfg.get("temperature", 0.0))
-        self._max_tokens = int(cfg.get("max_tokens", 160))
-        self._min_text_length = int(cfg.get("min_text_length", 8))
+    """Todo intent gate with LLM decision + robust fallback."""
 
-    async def decide(self, context: TodoIntentContext) -> IntentGateDecision:
+    def __init__(
+        self,
+        *,
+        llm_client: LLMClient | None = None,
+        min_text_length: int = 8,
+        model: str | None = None,
+        temperature: float = 0.0,
+        max_tokens: int = 160,
+        prompt_category: str = "transcription_extraction_gate",
+    ):
+        self._llm_client = llm_client or LLMClient()
+        self._min_text_length = max(0, int(min_text_length))
+        self._model = (model or "").strip()
+        self._temperature = float(temperature)
+        self._max_tokens = max(16, int(max_tokens))
+        self._prompt_category = prompt_category
+
+    @staticmethod
+    def _load_from_settings() -> dict[str, Any]:
+        cfg = settings.get("perception.todo_intent.gate", {}) or {}
+        if not isinstance(cfg, dict):
+            cfg = {}
+        return cfg
+
+    async def decide(self, context: TodoIntentContext) -> IntentGateDecision:  # noqa: PLR0911
         text = (context.merged_text or "").strip()
-        early = self._early_decision(text)
-        if early is not None:
-            return early
-
-        raw, error_reason = await self._call_gate_llm(text)
-        if error_reason:
-            return IntentGateDecision(should_extract=True, reason=error_reason)
-
-        data = parse_gate_response(raw)
-        return self._decision_from_data(data)
-
-    def _request_gate(self, text: str) -> str:
-        system_prompt = (
-            get_prompt("perception_todo_intent", "gate_system_assistant") or _GATE_SYSTEM_PROMPT
-        )
-        user_prompt_template = (
-            get_prompt("perception_todo_intent", "gate_user_prompt")
-            or _GATE_USER_PROMPT_TEMPLATE
-        )
-        user_prompt = self._render_user_prompt(user_prompt_template, text)
-
-        self._llm_client._initialize_client()
-        client = self._llm_client._get_client()
-        response = client.chat.completions.create(
-            model=self._model or self._llm_client.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=self._temperature,
-            max_tokens=self._max_tokens,
-        )
-        return (response.choices[0].message.content or "").strip()
-
-    def _sanitize_data(self, data: dict[str, Any]) -> dict[str, object]:
-        output: dict[str, object] = {}
-        for key, value in data.items():
-            if isinstance(value, str | int | float | bool) or value is None:
-                output[key] = value
-        return output
-
-    def _early_decision(self, text: str) -> IntentGateDecision | None:
         if not text:
             return IntentGateDecision(should_extract=False, reason="empty_text")
-        if len(text) < max(0, self._min_text_length):
+        if len(text) < self._min_text_length:
             return IntentGateDecision(should_extract=False, reason="too_short")
-        if not self._enabled:
-            return IntentGateDecision(should_extract=True, reason="disabled")
-        if not self._llm_client.is_available():
-            return IntentGateDecision(should_extract=True, reason="llm_unavailable")
-        return None
 
-    async def _call_gate_llm(self, text: str) -> tuple[str, str | None]:
+        cfg = self._load_from_settings()
+        enabled = bool(cfg.get("enabled", True))
+        if not enabled:
+            return IntentGateDecision(should_extract=True, reason="gate_disabled")
+
+        llm_client = self._llm_client
+        if not llm_client.is_available():
+            return IntentGateDecision(should_extract=True, reason="llm_unavailable_fallback")
+
+        model = (str(cfg.get("model", "")).strip() or self._model or llm_client.model).strip()
+        temperature = float(cfg.get("temperature", self._temperature))
+        max_tokens = int(cfg.get("max_tokens", self._max_tokens))
+        prompt_category = str(cfg.get("prompt_category", self._prompt_category))
+
+        llm_client._initialize_client()
+        client = llm_client._get_client()
+
+        system_prompt = get_prompt(prompt_category, "system_assistant")
+        user_prompt = get_prompt(prompt_category, "user_prompt", text=text)
+        if not system_prompt or not user_prompt:
+            return IntentGateDecision(should_extract=True, reason="missing_prompt_fallback")
+
         try:
-            raw = await asyncio.to_thread(self._request_gate, text)
-        except Exception as exc:  # pragma: no cover - defensive path
-            logger.warning(f"todo intent gate failed, fallback extract=true: {exc}")
-            return "", "error"
-        return raw, None
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            usage = getattr(response, "usage", None)
+            if usage:
+                log_token_usage(
+                    model=model,
+                    input_tokens=int(usage.prompt_tokens or 0),
+                    output_tokens=int(usage.completion_tokens or 0),
+                    endpoint="perception_todo_intent_gate",
+                    user_query=text,
+                    response_type="gate",
+                    feature_type="perception",
+                )
 
-    def _decision_from_data(self, data: object) -> IntentGateDecision:
-        if not isinstance(data, dict):
-            return IntentGateDecision(should_extract=True, reason="unparseable")
+            result_text = (response.choices[0].message.content or "").strip()
+            parsed = parse_gate_response(result_text)
+            if not isinstance(parsed, dict):
+                return IntentGateDecision(
+                    should_extract=True,
+                    reason="gate_unparseable_fallback",
+                )
 
-        decision = coerce_gate_decision(data)
-        if isinstance(decision, bool):
-            reason = str(data.get("reason") or "ok")
+            decision = coerce_gate_decision(parsed)
+            if not isinstance(decision, bool):
+                return IntentGateDecision(
+                    should_extract=True,
+                    reason="gate_unknown_format_fallback",
+                    raw=parsed,
+                )
+
+            reason = str(parsed.get("reason") or parsed.get("explanation") or "ok")
             return IntentGateDecision(
                 should_extract=decision,
-                reason=reason,
-                data=self._sanitize_data(data),
+                reason=reason[:120],
+                raw=parsed,
             )
-        return IntentGateDecision(
-            should_extract=True,
-            reason="unknown_format",
-            data=self._sanitize_data(data),
-        )
-
-    def _render_user_prompt(self, prompt_template: str, text: str) -> str:
-        try:
-            return prompt_template.format(text=text)
         except Exception:
-            return _GATE_USER_PROMPT_TEMPLATE.format(text=text)
+            return IntentGateDecision(
+                should_extract=True,
+                reason="gate_error_fallback",
+            )

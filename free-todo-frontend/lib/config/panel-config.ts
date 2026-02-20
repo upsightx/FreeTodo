@@ -8,6 +8,7 @@ import {
 	Activity,
 	Award,
 	BookOpen,
+	BrainCircuit,
 	Bug,
 	CalendarDays,
 	Camera,
@@ -39,6 +40,7 @@ export type PanelFeature =
 	| "crawlerDetail"
 	| "audio"
 	| "perceptionStream"
+	| "todoIntent"
 	| "preview";
 
 /**
@@ -53,6 +55,7 @@ export const DEV_IN_PROGRESS_FEATURES: PanelFeature[] = [
 	"achievements",
 	"audio",
 	"perceptionStream",
+	"todoIntent",
 ];
 
 /**
@@ -73,6 +76,7 @@ export const ALL_PANEL_FEATURES: PanelFeature[] = [
 	"crawlerDetail",
 	"audio",
 	"perceptionStream",
+	"todoIntent",
 	"preview",
 ];
 
@@ -94,5 +98,6 @@ export const FEATURE_ICON_MAP: Record<PanelFeature, LucideIcon> = {
 	crawlerDetail: Network,
 	audio: Mic,
 	perceptionStream: Radio,
+	todoIntent: BrainCircuit,
 	preview: Eye,
 };

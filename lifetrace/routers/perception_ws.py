@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
 from lifetrace.perception.manager import try_get_perception_manager, try_get_perception_stream
+from lifetrace.routers.perception_todo_intent import router as perception_todo_intent_router
 
 if TYPE_CHECKING:
     from lifetrace.perception.models import PerceptionEvent
@@ -85,3 +86,4 @@ _register_routes(_api_router)
 _register_routes(_legacy_router)
 router.include_router(_api_router)
 router.include_router(_legacy_router)
+router.include_router(perception_todo_intent_router)

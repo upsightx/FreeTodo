@@ -1,208 +1,207 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import re
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from lifetrace.schemas.perception_todo_intent import ExtractedTodoCandidate, TodoIntentContext
-from lifetrace.util.logging_config import get_logger
+from lifetrace.llm.llm_client import LLMClient
+from lifetrace.schemas.perception_todo_intent import ExtractedTodoCandidate
 from lifetrace.util.prompt_loader import get_prompt
-from lifetrace.util.time_utils import to_utc
+from lifetrace.util.settings import settings
 
 if TYPE_CHECKING:
-    from lifetrace.llm.llm_client import LLMClient
-
-logger = get_logger()
-
-_JSON_RE = re.compile(r"\{.*\}", re.DOTALL)
-_PRIORITY_SET = {"high", "medium", "low", "none"}
-
-_EXTRACT_SYSTEM_PROMPT = (
-    "Extract actionable todos from text. Return strict JSON with shape: "
-    '{"todos": [{"name": str, "description": str|null, "start_time": str|null, '
-    '"due": str|null, "deadline": str|null, "priority": "high|medium|low|none", '
-    '"tags": [str], "confidence": number, "source_text": str}]}. '
-    "Only include actionable items."
-)
-
-_EXTRACT_USER_PROMPT_TEMPLATE = "Extract todos from this merged context:\n{text}"
+    from lifetrace.schemas.perception_todo_intent import TodoIntentContext
 
 
 class TodoIntentExtractor:
-    def __init__(self, llm_client: LLMClient, config: dict[str, object] | None = None):
-        cfg = dict(config or {})
-        self._llm_client = llm_client
-        self._model = str(cfg.get("model") or "").strip()
-        self._temperature = float(cfg.get("temperature", 0.2))
-        self._max_tokens = int(cfg.get("max_tokens", 800))
-        self._max_todos_per_context = int(cfg.get("max_todos_per_context", 5))
+    """Todo intent extractor powered by LLM text generation."""
 
-    async def extract(self, context: TodoIntentContext) -> list[ExtractedTodoCandidate]:
-        text = (context.merged_text or "").strip()
+    _JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
+
+    def __init__(
+        self,
+        *,
+        llm_client: LLMClient | None = None,
+        model: str | None = None,
+        temperature: float = 0.2,
+        max_tokens: int = 800,
+        prompt_category: str = "perception_todo_intent_extraction",
+    ):
+        self._llm_client = llm_client or LLMClient()
+        self._model = (model or "").strip()
+        self._temperature = float(temperature)
+        self._max_tokens = max(64, int(max_tokens))
+        self._prompt_category = prompt_category
+
+    @staticmethod
+    def _load_from_settings() -> dict:
+        cfg = settings.get("perception.todo_intent.extractor", {}) or {}
+        if not isinstance(cfg, dict):
+            cfg = {}
+        return cfg
+
+    @staticmethod
+    def _to_datetime(value: object) -> datetime | None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        text = str(value).strip()
         if not text:
+            return None
+        normalized = text.replace("Z", "+00:00")
+        try:
+            return datetime.fromisoformat(normalized)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _to_confidence(value: object) -> float:
+        try:
+            val = float(value)
+        except Exception:
+            return 0.0
+        if val < 0:
+            return 0.0
+        if val > 1:
+            return 1.0
+        return val
+
+    @staticmethod
+    def _to_tags(value: object) -> list[str]:
+        if not isinstance(value, list):
             return []
-        if not self._llm_client.is_available():
-            logger.info("todo intent extractor skipped: llm_unavailable")
-            return []
+        tags: list[str] = []
+        for item in value:
+            text = str(item).strip()
+            if text:
+                tags.append(text)
+        return tags
+
+    @classmethod
+    def _parse_json(cls, text: str) -> dict:
+        raw = (text or "").strip()
+        if raw.startswith("```json"):
+            raw = raw[7:]
+        if raw.startswith("```"):
+            raw = raw[3:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+        if not raw:
+            return {}
 
         try:
-            raw = await asyncio.to_thread(self._request_extract, text)
-        except Exception as exc:  # pragma: no cover - defensive path
-            logger.warning(f"todo intent extractor request failed: {exc}")
-            return []
+            parsed = json.loads(raw)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            pass
 
-        payload = self._parse_payload(raw)
+        match = cls._JSON_BLOCK_RE.search(raw)
+        if not match:
+            return {}
+        try:
+            parsed = json.loads(match.group(0))
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+
+    def _to_candidates(self, payload: dict) -> list[ExtractedTodoCandidate]:
         todos_raw = payload.get("todos")
         if not isinstance(todos_raw, list):
             return []
 
-        output: list[ExtractedTodoCandidate] = []
+        out: list[ExtractedTodoCandidate] = []
         for item in todos_raw:
-            candidate = self._coerce_candidate(item)
-            if candidate is None:
+            if not isinstance(item, dict):
                 continue
-            output.append(candidate)
-            if len(output) >= max(1, self._max_todos_per_context):
-                break
-        return output
+            name = str(item.get("name") or item.get("title") or "").strip()
+            if not name:
+                continue
+            out.append(
+                ExtractedTodoCandidate(
+                    name=name,
+                    description=str(item.get("description")).strip()
+                    if item.get("description") is not None
+                    else None,
+                    start_time=self._to_datetime(item.get("start_time")),
+                    due=self._to_datetime(item.get("due")),
+                    deadline=self._to_datetime(item.get("deadline")),
+                    time_zone=str(item.get("time_zone")).strip()
+                    if item.get("time_zone") is not None
+                    else None,
+                    priority=str(item.get("priority") or "none").strip().lower() or "none",
+                    tags=self._to_tags(item.get("tags")),
+                    confidence=self._to_confidence(item.get("confidence")),
+                    source_text=str(item.get("source_text")).strip()
+                    if item.get("source_text") is not None
+                    else None,
+                )
+            )
+        return out
 
-    def _request_extract(self, text: str) -> str:
-        system_prompt = (
-            get_prompt("perception_todo_intent", "extract_system_assistant")
-            or _EXTRACT_SYSTEM_PROMPT
-        )
-        user_prompt_template = (
-            get_prompt("perception_todo_intent", "extract_user_prompt")
-            or _EXTRACT_USER_PROMPT_TEMPLATE
-        )
-        user_prompt = self._render_user_prompt(user_prompt_template, text)
+    async def extract(
+        self,
+        context: TodoIntentContext,
+        *,
+        strict_json: bool = False,
+    ) -> list[ExtractedTodoCandidate]:
+        cfg = self._load_from_settings()
+        llm_client = self._llm_client
+        if not llm_client.is_available():
+            return []
 
-        self._llm_client._initialize_client()
-        client = self._llm_client._get_client()
-        response = client.chat.completions.create(
-            model=self._model or self._llm_client.model,
+        model = (
+            str(cfg.get("model", "")).strip()
+            or self._model
+            or str(settings.get("llm.todo_extraction_model", "")).strip()
+            or llm_client.model
+        )
+        temperature = float(cfg.get("temperature", self._temperature))
+        max_tokens = int(cfg.get("max_tokens", self._max_tokens))
+        prompt_category = str(cfg.get("prompt_category", self._prompt_category))
+
+        merged_text = (context.merged_text or "").strip()
+        if not merged_text:
+            return []
+
+        system_prompt = get_prompt(prompt_category, "system_assistant")
+        user_prompt = get_prompt(
+            prompt_category,
+            "user_prompt",
+            text=merged_text,
+            source_set=", ".join([source.value for source in context.source_set]) or "unknown",
+            app_name=str(context.metadata.get("app_name") or ""),
+            window_title=str(context.metadata.get("window_title") or ""),
+            speaker=str(context.metadata.get("speaker") or ""),
+            strict_json="true" if strict_json else "false",
+        )
+        if strict_json:
+            user_prompt = (
+                f"{user_prompt}\n\n仅返回严格 JSON，不要包含任何解释、前后缀或 markdown 代码块。"
+            )
+
+        if not system_prompt or not user_prompt:
+            raise ValueError("missing_extractor_prompt")
+
+        result_text = llm_client.chat(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=self._temperature,
-            max_tokens=self._max_tokens,
+            temperature=temperature,
+            model=model,
+            max_tokens=max_tokens,
+            log_meta={
+                "endpoint": "perception_todo_intent_extract",
+                "feature_type": "perception",
+                "response_type": "extract",
+                "user_query": merged_text,
+                "context_id": context.context_id,
+            },
         )
-        return (response.choices[0].message.content or "").strip()
-
-    def _parse_payload(self, raw: str) -> dict[str, Any]:
-        clean = (raw or "").strip()
-        if clean.startswith("```json"):
-            clean = clean[7:]
-        if clean.startswith("```"):
-            clean = clean[3:]
-        if clean.endswith("```"):
-            clean = clean[:-3]
-        clean = clean.strip()
-
-        if not clean:
-            return {}
-
-        for candidate in (clean, self._extract_json_object(clean)):
-            if not candidate:
-                continue
-            parsed = self._try_json_loads(candidate)
-            if isinstance(parsed, dict):
-                return parsed
-            if isinstance(parsed, list):
-                return {"todos": parsed}
-        return {}
-
-    def _extract_json_object(self, text: str) -> str | None:
-        match = _JSON_RE.search(text)
-        return match.group(0) if match else None
-
-    def _try_json_loads(self, text: str) -> Any:
-        try:
-            return json.loads(text)
-        except Exception:
-            return None
-
-    def _coerce_candidate(self, item: Any) -> ExtractedTodoCandidate | None:
-        if not isinstance(item, dict):
-            return None
-
-        name = str(item.get("name") or item.get("title") or "").strip()
-        if not name:
-            return None
-
-        tags = self._coerce_tags(item.get("tags"))
-        confidence = self._clamp_confidence(item.get("confidence"))
-        priority = self._coerce_priority(item.get("priority"))
-
-        source_text = str(item.get("source_text") or item.get("evidence") or name).strip()
-        return ExtractedTodoCandidate(
-            name=name,
-            description=self._coerce_optional_str(item.get("description")),
-            start_time=self._parse_datetime(item.get("start_time")),
-            due=self._parse_datetime(item.get("due")),
-            deadline=self._parse_datetime(item.get("deadline")),
-            time_zone=self._coerce_optional_str(item.get("time_zone")),
-            priority=priority,
-            tags=tags,
-            confidence=confidence,
-            source_text=source_text,
-        )
-
-    def _coerce_tags(self, value: Any) -> list[str]:
-        if not isinstance(value, list):
-            return []
-        output: list[str] = []
-        for item in value:
-            tag = str(item or "").strip()
-            if not tag:
-                continue
-            output.append(tag[:32])
-        return output
-
-    def _coerce_priority(self, value: Any) -> str:
-        normalized = str(value or "none").strip().lower()
-        return normalized if normalized in _PRIORITY_SET else "none"
-
-    def _coerce_optional_str(self, value: Any) -> str | None:
-        if value is None:
-            return None
-        text = str(value).strip()
-        return text or None
-
-    def _clamp_confidence(self, value: Any) -> float:
-        try:
-            conf = float(value)
-        except (TypeError, ValueError):
-            return 0.0
-        if conf < 0:
-            return 0.0
-        if conf > 1:
-            return 1.0
-        return conf
-
-    def _parse_datetime(self, value: Any) -> datetime | None:
-        if value is None:
-            return None
-        if isinstance(value, datetime):
-            return to_utc(value)
-        if not isinstance(value, str):
-            return None
-
-        raw = value.strip()
-        if not raw:
-            return None
-        if raw.endswith("Z"):
-            raw = f"{raw[:-1]}+00:00"
-        try:
-            return to_utc(datetime.fromisoformat(raw))
-        except ValueError:
-            return None
-
-    def _render_user_prompt(self, prompt_template: str, text: str) -> str:
-        try:
-            return prompt_template.format(text=text)
-        except Exception:
-            return _EXTRACT_USER_PROMPT_TEMPLATE.format(text=text)
+        payload = self._parse_json(result_text)
+        if not payload:
+            raise ValueError("extractor_unparseable_response")
+        return self._to_candidates(payload)
