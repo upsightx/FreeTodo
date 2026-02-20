@@ -101,11 +101,15 @@ class TodoIntentExtractor:
         if not raw:
             return {}
 
+        parsed: object | None = None
         try:
             parsed = json.loads(raw)
-            return parsed if isinstance(parsed, dict) else {}
         except Exception:
-            pass
+            parsed = None
+        if isinstance(parsed, dict):
+            return parsed
+        if parsed is not None:
+            return {}
 
         match = cls._JSON_BLOCK_RE.search(raw)
         if not match:
