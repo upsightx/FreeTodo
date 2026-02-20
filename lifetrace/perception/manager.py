@@ -352,6 +352,16 @@ class PerceptionStreamManager:
             return
 
         queue_maxsize = max(1, int(self._todo_intent_config.get("internal_queue_maxsize", 200)))
+        processing_workers = max(1, int(self._todo_intent_config.get("processing_workers", 2)))
+        processing_queue_maxsize = self._todo_intent_config.get(
+            "processing_queue_maxsize",
+            queue_maxsize,
+        )
+        try:
+            processing_queue_maxsize = int(processing_queue_maxsize)
+        except (TypeError, ValueError):
+            processing_queue_maxsize = queue_maxsize
+        processing_queue_maxsize = max(1, processing_queue_maxsize)
         max_recent_records = max(1, int(self._todo_intent_config.get("max_recent_records", 200)))
         aggregation_window_seconds = self._todo_intent_config.get("window_seconds", 20)
         try:
@@ -364,6 +374,8 @@ class PerceptionStreamManager:
             queue_maxsize=queue_maxsize,
             max_recent_records=max_recent_records,
             aggregation_window_seconds=aggregation_window_seconds,
+            processing_workers=processing_workers,
+            processing_queue_maxsize=processing_queue_maxsize,
             enabled=True,
         )
         await subscriber.start(self.stream)

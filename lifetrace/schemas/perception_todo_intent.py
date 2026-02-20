@@ -76,6 +76,12 @@ class TodoIntentSubscriberStatusResponse(BaseModel):
     queue_maxsize: int
     enqueued_total: int
     dropped_total: int
+    processing_workers: int = 1
+    running_workers: int = 0
+    context_queue_size: int = 0
+    context_queue_maxsize: int = 0
+    contexts_enqueued_total: int = 0
+    contexts_dropped_total: int = 0
     processed_total: int
     failed_total: int
     orchestrator: TodoIntentOrchestratorStats

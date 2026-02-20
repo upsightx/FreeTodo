@@ -184,6 +184,8 @@ settings = Dynaconf(
         Validator("perception.todo_intent.max_context_chars", default=2500, is_type_of=int),
         Validator("perception.todo_intent.max_todos_per_context", default=5, is_type_of=int),
         Validator("perception.todo_intent.internal_queue_maxsize", default=200, is_type_of=int),
+        Validator("perception.todo_intent.processing_workers", default=2, is_type_of=int),
+        Validator("perception.todo_intent.processing_queue_maxsize", default=200, is_type_of=int),
         Validator("perception.todo_intent.pre_gate_dedupe.enabled", default=True, is_type_of=bool),
         Validator(
             "perception.todo_intent.pre_gate_dedupe.exact_window_seconds",

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from datetime import datetime
@@ -58,9 +59,17 @@ class TodoIntentExtractor:
 
     @staticmethod
     def _to_confidence(value: object) -> float:
-        try:
+        if isinstance(value, int | float):
             val = float(value)
-        except Exception:
+        elif isinstance(value, str):
+            text = value.strip()
+            if not text:
+                return 0.0
+            try:
+                val = float(text)
+            except ValueError:
+                return 0.0
+        else:
             return 0.0
         if val < 0:
             return 0.0
@@ -185,7 +194,8 @@ class TodoIntentExtractor:
         if not system_prompt or not user_prompt:
             raise ValueError("missing_extractor_prompt")
 
-        result_text = llm_client.chat(
+        result_text = await asyncio.to_thread(
+            llm_client.chat,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},

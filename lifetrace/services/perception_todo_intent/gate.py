@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from lifetrace.llm.llm_client import LLMClient
@@ -70,7 +71,8 @@ class TodoIntentGate:
             return IntentGateDecision(should_extract=True, reason="missing_prompt_fallback")
 
         try:
-            response = client.chat.completions.create(
+            response = await asyncio.to_thread(
+                client.chat.completions.create,
                 model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},

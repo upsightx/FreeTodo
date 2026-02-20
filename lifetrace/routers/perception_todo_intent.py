@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
 from lifetrace.perception.manager import try_get_perception_manager
 from lifetrace.schemas.perception_todo_intent import (
+    TodoIntentOrchestratorStats,
     TodoIntentProcessingRecord,
     TodoIntentSubscriberStatusResponse,
 )
@@ -65,15 +66,15 @@ def _register_routes(r: APIRouter) -> None:  # noqa: C901
                 queue_maxsize=0,
                 enqueued_total=0,
                 dropped_total=0,
+                processing_workers=0,
+                running_workers=0,
+                context_queue_size=0,
+                context_queue_maxsize=0,
+                contexts_enqueued_total=0,
+                contexts_dropped_total=0,
                 processed_total=0,
                 failed_total=0,
-                orchestrator={
-                    "contexts_total": 0,
-                    "dedupe_hits": 0,
-                    "gate_skips": 0,
-                    "extracted_candidates": 0,
-                    "integrated_total": 0,
-                },
+                orchestrator=TodoIntentOrchestratorStats(),
             )
         return subscriber.get_status()
 

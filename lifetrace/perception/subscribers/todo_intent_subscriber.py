@@ -24,7 +24,7 @@ logger = get_logger()
 
 
 class TodoIntentSubscriber:
-    """PerceptionStream subscriber with internal queue + worker loop."""
+    """PerceptionStream subscriber with event batching + processing worker pool."""
 
     @staticmethod
     def _modality_sort_key(modality: str) -> int:
@@ -35,7 +35,7 @@ class TodoIntentSubscriber:
         }
         return order.get(modality, 99)
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         orchestrator: TodoIntentOrchestrator,
@@ -43,47 +43,72 @@ class TodoIntentSubscriber:
         max_recent_records: int = 200,
         aggregation_window_seconds: float = 20.0,
         max_events_per_context: int = 32,
+        processing_workers: int = 2,
+        processing_queue_maxsize: int | None = None,
         enabled: bool = True,
     ):
         self._orchestrator = orchestrator
         self._enabled = bool(enabled)
         self._aggregation_window_seconds = max(0.0, float(aggregation_window_seconds))
         self._max_events_per_context = max(1, int(max_events_per_context))
-        self._queue: asyncio.Queue[PerceptionEvent] = asyncio.Queue(
+        self._processing_workers = max(1, int(processing_workers))
+
+        resolved_processing_queue_maxsize = (
+            queue_maxsize if processing_queue_maxsize is None else processing_queue_maxsize
+        )
+        self._event_queue: asyncio.Queue[PerceptionEvent] = asyncio.Queue(
             maxsize=max(1, int(queue_maxsize))
+        )
+        self._context_queue: asyncio.Queue[list[PerceptionEvent]] = asyncio.Queue(
+            maxsize=max(1, int(resolved_processing_queue_maxsize))
         )
         self._recent_records: deque[TodoIntentProcessingRecord] = deque(
             maxlen=max(1, int(max_recent_records))
         )
         self._record_subscribers: list[Callable[[TodoIntentProcessingRecord], Awaitable[None]]] = []
-        self._worker_task: asyncio.Task[None] | None = None
+        self._batcher_task: asyncio.Task[None] | None = None
+        self._worker_tasks: list[asyncio.Task[None]] = []
         self._enqueued_total = 0
         self._dropped_total = 0
+        self._contexts_enqueued_total = 0
+        self._contexts_dropped_total = 0
         self._processed_total = 0
         self._failed_total = 0
 
     async def start(self, stream) -> None:
         if not self._enabled:
             return
-        if self._worker_task is not None and not self._worker_task.done():
+        if self._batcher_task is not None and not self._batcher_task.done():
             return
         stream.subscribe(self.on_event)
-        self._worker_task = asyncio.create_task(self._worker_loop())
+        self._batcher_task = asyncio.create_task(self._batcher_loop())
+        self._worker_tasks = [
+            asyncio.create_task(self._worker_loop(worker_id=index + 1))
+            for index in range(self._processing_workers)
+        ]
         logger.info(
-            "TodoIntentSubscriber started: queue_maxsize=%s aggregation_window_seconds=%s",
-            self._queue.maxsize,
-            self._aggregation_window_seconds,
+            "TodoIntentSubscriber started: "
+            f"event_queue_maxsize={self._event_queue.maxsize} "
+            f"context_queue_maxsize={self._context_queue.maxsize} "
+            f"aggregation_window_seconds={self._aggregation_window_seconds} "
+            f"processing_workers={self._processing_workers}"
         )
 
     async def stop(self, stream) -> None:
         stream.unsubscribe(self.on_event)
-        task = self._worker_task
-        self._worker_task = None
-        if task is None:
+        tasks: list[asyncio.Task[None]] = []
+        if self._batcher_task is not None:
+            tasks.append(self._batcher_task)
+        tasks.extend(self._worker_tasks)
+        self._batcher_task = None
+        self._worker_tasks = []
+        if not tasks:
             return
-        task.cancel()
-        with suppress(asyncio.CancelledError):
-            await task
+        for task in tasks:
+            task.cancel()
+        for task in tasks:
+            with suppress(asyncio.CancelledError):
+                await task
 
     async def on_event(self, event: PerceptionEvent) -> None:
         if not self._enabled:
@@ -91,7 +116,7 @@ class TodoIntentSubscriber:
         if not (event.content_text or "").strip():
             return
         try:
-            self._queue.put_nowait(event)
+            self._event_queue.put_nowait(event)
             self._enqueued_total += 1
         except asyncio.QueueFull:
             self._dropped_total += 1
@@ -150,13 +175,22 @@ class TodoIntentSubscriber:
                 break
 
             try:
-                event = await asyncio.wait_for(self._queue.get(), timeout=remaining)
+                event = await asyncio.wait_for(self._event_queue.get(), timeout=remaining)
             except TimeoutError:
                 break
             batch.append(event)
 
         deduped_batch = self._dedupe_events_within_batch(batch)
         return deduped_batch or [first_event]
+
+    def _enqueue_batch(self, batch: list[PerceptionEvent]) -> None:
+        try:
+            self._context_queue.put_nowait(batch)
+            self._contexts_enqueued_total += 1
+        except asyncio.QueueFull:
+            # Processing queue is saturated: keep ingress non-blocking and drop this batch.
+            self._contexts_dropped_total += 1
+            self._dropped_total += len(batch)
 
     @staticmethod
     def _resolve_error_code(exc: Exception) -> str:
@@ -224,10 +258,16 @@ class TodoIntentSubscriber:
             error=error_code,
         )
 
-    async def _worker_loop(self) -> None:
+    async def _batcher_loop(self) -> None:
         while True:
-            event = await self._queue.get()
+            event = await self._event_queue.get()
             batch = await self._collect_batch(event)
+            self._enqueue_batch(batch)
+
+    async def _worker_loop(self, *, worker_id: int) -> None:
+        while True:
+            batch = await self._context_queue.get()
+            event = batch[0]
             try:
                 if len(batch) == 1:
                     record = await self._orchestrator.process_event(batch[0])
@@ -246,19 +286,29 @@ class TodoIntentSubscriber:
                 )
                 await self._publish_record(fallback)
                 logger.exception(
-                    "TodoIntentSubscriber worker failed for event=%s batch_size=%s",
-                    event.event_id,
-                    len(batch),
+                    "TodoIntentSubscriber worker-"
+                    f"{worker_id} failed for event={event.event_id} batch_size={len(batch)}"
                 )
 
     def get_status(self) -> TodoIntentSubscriberStatusResponse:
+        running_workers = sum(1 for task in self._worker_tasks if not task.done())
         return TodoIntentSubscriberStatusResponse(
             enabled=self._enabled,
-            running=self._worker_task is not None and not self._worker_task.done(),
-            queue_size=self._queue.qsize(),
-            queue_maxsize=self._queue.maxsize,
+            running=(
+                self._batcher_task is not None
+                and not self._batcher_task.done()
+                and running_workers > 0
+            ),
+            queue_size=self._event_queue.qsize(),
+            queue_maxsize=self._event_queue.maxsize,
             enqueued_total=self._enqueued_total,
             dropped_total=self._dropped_total,
+            processing_workers=self._processing_workers,
+            running_workers=running_workers,
+            context_queue_size=self._context_queue.qsize(),
+            context_queue_maxsize=self._context_queue.maxsize,
+            contexts_enqueued_total=self._contexts_enqueued_total,
+            contexts_dropped_total=self._contexts_dropped_total,
             processed_total=self._processed_total,
             failed_total=self._failed_total,
             orchestrator=self._orchestrator.get_stats(),
