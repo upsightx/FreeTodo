@@ -68,6 +68,7 @@ class TodoIntentSubscriber:
         self._record_subscribers: list[Callable[[TodoIntentProcessingRecord], Awaitable[None]]] = []
         self._batcher_task: asyncio.Task[None] | None = None
         self._worker_tasks: list[asyncio.Task[None]] = []
+        self._active_worker_ids: set[int] = set()
         self._enqueued_total = 0
         self._dropped_total = 0
         self._contexts_enqueued_total = 0
@@ -268,6 +269,7 @@ class TodoIntentSubscriber:
         while True:
             batch = await self._context_queue.get()
             event = batch[0]
+            self._active_worker_ids.add(worker_id)
             try:
                 if len(batch) == 1:
                     record = await self._orchestrator.process_event(batch[0])
@@ -289,9 +291,12 @@ class TodoIntentSubscriber:
                     "TodoIntentSubscriber worker-"
                     f"{worker_id} failed for event={event.event_id} batch_size={len(batch)}"
                 )
+            finally:
+                self._active_worker_ids.discard(worker_id)
 
     def get_status(self) -> TodoIntentSubscriberStatusResponse:
         running_workers = sum(1 for task in self._worker_tasks if not task.done())
+        active_worker_ids = sorted(self._active_worker_ids)
         return TodoIntentSubscriberStatusResponse(
             enabled=self._enabled,
             running=(
@@ -305,6 +310,8 @@ class TodoIntentSubscriber:
             dropped_total=self._dropped_total,
             processing_workers=self._processing_workers,
             running_workers=running_workers,
+            active_workers=len(active_worker_ids),
+            active_worker_ids=active_worker_ids,
             context_queue_size=self._context_queue.qsize(),
             context_queue_maxsize=self._context_queue.maxsize,
             contexts_enqueued_total=self._contexts_enqueued_total,

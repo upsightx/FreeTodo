@@ -78,6 +78,8 @@ class TodoIntentSubscriberStatusResponse(BaseModel):
     dropped_total: int
     processing_workers: int = 1
     running_workers: int = 0
+    active_workers: int = 0
+    active_worker_ids: list[int] = Field(default_factory=list)
     context_queue_size: int = 0
     context_queue_maxsize: int = 0
     contexts_enqueued_total: int = 0

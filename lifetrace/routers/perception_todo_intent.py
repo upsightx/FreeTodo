@@ -68,6 +68,8 @@ def _register_routes(r: APIRouter) -> None:  # noqa: C901
                 dropped_total=0,
                 processing_workers=0,
                 running_workers=0,
+                active_workers=0,
+                active_worker_ids=[],
                 context_queue_size=0,
                 context_queue_maxsize=0,
                 contexts_enqueued_total=0,
