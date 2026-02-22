@@ -368,12 +368,19 @@ class PerceptionStreamManager:
             aggregation_window_seconds = float(aggregation_window_seconds)
         except (TypeError, ValueError):
             aggregation_window_seconds = 20.0
+        max_context_chars = self._todo_intent_config.get("max_context_chars", 5000)
+        try:
+            max_context_chars = int(max_context_chars)
+        except (TypeError, ValueError):
+            max_context_chars = 5000
+        max_context_chars = max(1, max_context_chars)
         orchestrator = TodoIntentOrchestrator(config=self._todo_intent_config)
         subscriber = TodoIntentSubscriber(
             orchestrator=orchestrator,
             queue_maxsize=queue_maxsize,
             max_recent_records=max_recent_records,
             aggregation_window_seconds=aggregation_window_seconds,
+            max_context_chars=max_context_chars,
             processing_workers=processing_workers,
             processing_queue_maxsize=processing_queue_maxsize,
             enabled=True,

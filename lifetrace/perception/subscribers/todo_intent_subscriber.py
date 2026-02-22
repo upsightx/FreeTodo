@@ -42,7 +42,7 @@ class TodoIntentSubscriber:
         queue_maxsize: int = 200,
         max_recent_records: int = 200,
         aggregation_window_seconds: float = 20.0,
-        max_events_per_context: int = 32,
+        max_context_chars: int = 5000,
         processing_workers: int = 2,
         processing_queue_maxsize: int | None = None,
         enabled: bool = True,
@@ -50,7 +50,7 @@ class TodoIntentSubscriber:
         self._orchestrator = orchestrator
         self._enabled = bool(enabled)
         self._aggregation_window_seconds = max(0.0, float(aggregation_window_seconds))
-        self._max_events_per_context = max(1, int(max_events_per_context))
+        self._max_context_chars = max(1, int(max_context_chars))
         self._processing_workers = max(1, int(processing_workers))
 
         resolved_processing_queue_maxsize = (
@@ -68,6 +68,7 @@ class TodoIntentSubscriber:
         self._record_subscribers: list[Callable[[TodoIntentProcessingRecord], Awaitable[None]]] = []
         self._batcher_task: asyncio.Task[None] | None = None
         self._worker_tasks: list[asyncio.Task[None]] = []
+        self._next_batch_seed: PerceptionEvent | None = None
         self._active_worker_ids: set[int] = set()
         self._enqueued_total = 0
         self._dropped_total = 0
@@ -92,6 +93,7 @@ class TodoIntentSubscriber:
             f"event_queue_maxsize={self._event_queue.maxsize} "
             f"context_queue_maxsize={self._context_queue.maxsize} "
             f"aggregation_window_seconds={self._aggregation_window_seconds} "
+            f"max_context_chars={self._max_context_chars} "
             f"processing_workers={self._processing_workers}"
         )
 
@@ -161,15 +163,24 @@ class TodoIntentSubscriber:
             deduped.append(event)
         return deduped
 
-    async def _collect_batch(self, first_event: PerceptionEvent) -> list[PerceptionEvent]:
+    @staticmethod
+    def _event_char_count(event: PerceptionEvent) -> int:
+        return len((event.content_text or "").strip())
+
+    async def _collect_batch(
+        self,
+        first_event: PerceptionEvent,
+    ) -> tuple[list[PerceptionEvent], PerceptionEvent | None]:
         if self._aggregation_window_seconds <= 0:
-            return [first_event]
+            return [first_event], None
 
         loop = asyncio.get_running_loop()
         started_at = loop.time()
         batch = [first_event]
+        current_chars = self._event_char_count(first_event)
+        next_batch_seed: PerceptionEvent | None = None
 
-        while len(batch) < self._max_events_per_context:
+        while True:
             elapsed = loop.time() - started_at
             remaining = self._aggregation_window_seconds - elapsed
             if remaining <= 0:
@@ -179,10 +190,16 @@ class TodoIntentSubscriber:
                 event = await asyncio.wait_for(self._event_queue.get(), timeout=remaining)
             except TimeoutError:
                 break
+            event_chars = self._event_char_count(event)
+            if batch and current_chars + event_chars > self._max_context_chars:
+                # Keep the overflow event as the first event in the next batch.
+                next_batch_seed = event
+                break
             batch.append(event)
+            current_chars += event_chars
 
         deduped_batch = self._dedupe_events_within_batch(batch)
-        return deduped_batch or [first_event]
+        return deduped_batch or [first_event], next_batch_seed
 
     def _enqueue_batch(self, batch: list[PerceptionEvent]) -> None:
         try:
@@ -261,8 +278,13 @@ class TodoIntentSubscriber:
 
     async def _batcher_loop(self) -> None:
         while True:
-            event = await self._event_queue.get()
-            batch = await self._collect_batch(event)
+            if self._next_batch_seed is not None:
+                event = self._next_batch_seed
+                self._next_batch_seed = None
+            else:
+                event = await self._event_queue.get()
+            batch, next_batch_seed = await self._collect_batch(event)
+            self._next_batch_seed = next_batch_seed
             self._enqueue_batch(batch)
 
     async def _worker_loop(self, *, worker_id: int) -> None:

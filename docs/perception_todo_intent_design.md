@@ -318,7 +318,7 @@ perception:
     enabled: true
     mode: draft # draft | active | review_queue
     window_seconds: 20
-    max_context_chars: 2500
+    max_context_chars: 5000
     max_todos_per_context: 5
     internal_queue_maxsize: 200       # subscriber 内部队列上限，超出时丢弃低优先级事件
     pre_gate_dedupe:

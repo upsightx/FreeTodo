@@ -59,7 +59,7 @@ perception:
     mode: memory_preview # memory_preview | draft | active | review_queue
     disable_legacy_auto_extraction: true # 启用后跳过旧自动提取链路（audio/proactive_ocr/todo_recorder）
     window_seconds: 20
-    max_context_chars: 2500
+    max_context_chars: 5000
     max_todos_per_context: 5
     internal_queue_maxsize: 200
     processing_workers: 2
