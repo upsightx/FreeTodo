@@ -23,6 +23,23 @@ from .modes import (
 )
 
 
+async def _publish_perception_user_input(text: str) -> None:
+    content = (text or "").strip()
+    if not content:
+        return
+    try:
+        from lifetrace.perception.manager import (  # noqa: PLC0415
+            try_get_perception_manager,
+        )
+
+        mgr = try_get_perception_manager()
+        if mgr is None:
+            return
+        await mgr.try_publish_user_input(content, metadata={"source": "chat"})
+    except Exception:
+        return
+
+
 @router.post("", response_model=ChatResponse)
 async def chat_with_llm(
     message: ChatMessage,
@@ -33,6 +50,7 @@ async def chat_with_llm(
 
     try:
         logger.info(f"收到聊天消息: {message.message}")
+        await _publish_perception_user_input(message.get_user_input_for_storage())
 
         # 使用RAG服务处理查询
         rag_service = get_rag_service()
@@ -87,6 +105,7 @@ async def chat_with_llm_stream(
     """
     try:
         logger.info(f"[stream] 收到聊天消息: {message.message}")
+        await _publish_perception_user_input(message.get_user_input_for_storage())
 
         # 解析请求语言
         lang = get_request_language(request)

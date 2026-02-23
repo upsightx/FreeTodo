@@ -7,6 +7,7 @@ export { CrawlerConfigSection } from "./CrawlerConfigSection";
 export { DifyConfigSection } from "./DifyConfigSection";
 export { DockDisplayModeSection } from "./DockDisplayModeSection";
 export { JournalSettingsSection } from "./JournalSettingsSection";
+export { KdlConfigSection } from "./KdlConfigSection";
 export { LlmConfigSection } from "./LlmConfigSection";
 export { NotificationPermissionSection } from "./NotificationPermissionSection";
 export { NotificationPopupSection } from "./NotificationPopupSection";

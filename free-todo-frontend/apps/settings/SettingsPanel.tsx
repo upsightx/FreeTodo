@@ -17,6 +17,7 @@ import {
 	// DifyConfigSection,
 	DockDisplayModeSection,
 	JournalSettingsSection,
+	KdlConfigSection,
 	LlmConfigSection,
 	NotificationPermissionSection,
 	NotificationPopupSection,
@@ -170,6 +171,7 @@ export function SettingsPanel() {
 					)}
 				<CrawlerConfigSection loading={loading} />
 				<CookiesConfigSection loading={loading} />
+				<KdlConfigSection loading={loading} />
 				</>
 			);
 			case "help":

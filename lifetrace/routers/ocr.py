@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 
 from lifetrace.core.dependencies import get_ocr_processor
+from lifetrace.perception.manager import try_get_perception_manager
 from lifetrace.storage import ocr_mgr, screenshot_mgr
 from lifetrace.util.logging_config import get_logger
 
@@ -38,6 +39,20 @@ async def process_ocr(screenshot_id: int):
                 language=ocr_result.get("language", "ch"),
                 processing_time=ocr_result["processing_time"],
             )
+
+            mgr = try_get_perception_manager()
+            if mgr is not None:
+                await mgr.try_publish_screen_ocr(
+                    ocr_result["text_content"],
+                    content_raw=f"/api/screenshots/{screenshot['id']}/image",
+                    metadata={
+                        "source": "ocr_route",
+                        "screenshot_id": screenshot["id"],
+                        "app_name": screenshot.get("app_name"),
+                        "window_title": screenshot.get("window_title"),
+                        "confidence": ocr_result.get("confidence"),
+                    },
+                )
 
             return {
                 "success": True,

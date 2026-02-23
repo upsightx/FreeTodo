@@ -15,6 +15,7 @@ from lifetrace.core.module_registry import (
     register_modules,
 )
 from lifetrace.jobs.job_manager import get_job_manager
+from lifetrace.perception.manager import init_perception_manager, shutdown_perception_manager
 from lifetrace.services.config_service import is_llm_configured
 from lifetrace.util.base_paths import get_user_logs_dir
 from lifetrace.util.logging_config import get_logger, setup_logging
@@ -27,7 +28,7 @@ setup_logging(logging_config)
 
 logger = get_logger()
 
-PRIORITY_MODULES = ("health", "config", "system", "todo")
+PRIORITY_MODULES = ("health", "config", "system", "todo", "perception")
 
 
 @asynccontextmanager
@@ -35,6 +36,11 @@ async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     # 启动逻辑
     logger.info("Web服务器启动")
+
+    # 初始化 Perception Stream（轻量内存总线，副作用可控）
+    perception_config = settings.get("perception", {}) or {}
+    if perception_config.get("enabled", True):
+        app.state.perception_manager = await init_perception_manager(perception_config)
 
     # 初始化任务管理器
     manager = get_job_manager()
@@ -66,6 +72,9 @@ async def lifespan(app: FastAPI):
     manager = getattr(app.state, "job_manager", None)
     if manager:
         manager.stop_all()
+
+    with suppress(Exception):
+        await shutdown_perception_manager()
 
 
 app = FastAPI(

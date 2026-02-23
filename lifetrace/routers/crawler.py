@@ -94,6 +94,17 @@ def _get_crawler_config_path() -> Path:
     return _get_crawler_dir() / "config" / "base_config.py"
 
 
+def _get_proxy_config_path() -> Path:
+    """获取代理配置文件路径（proxy_config.py）。"""
+    return _get_crawler_dir() / "config" / "proxy_config.py"
+
+
+def _try_get_proxy_config_path() -> Path | None:
+    """尝试获取代理配置文件路径，不可用时返回 None。"""
+    d = _try_get_crawler_dir()
+    return d / "config" / "proxy_config.py" if d else None
+
+
 def _get_cookies_config_path() -> Path:
     """动态获取 Cookies 配置文件路径（写操作用）。"""
     return _get_crawler_dir() / "config" / "accounts_cookies.xlsx"
@@ -395,6 +406,96 @@ async def update_keywords(data: dict[str, str]):
     except Exception as e:
         logger.error(f"更新关键词失败: {e}")
         raise HTTPException(status_code=500, detail=f"更新关键词失败: {e!s}") from e
+
+
+# ============== 快代理 (KDL) 配置 ==============
+
+def _read_proxy_config_file() -> str | None:
+    """读取 proxy_config.py 内容，不可用时返回 None。"""
+    path = _try_get_proxy_config_path()
+    if path is None or not path.exists():
+        return None
+    return path.read_text(encoding="utf-8")
+
+
+def _write_proxy_config_file(content: str) -> None:
+    """写入 proxy_config.py 内容"""
+    path = _get_proxy_config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def _update_proxy_config_line(content: str, key: str, value: str) -> str:
+    """更新或追加 proxy_config 中的 KEY = "value" 行。"""
+    new_line = f'{key} = "{value}"'
+    # 匹配 KEY = "..." 或 KEY = os.getenv(...) 等格式
+    pattern = rf"^{re.escape(key)}\s*=\s*.+$"
+    new_content, count = re.subn(pattern, new_line, content, flags=re.MULTILINE)
+    if count == 0:
+        # 键不存在，在文件末尾追加（在空行之前）
+        lines = new_content.rstrip().split("\n")
+        lines.append(new_line)
+        return "\n".join(lines) + "\n"
+    return new_content
+
+
+class KdlProxyConfigResponse(BaseModel):
+    """快代理配置响应"""
+    kdl_secert_id: str = ""
+    kdl_signature: str = ""
+    kdl_user_name: str = ""
+    kdl_user_pwd: str = ""
+
+
+class KdlProxyConfigUpdate(BaseModel):
+    """快代理配置更新请求"""
+    kdl_secert_id: str | None = None
+    kdl_signature: str | None = None
+    kdl_user_name: str | None = None
+    kdl_user_pwd: str | None = None
+
+
+@router.get("/proxy-config", response_model=KdlProxyConfigResponse)
+async def get_proxy_config():
+    """获取快代理 (KDL) 配置"""
+    try:
+        content = _read_proxy_config_file()
+        if content is None:
+            return KdlProxyConfigResponse()
+        return KdlProxyConfigResponse(
+            kdl_secert_id=extract_config_value(content, "KDL_SECERT_ID", "str") or "",
+            kdl_signature=extract_config_value(content, "KDL_SIGNATURE", "str") or "",
+            kdl_user_name=extract_config_value(content, "KDL_USER_NAME", "str") or "",
+            kdl_user_pwd=extract_config_value(content, "KDL_USER_PWD", "str") or "",
+        )
+    except Exception as e:
+        logger.error(f"获取代理配置失败: {e}")
+        return KdlProxyConfigResponse()
+
+
+@router.post("/proxy-config")
+async def update_proxy_config(config: KdlProxyConfigUpdate):
+    """更新快代理 (KDL) 配置"""
+    try:
+        content = _read_proxy_config_file()
+        if content is None:
+            raise HTTPException(status_code=503, detail=_PLUGIN_NOT_INSTALLED_MSG)
+        if config.kdl_secert_id is not None:
+            content = _update_proxy_config_line(content, "KDL_SECERT_ID", config.kdl_secert_id)
+        if config.kdl_signature is not None:
+            content = _update_proxy_config_line(content, "KDL_SIGNATURE", config.kdl_signature)
+        if config.kdl_user_name is not None:
+            content = _update_proxy_config_line(content, "KDL_USER_NAME", config.kdl_user_name)
+        if config.kdl_user_pwd is not None:
+            content = _update_proxy_config_line(content, "KDL_USER_PWD", config.kdl_user_pwd)
+        _write_proxy_config_file(content)
+        logger.info("快代理配置已更新")
+        return {"success": True, "message": "快代理配置已保存"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"更新代理配置失败: {e}")
+        raise HTTPException(status_code=500, detail=f"更新代理配置失败: {str(e)}") from e
 
 
 # ============== Cookies 管理 ==============

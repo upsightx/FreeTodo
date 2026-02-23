@@ -40,8 +40,20 @@ backend_modules:
     - floating_capture
     - crawler
     - audio
+    - perception
     - proactive_ocr
     - plugin
+
+# 感知流（Perception Stream）配置
+perception:
+  enabled: true
+  window_seconds: 300
+  max_pending_events: 1000
+  status_online_window_seconds: 60
+  audio_enabled: true
+  audio_source: mic_pc
+  ocr_enabled: false
+  input_enabled: false
 
 # 基础目录配置
 base_dir: data

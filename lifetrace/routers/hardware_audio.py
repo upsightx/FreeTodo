@@ -93,6 +93,9 @@ class HardwareAudioSession:
                     task = asyncio.create_task(self._update_transcription())
                     self._update_tasks.add(task)
                     task.add_done_callback(self._update_tasks.discard)
+                    perception_task = asyncio.create_task(self._publish_perception(text.strip()))
+                    self._update_tasks.add(perception_task)
+                    perception_task.add_done_callback(self._update_tasks.discard)
 
             await self.asr_client.transcribe_stream(
                 audio_stream=self._audio_generator(),
@@ -102,6 +105,26 @@ class HardwareAudioSession:
             logger.error(f"[hardware] ASR 失败: {e}", exc_info=True)
         finally:
             await self._finalize()
+
+    async def _publish_perception(self, text: str) -> None:
+        try:
+            from lifetrace.perception.manager import (  # noqa: PLC0415
+                try_get_perception_manager,
+            )
+            from lifetrace.perception.models import SourceType  # noqa: PLC0415
+
+            mgr = try_get_perception_manager()
+            if mgr is None:
+                return
+
+            await mgr.try_publish_audio_transcription(
+                text,
+                metadata={"source": "hardware_audio", "uid": self.uid},
+                source=SourceType.MIC_HARDWARE,
+            )
+        except Exception:
+            # Perception stream is best-effort.
+            return
 
     async def _ensure_recording_created(self) -> int:
         """确保录音记录已创建（第一次调用时创建临时记录）。"""
@@ -140,16 +163,13 @@ class HardwareAudioSession:
                 logger.info(f"[hardware] 设备 {self.uid} 无音频数据，跳过保存")
                 return
 
-            from lifetrace.routers.audio_ws import (  # noqa: PLC0415
-                _apply_agc_to_pcm,
-                _pcm16le_to_wav,
-            )
+            from lifetrace.util.audio_utils import apply_agc_to_pcm, pcm16le_to_wav  # noqa: PLC0415
 
             pcm_bytes = b"".join(self.audio_chunks)
             duration = len(pcm_bytes) / (self.sample_rate * 2)  # 16-bit mono
 
-            pcm_bytes = _apply_agc_to_pcm(logger, pcm_bytes)
-            wav_bytes = _pcm16le_to_wav(pcm_bytes, sample_rate=self.sample_rate)
+            pcm_bytes = apply_agc_to_pcm(logger, pcm_bytes)
+            wav_bytes = pcm16le_to_wav(pcm_bytes, sample_rate=self.sample_rate)
 
             # 保存 WAV 文件
             file_path = self.audio_service.generate_audio_file_path(self.started_at)

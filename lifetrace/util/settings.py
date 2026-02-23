@@ -169,6 +169,15 @@ settings = Dynaconf(
         Validator("backend_modules.enabled", default=[], is_type_of=list),
         Validator("backend_modules.disabled", default=[], is_type_of=list),
         Validator("backend_modules.unavailable", default=[], is_type_of=list),
+        # 感知流配置（Perception Stream）
+        Validator("perception.enabled", default=True, is_type_of=bool),
+        Validator("perception.window_seconds", default=300, is_type_of=int),
+        Validator("perception.max_pending_events", default=1000, is_type_of=int),
+        Validator("perception.status_online_window_seconds", default=60, is_type_of=int),
+        Validator("perception.audio_enabled", default=True, is_type_of=bool),
+        Validator("perception.audio_source", default="mic_pc"),
+        Validator("perception.ocr_enabled", default=False, is_type_of=bool),
+        Validator("perception.input_enabled", default=False, is_type_of=bool),
     ],
 )
 

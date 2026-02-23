@@ -223,6 +223,94 @@ function Invoke-HookSetup {
     }
 }
 
+# 默认端口与范围（与 dev-with-auto-port.js、lifetrace 后端及 AgentOS 配置一致）
+$script:DEFAULT_BACKEND_PORT = 8001
+$script:DEFAULT_FRONTEND_PORT = 3001
+$script:DEFAULT_AGENTOS_PORT = 8200
+$script:BACKEND_PORT_MIN = 8000
+$script:BACKEND_PORT_MAX = 8099
+$script:FRONTEND_PORT_MIN = 3001
+$script:FRONTEND_PORT_MAX = 3199
+$script:AGENTOS_PORT_MIN = 8200
+$script:AGENTOS_PORT_MAX = 8299
+
+function Test-PortAvailable {
+    param([int]$Port)
+    try {
+        $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $Port)
+        $listener.Start()
+        $listener.Stop()
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Get-RandomAvailablePort {
+    param(
+        [int]$MinPort,
+        [int]$MaxPort,
+        [int[]]$ExcludePorts = @(),
+        [int]$MaxAttempts = 150
+    )
+    $candidates = [System.Collections.ArrayList]::new()
+    for ($p = $MinPort; $p -le $MaxPort; $p++) {
+        if ($ExcludePorts -notcontains $p) {
+            [void]$candidates.Add($p)
+        }
+    }
+    if ($candidates.Count -eq 0) {
+        throw "No port candidates in range $MinPort-$MaxPort (excluding $($ExcludePorts -join ','))"
+    }
+    $shuffled = $candidates | Sort-Object { Get-Random }
+    $toTry = [Math]::Min($MaxAttempts, $shuffled.Count)
+    for ($i = 0; $i -lt $toTry; $i++) {
+        $port = $shuffled[$i]
+        if (Test-PortAvailable -Port $port) {
+            return $port
+        }
+    }
+    throw "Cannot find available port in range $MinPort-$MaxPort after $MaxAttempts random attempts"
+}
+
+function Resolve-DevPorts {
+    $backendPort = $script:DEFAULT_BACKEND_PORT
+    $frontendPort = $script:DEFAULT_FRONTEND_PORT
+    $agentosPort = $script:DEFAULT_AGENTOS_PORT
+    $backendNeedRandom = -not (Test-PortAvailable -Port $backendPort)
+    $frontendNeedRandom = -not (Test-PortAvailable -Port $frontendPort)
+    $agentosNeedRandom = -not (Test-PortAvailable -Port $agentosPort)
+    if ($backendNeedRandom -or $frontendNeedRandom -or $agentosNeedRandom) {
+        Write-Host "Detected port conflict, allocating random available ports..."
+        if ($backendNeedRandom) {
+            $excludeForBackend = @()
+            if (-not $frontendNeedRandom) { $excludeForBackend += $frontendPort }
+            if (-not $agentosNeedRandom) { $excludeForBackend += $agentosPort }
+            $backendPort = Get-RandomAvailablePort `
+                -MinPort $script:BACKEND_PORT_MIN -MaxPort $script:BACKEND_PORT_MAX `
+                -ExcludePorts $excludeForBackend
+            Write-Host "  Backend port $($script:DEFAULT_BACKEND_PORT) in use, using $backendPort"
+        }
+        if ($frontendNeedRandom) {
+            $frontendPort = Get-RandomAvailablePort `
+                -MinPort $script:FRONTEND_PORT_MIN -MaxPort $script:FRONTEND_PORT_MAX `
+                -ExcludePorts @($backendPort, $agentosPort)
+            Write-Host "  Frontend port $($script:DEFAULT_FRONTEND_PORT) in use, using $frontendPort"
+        }
+        if ($agentosNeedRandom) {
+            $agentosPort = Get-RandomAvailablePort `
+                -MinPort $script:AGENTOS_PORT_MIN -MaxPort $script:AGENTOS_PORT_MAX `
+                -ExcludePorts @($backendPort, $frontendPort)
+            Write-Host "  AgentOS port $($script:DEFAULT_AGENTOS_PORT) in use, using $agentosPort"
+        }
+        $allPorts = @($backendPort, $frontendPort, $agentosPort)
+        if ($allPorts.Count -ne ($allPorts | Select-Object -Unique).Count) {
+            throw "Resolved ports must differ: backend=$backendPort, frontend=$frontendPort, agentos=$agentosPort"
+        }
+    }
+    return @{ BackendPort = $backendPort; FrontendPort = $frontendPort; AgentosPort = $agentosPort }
+}
+
 function Install-Winget {
     if (Test-Command "winget") {
         return $true
@@ -441,13 +529,25 @@ if ($Run -ne "1") {
     exit 0
 }
 
+$devPorts = Resolve-DevPorts
+$backendPort = $devPorts.BackendPort
+$frontendPort = $devPorts.FrontendPort
+$agentosPort = $devPorts.AgentosPort
+
 if ($Mode -eq "web") {
     $uvPath = (Get-Command uv).Source
     $backendJob = Start-Job -ScriptBlock {
-        param($RepoDir, $UvPath, $PythonCmd)
+        param($RepoDir, $UvPath, $PythonCmd, $BackendPort)
         Set-Location $RepoDir
-        & $UvPath run $PythonCmd -m lifetrace.server
-    } -ArgumentList (Get-Location).Path, $uvPath, $pythonCmd
+        & $UvPath run $PythonCmd -m lifetrace.server --port $BackendPort
+    } -ArgumentList (Get-Location).Path, $uvPath, $pythonCmd, $backendPort
+
+    $agentosJob = Start-Job -ScriptBlock {
+        param($RepoDir, $UvPath, $PythonCmd, $AgentosPort)
+        Set-Location $RepoDir
+        $env:LIFETRACE__AGNO__AGENT_OS__PORT = $AgentosPort
+        & $UvPath run $PythonCmd -m lifetrace.agent_os
+    } -ArgumentList (Get-Location).Path, $uvPath, $pythonCmd, $agentosPort
 
     try {
         Set-Location (Join-Path (Get-Location).Path "free-todo-frontend")
@@ -456,17 +556,32 @@ if ($Mode -eq "web") {
         }
         if ($Frontend -eq "build") {
             $nextDir = Join-Path (Get-Location).Path ".next"
-            if (-not ($repoReady -and $depsReady -and (Test-Path $nextDir))) {
+            $env:NEXT_PUBLIC_API_URL = "http://127.0.0.1:$backendPort"
+            $needBuild = -not ($repoReady -and $depsReady -and (Test-Path $nextDir))
+            if ($backendPort -ne $script:DEFAULT_BACKEND_PORT) {
+                $needBuild = $true
+                Write-Host "Backend port changed, rebuilding frontend to update API URL."
+            }
+            if ($needBuild) {
                 pnpm build
             } else {
                 Write-Host "Next.js build is up to date. Skipping build step."
             }
+            $env:PORT = $frontendPort
             pnpm start
         } else {
             $env:WINDOW_MODE = $Variant
+            $env:PORT = $frontendPort
+            $env:NEXT_PUBLIC_API_URL = "http://127.0.0.1:$backendPort"
             pnpm dev
         }
     } finally {
+        if ($agentosJob -and $agentosJob.State -eq "Running") {
+            Stop-Job $agentosJob | Out-Null
+        }
+        if ($agentosJob) {
+            Remove-Job $agentosJob -Force | Out-Null
+        }
         if ($backendJob -and $backendJob.State -eq "Running") {
             Stop-Job $backendJob | Out-Null
         }
@@ -494,21 +609,36 @@ if ($Mode -eq "web") {
     } else {
         $uvPath = (Get-Command uv).Source
         $backendJob = Start-Job -ScriptBlock {
-            param($RepoDir, $UvPath, $PythonCmd)
+            param($RepoDir, $UvPath, $PythonCmd, $BackendPort)
             Set-Location $RepoDir
-            & $UvPath run $PythonCmd -m lifetrace.server
-        } -ArgumentList (Resolve-Path "..").Path, $uvPath, $pythonCmd
+            & $UvPath run $PythonCmd -m lifetrace.server --port $BackendPort
+        } -ArgumentList (Resolve-Path "..").Path, $uvPath, $pythonCmd, $backendPort
+
+        $agentosJob = Start-Job -ScriptBlock {
+            param($RepoDir, $UvPath, $PythonCmd, $AgentosPort)
+            Set-Location $RepoDir
+            $env:LIFETRACE__AGNO__AGENT_OS__PORT = $AgentosPort
+            & $UvPath run $PythonCmd -m lifetrace.agent_os
+        } -ArgumentList (Resolve-Path "..").Path, $uvPath, $pythonCmd, $agentosPort
 
         $frontendJob = Start-Job -ScriptBlock {
-            param($FrontendDir, $Variant)
+            param($FrontendDir, $Variant, $FrontendPort, $BackendPort)
             Set-Location $FrontendDir
             $env:WINDOW_MODE = $Variant
+            $env:PORT = $FrontendPort
+            $env:NEXT_PUBLIC_API_URL = "http://127.0.0.1:$BackendPort"
             pnpm dev
-        } -ArgumentList (Get-Location).Path, $Variant
+        } -ArgumentList (Get-Location).Path, $Variant, $frontendPort, $backendPort
 
         try {
             pnpm tauri:dev
         } finally {
+            if ($agentosJob -and $agentosJob.State -eq "Running") {
+                Stop-Job $agentosJob | Out-Null
+            }
+            if ($agentosJob) {
+                Remove-Job $agentosJob -Force | Out-Null
+            }
             if ($frontendJob -and $frontendJob.State -eq "Running") {
                 Stop-Job $frontendJob | Out-Null
             }
@@ -544,10 +674,31 @@ if ($Mode -eq "web") {
         if ($Backend -eq "pyinstaller") {
             throw "backend=pyinstaller is only supported with frontend=build."
         }
-        if ($Variant -eq "island") {
-            pnpm electron:dev:island
-        } else {
-            pnpm electron:dev
+        $uvPath = (Get-Command uv).Source
+        $repoDir = (Resolve-Path "..").Path
+        $agentosJob = Start-Job -ScriptBlock {
+            param($RepoDir, $UvPath, $PythonCmd, $AgentosPort)
+            Set-Location $RepoDir
+            $env:LIFETRACE__AGNO__AGENT_OS__PORT = $AgentosPort
+            & $UvPath run $PythonCmd -m lifetrace.agent_os
+        } -ArgumentList $repoDir, $uvPath, $pythonCmd, $agentosPort
+
+        try {
+            $env:PORT = $frontendPort
+            $env:BACKEND_PORT = $backendPort
+            $env:NEXT_PUBLIC_API_URL = "http://127.0.0.1:$backendPort"
+            if ($Variant -eq "island") {
+                pnpm electron:dev:island
+            } else {
+                pnpm electron:dev
+            }
+        } finally {
+            if ($agentosJob -and $agentosJob.State -eq "Running") {
+                Stop-Job $agentosJob | Out-Null
+            }
+            if ($agentosJob) {
+                Remove-Job $agentosJob -Force | Out-Null
+            }
         }
     }
 }
