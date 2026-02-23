@@ -50,7 +50,7 @@ class OCRAdapter:
         return PerceptionEvent(
             timestamp=get_utc_now(),
             source=SourceType.OCR_PROACTIVE,
-            modality=Modality.TEXT,
+            modality=Modality.IMAGE,
             content_text=content,
             content_raw=content_raw,
             metadata=metadata or {},

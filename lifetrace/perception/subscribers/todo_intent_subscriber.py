@@ -149,18 +149,52 @@ class TodoIntentSubscriber:
         await asyncio.gather(*(cb(record) for cb in subscribers), return_exceptions=True)
 
     @staticmethod
+    def _normalize_text_for_dedupe(text: str) -> str:
+        return " ".join((text or "").strip().lower().split())
+
+    @staticmethod
+    def _event_order_key(event: PerceptionEvent) -> tuple[int, str, str]:
+        return (
+            int(event.sequence_id),
+            event.timestamp.isoformat(),
+            event.event_id,
+        )
+
+    @staticmethod
+    def _is_duplicate_or_contained(candidate: str, existing: str) -> bool:
+        if candidate == existing:
+            return True
+        return candidate in existing or existing in candidate
+
+    @staticmethod
     def _dedupe_events_within_batch(events: list[PerceptionEvent]) -> list[PerceptionEvent]:
-        seen: set[tuple[str, str]] = set()
-        deduped: list[PerceptionEvent] = []
+        bucketed: dict[str, list[tuple[PerceptionEvent, str]]] = {}
+
         for event in events:
-            text = " ".join((event.content_text or "").strip().lower().split())
+            text = TodoIntentSubscriber._normalize_text_for_dedupe(event.content_text or "")
             if not text:
                 continue
-            key = (event.source.value, text)
-            if key in seen:
-                continue
-            seen.add(key)
-            deduped.append(event)
+
+            # Deduplicate only within the same modality bucket.
+            bucket_key = event.modality.value
+            bucket = bucketed.setdefault(bucket_key, [])
+            matched_idx: int | None = None
+
+            for idx, (kept_event, kept_text) in enumerate(bucket):
+                if TodoIntentSubscriber._is_duplicate_or_contained(text, kept_text):
+                    matched_idx = idx
+                    # Keep the latest event version when duplicate/contained.
+                    if TodoIntentSubscriber._event_order_key(event) >= (
+                        TodoIntentSubscriber._event_order_key(kept_event)
+                    ):
+                        bucket[idx] = (event, text)
+                    break
+
+            if matched_idx is None:
+                bucket.append((event, text))
+
+        deduped = [event for items in bucketed.values() for event, _ in items]
+        deduped.sort(key=TodoIntentSubscriber._event_order_key)
         return deduped
 
     @staticmethod
