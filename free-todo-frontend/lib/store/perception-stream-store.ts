@@ -37,6 +37,7 @@ interface PerceptionStreamState {
 	events: PerceptionEvent[];
 	connectionState: PerceptionConnectionState;
 	filter: StreamFilter;
+	appendEvents: (events: PerceptionEvent[]) => void;
 	connect: () => void;
 	disconnect: () => void;
 	loadRecentEvents: (count?: number) => Promise<void>;
@@ -80,15 +81,74 @@ function appendAndDedupeEvents(
 	incoming: PerceptionEvent[],
 ): PerceptionEvent[] {
 	if (incoming.length === 0) return existing;
-	const seen = new Set(existing.map((e) => e.event_id));
-	const merged = [...existing];
-	for (const e of incoming) {
-		if (seen.has(e.event_id)) continue;
-		seen.add(e.event_id);
-		merged.push(e);
+
+	const fallbackMerge = (): PerceptionEvent[] => {
+		const seen = new Set(existing.map((e) => e.event_id));
+		const merged = [...existing];
+		for (const event of incoming) {
+			if (seen.has(event.event_id)) continue;
+			seen.add(event.event_id);
+			merged.push(event);
+		}
+		merged.sort((a, b) => (a.sequence_id ?? 0) - (b.sequence_id ?? 0));
+		return merged.slice(-MAX_EVENTS);
+	};
+
+	if (existing.length === 0) {
+		return fallbackMerge();
 	}
-	merged.sort((a, b) => (a.sequence_id ?? 0) - (b.sequence_id ?? 0));
-	return merged.slice(-MAX_EVENTS);
+
+	const lastExisting = existing[existing.length - 1];
+	const lastSequenceId = lastExisting?.sequence_id ?? Number.NEGATIVE_INFINITY;
+
+	// 高频单条事件流：在顺序递增且无重复时直接追加，避免每次全量排序。
+	if (incoming.length === 1) {
+		const next = incoming[0];
+		const nextSequenceId = next.sequence_id ?? Number.NEGATIVE_INFINITY;
+		if (nextSequenceId > lastSequenceId) {
+			const duplicated = existing.some((event) => event.event_id === next.event_id);
+			if (!duplicated) {
+				const merged =
+					existing.length < MAX_EVENTS
+						? [...existing, next]
+						: [...existing.slice(-(MAX_EVENTS - 1)), next];
+				return merged;
+			}
+		}
+		return fallbackMerge();
+	}
+
+	let monotonicAppend = true;
+	let previousSequenceId = lastSequenceId;
+	const incomingIds = new Set<string>();
+	for (const event of incoming) {
+		if (incomingIds.has(event.event_id)) {
+			monotonicAppend = false;
+			break;
+		}
+		incomingIds.add(event.event_id);
+
+		const sequenceId = event.sequence_id ?? Number.NEGATIVE_INFINITY;
+		if (sequenceId <= previousSequenceId) {
+			monotonicAppend = false;
+			break;
+		}
+		previousSequenceId = sequenceId;
+	}
+
+	if (!monotonicAppend) {
+		return fallbackMerge();
+	}
+
+	const existingIds = new Set(existing.map((event) => event.event_id));
+	for (const id of incomingIds) {
+		if (existingIds.has(id)) {
+			return fallbackMerge();
+		}
+	}
+
+	const merged = [...existing, ...incoming];
+	return merged.length <= MAX_EVENTS ? merged : merged.slice(-MAX_EVENTS);
 }
 
 async function loadRecentBestEffort(
@@ -202,6 +262,10 @@ export const usePerceptionStreamStore = create<PerceptionStreamState>((set) => (
 	events: [],
 	connectionState: "disconnected",
 	filter: { sources: new Set(), modalities: new Set() },
+	appendEvents: (incoming) =>
+		set((state) => ({
+			events: appendAndDedupeEvents(state.events, incoming),
+		})),
 
 	connect: () => {
 		shouldReconnect = true;

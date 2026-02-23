@@ -12,7 +12,15 @@ import { SourceFilter } from "./components/SourceFilter";
 import { SourceStatusBar } from "./components/SourceStatusBar";
 import { useFilteredEvents } from "./hooks/useFilteredEvents";
 
-export function PerceptionStreamPanel() {
+type PerceptionStreamPanelProps = {
+	autoConnect?: boolean;
+	showSourceStatusBar?: boolean;
+};
+
+export function PerceptionStreamPanel({
+	autoConnect = true,
+	showSourceStatusBar = true,
+}: PerceptionStreamPanelProps = {}) {
 	const t = useTranslations("perceptionStream");
 
 	const events = usePerceptionStreamStore((s) => s.events);
@@ -24,9 +32,13 @@ export function PerceptionStreamPanel() {
 	const filteredEvents = useFilteredEvents(events);
 
 	useEffect(() => {
+		if (!autoConnect) {
+			disconnect();
+			return;
+		}
 		connect();
 		return () => disconnect();
-	}, [connect, disconnect]);
+	}, [autoConnect, connect, disconnect]);
 
 	return (
 		<div className="flex h-full flex-col overflow-hidden bg-background">
@@ -58,7 +70,7 @@ export function PerceptionStreamPanel() {
 				}
 			/>
 			<SourceFilter />
-			<SourceStatusBar />
+			{showSourceStatusBar ? <SourceStatusBar /> : null}
 			<EventTimeline events={filteredEvents} />
 		</div>
 	);
