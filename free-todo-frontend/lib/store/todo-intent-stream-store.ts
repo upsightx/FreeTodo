@@ -11,6 +11,7 @@ export type TodoIntentProcessingStatus =
 	| "dedupe_hit"
 	| "gate_skipped"
 	| "extracted"
+	| "extract_failed"
 	| "processed"
 	| "failed";
 

@@ -101,6 +101,13 @@ class TodoIntentOrchestrator:
             return "输入"
         return "文本"
 
+    @staticmethod
+    def _resolve_extract_error(exc: Exception) -> str:
+        message = " ".join(str(exc).strip().split())
+        if message:
+            return message[:120]
+        return f"extractor_{exc.__class__.__name__.lower()}"
+
     def _format_event_markdown(self, event: PerceptionEvent, text: str) -> str:
         label = self._source_label(event.source)
         metadata = event.metadata if isinstance(event.metadata, dict) else {}
@@ -255,8 +262,17 @@ class TodoIntentOrchestrator:
         try:
             candidates = await self._extractor.extract(context)
         except Exception:
-            # Retry once with stricter JSON instruction.
-            candidates = await self._extractor.extract(context, strict_json=True)
+            try:
+                # Retry once with stricter JSON instruction.
+                candidates = await self._extractor.extract(context, strict_json=True)
+            except Exception as exc:
+                return self._build_record(
+                    context=context,
+                    status=TodoIntentProcessingStatus.EXTRACT_FAILED,
+                    dedupe_key=dedupe_key,
+                    gate_decision=gate_decision,
+                    error=self._resolve_extract_error(exc),
+                )
 
         normalized = self._post_processor.normalize(candidates, context)
         self._counters["extracted_candidates"] += len(normalized)

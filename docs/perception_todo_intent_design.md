@@ -160,15 +160,20 @@ Todo Integration
 
 #### 目标
 
-防止同一来源的重复文本在同一聚合窗口内多次出现，避免 `merged_text` 重复堆叠（典型场景：OCR_SCREEN 每隔几秒截图，同一屏幕内容在 20 秒窗口内被捕获多次）。
+防止同一模态的重复文本在同一聚合窗口内多次出现，避免 `merged_text` 重复堆叠（典型场景：OCR_SCREEN 与 OCR_PROACTIVE 在 20 秒窗口内同时捕获到同一屏幕内容）。
 
 #### 策略
 
 事件从内部队列取出后、写入窗口缓存前，检查：
 
-- 当前窗口缓存中是否已存在来自**相同来源**（`source`）且 `canonical_text` 相同的事件。
+- 当前窗口缓存中是否已存在来自**相同模态**（`modality`）且 `canonical_text` 相同（或包含关系）的事件。
 - 若命中：丢弃新事件（或更新已有事件的时间戳），不重复加入缓存。
 - 若未命中：正常加入缓存。
+
+联调阶段说明：
+
+- 当前实现采用“同模态去重”而非“同 source 去重”，原因是 `ocr_screen` 与 `ocr_proactive` 在同窗口下常有高重复，仅按 source 去重不够干净。
+- 该策略会降低 OCR 冗余，但会让精确的单条证据映射更困难（`source_text -> source_event_ids` 可能不是稳定的一对一关系）。
 
 #### 与跨窗口去重的区别
 
@@ -250,7 +255,7 @@ Gate 的 JSON 解析与容错逻辑直接复用 `services/audio_extraction/gate.
 }
 ```
 
-`source_event_ids` 由 Post Processor 根据 `source_text` 与上下文事件匹配后填充，不要求 Extractor 输出。
+理想状态：`source_event_ids` 由 Post Processor 根据 `source_text` 与上下文事件匹配后填充，不要求 Extractor 输出。
 
 #### 后处理
 
@@ -258,7 +263,8 @@ Gate 的 JSON 解析与容错逻辑直接复用 `services/audio_extraction/gate.
 - 字段归一：映射到 `TodoCreate` 字段。
 - 去重键：`hash(name + due + source_text_normalized)`。
 - 多候选裁剪：限制每个上下文最大提取条数（默认 5）。
-- `source_event_ids` 填充：遍历上下文事件，匹配 `source_text` 所在事件后写入。
+- `source_event_ids`（联调阶段临时实现）：由于窗口内采用同模态去重，且输入中未携带稳定逐行锚点，当前先回填当前上下文 `event_ids` 作为上下文级证据，不保证精确到单条事件。
+- `source_event_ids`（后续目标）：在去重策略稳定后，恢复为基于 `source_text` 的精确事件映射。
 
 #### 模型建议
 
@@ -470,6 +476,7 @@ TodoIntentSubscriber.on_event()
 2. `draft` 与 `active` 的切换阈值是否按用户个性化学习？
 3. 是否需要独立候选表保存所有“未入库”的提取结果用于复盘？
 4. 前端是否需要“待办来源证据”可视化面板作为 Phase 2 范围？
+5. 在“同模态窗口去重”前提下，`source_text -> source_event_ids` 应采用何种稳定映射策略（输入锚点、后处理匹配、还是混合方案）？
 
 ## 十五、当前联调阶段补充（临时约束）
 
@@ -490,6 +497,7 @@ TodoIntentSubscriber.on_event()
   - `coerce_gate_decision()`
 - 模型调用直接走 OpenAI 兼容接口（按当前项目 LLMClient 配置），Gate 与 Extractor 均输出严格 JSON。
 - 本阶段 `Integration` 仅做内存态状态更新，不执行 `todo` 表写入。
+- 本阶段暂不实现 `source_text -> source_event_ids` 的精确映射；先保留上下文级证据，待去重策略稳定后再实现精确引用。
 
 ### 15.3 前端面板实现范围（立即执行）
 

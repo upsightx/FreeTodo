@@ -20,6 +20,7 @@ class TodoIntentProcessingStatus(str, Enum):
     DEDUPE_HIT = "dedupe_hit"
     GATE_SKIPPED = "gate_skipped"
     EXTRACTED = "extracted"
+    EXTRACT_FAILED = "extract_failed"
     PROCESSED = "processed"
     FAILED = "failed"
 

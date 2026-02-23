@@ -274,6 +274,8 @@ function statusTone(status: TodoIntentProcessingRecord["status"]): string {
 		case "gate_skipped":
 		case "dedupe_hit":
 			return "bg-amber-50 text-amber-700 border-amber-200";
+		case "extract_failed":
+			return "bg-orange-50 text-orange-700 border-orange-200";
 		case "failed":
 			return "bg-red-50 text-red-700 border-red-200";
 		default:

@@ -945,6 +945,7 @@
 			"dedupe_hit": "Dedupe hit",
 			"gate_skipped": "Gate skipped",
 			"extracted": "Extracted",
+			"extract_failed": "Extractor failed",
 			"processed": "Processed",
 			"failed": "Failed"
 		}
