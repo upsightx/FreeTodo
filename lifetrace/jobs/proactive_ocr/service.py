@@ -14,6 +14,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 from lifetrace.llm.todo_extraction_service import todo_extraction_service
+from lifetrace.perception.todo_intent_flags import should_disable_legacy_auto_extraction
 from lifetrace.storage import ocr_mgr, screenshot_mgr
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.path_utils import get_screenshots_dir
@@ -464,6 +465,9 @@ class ProactiveOCRService:
                 # 自动触发基于 OCR 文本的待办提取
                 # 同时检查 proactive_ocr 自身开关和全局自动待办检测开关
                 try:
+                    if should_disable_legacy_auto_extraction():
+                        logger.debug("ProactiveOCR: 已启用 todo_intent，跳过旧 OCR 自动提取链路")
+                        return screenshot_id
                     auto_extract = settings.get(
                         "jobs.proactive_ocr.params.auto_extract_todos", False
                     )

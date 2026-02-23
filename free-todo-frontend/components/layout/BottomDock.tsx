@@ -66,6 +66,7 @@ const FEATURE_LABEL_MAP: Partial<Record<PanelFeature, string>> = {
 	crawlerDetail: "crawlerDetail",
 	audio: "audio",
 	perceptionStream: "perceptionStream",
+	todoIntent: "todoIntent",
 	preview: "preview",
 };
 

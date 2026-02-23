@@ -176,6 +176,17 @@ const panelRegistry: Record<PanelFeature, PanelPlugin> = {
 				default: mod.PerceptionStreamPanel,
 			})),
 	},
+	todoIntent: {
+		id: "todoIntent",
+		labelKey: "todoIntentLabel",
+		placeholderKey: "todoIntentPlaceholder",
+		icon: FEATURE_ICON_MAP.todoIntent,
+		backendModules: ["perception"],
+		loader: () =>
+			import("@/apps/todo-intent/TodoIntentPanel").then((mod) => ({
+				default: mod.TodoIntentPanel,
+			})),
+	},
 };
 
 const lazyPanelCache = new Map<PanelFeature, LazyExoticComponent<ComponentType>>();

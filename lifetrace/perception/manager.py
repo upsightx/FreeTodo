@@ -10,10 +10,15 @@ from lifetrace.perception.adapters.input_adapter import InputAdapter
 from lifetrace.perception.adapters.ocr_adapter import OCRAdapter
 from lifetrace.perception.models import SourceType
 from lifetrace.perception.stream import PerceptionStream
+from lifetrace.perception.subscribers.todo_intent_subscriber import TodoIntentSubscriber
+from lifetrace.services.perception_todo_intent.orchestrator import TodoIntentOrchestrator
+from lifetrace.util.logging_config import get_logger
 from lifetrace.util.time_utils import get_utc_now
 
 if TYPE_CHECKING:
     from lifetrace.perception.models import PerceptionEvent
+
+logger = get_logger()
 
 
 class PerceptionStreamManager:
@@ -30,6 +35,12 @@ class PerceptionStreamManager:
         self._status_online_window_seconds = max(
             1, int(config.get("status_online_window_seconds", 60))
         )
+        todo_intent_config = config.get("todo_intent", {}) if isinstance(config, dict) else {}
+        self._todo_intent_config = (
+            dict(todo_intent_config) if isinstance(todo_intent_config, dict) else {}
+        )
+        self._todo_intent_enabled = bool(self._todo_intent_config.get("enabled", True))
+        self._todo_intent_subscriber: TodoIntentSubscriber | None = None
         self._enabled_sources = self._build_enabled_sources()
         self._status_lock = threading.Lock()
         self._last_seen: dict[SourceType, datetime] = {}
@@ -56,7 +67,13 @@ class PerceptionStreamManager:
         if self._config.get("input_enabled", False):
             self._adapters["input"] = InputAdapter(self.publish_event)
 
+        await self._start_todo_intent_subscriber()
+
     async def stop(self) -> None:
+        subscriber = self._todo_intent_subscriber
+        self._todo_intent_subscriber = None
+        if subscriber is not None:
+            await subscriber.stop(self.stream)
         self._adapters.clear()
         await self.stream.stop()
 
@@ -282,6 +299,14 @@ class PerceptionStreamManager:
                 status_entry["online"] = True
 
         status["_stream"] = self.stream.get_queue_stats()
+        subscriber = self._todo_intent_subscriber
+        if subscriber is not None:
+            status["_todo_intent"] = subscriber.get_status().model_dump(mode="json")
+        else:
+            status["_todo_intent"] = {
+                "enabled": self._todo_intent_enabled,
+                "running": False,
+            }
         return status
 
     def _build_enabled_sources(self) -> dict[SourceType, bool]:
@@ -316,6 +341,53 @@ class PerceptionStreamManager:
     def get_ocr_adapter(self) -> OCRAdapter | None:
         adapter = self._adapters.get("ocr")
         return adapter if isinstance(adapter, OCRAdapter) else None
+
+    def get_todo_intent_subscriber(self) -> TodoIntentSubscriber | None:
+        return self._todo_intent_subscriber
+
+    async def _start_todo_intent_subscriber(self) -> None:
+        if not self._todo_intent_enabled:
+            return
+        if self._todo_intent_subscriber is not None:
+            return
+
+        queue_maxsize = max(1, int(self._todo_intent_config.get("internal_queue_maxsize", 200)))
+        processing_workers = max(1, int(self._todo_intent_config.get("processing_workers", 2)))
+        processing_queue_maxsize = self._todo_intent_config.get(
+            "processing_queue_maxsize",
+            queue_maxsize,
+        )
+        try:
+            processing_queue_maxsize = int(processing_queue_maxsize)
+        except (TypeError, ValueError):
+            processing_queue_maxsize = queue_maxsize
+        processing_queue_maxsize = max(1, processing_queue_maxsize)
+        max_recent_records = max(1, int(self._todo_intent_config.get("max_recent_records", 200)))
+        aggregation_window_seconds = self._todo_intent_config.get("window_seconds", 20)
+        try:
+            aggregation_window_seconds = float(aggregation_window_seconds)
+        except (TypeError, ValueError):
+            aggregation_window_seconds = 20.0
+        max_context_chars = self._todo_intent_config.get("max_context_chars", 5000)
+        try:
+            max_context_chars = int(max_context_chars)
+        except (TypeError, ValueError):
+            max_context_chars = 5000
+        max_context_chars = max(1, max_context_chars)
+        orchestrator = TodoIntentOrchestrator(config=self._todo_intent_config)
+        subscriber = TodoIntentSubscriber(
+            orchestrator=orchestrator,
+            queue_maxsize=queue_maxsize,
+            max_recent_records=max_recent_records,
+            aggregation_window_seconds=aggregation_window_seconds,
+            max_context_chars=max_context_chars,
+            processing_workers=processing_workers,
+            processing_queue_maxsize=processing_queue_maxsize,
+            enabled=True,
+        )
+        await subscriber.start(self.stream)
+        self._todo_intent_subscriber = subscriber
+        logger.info("Perception todo-intent subscriber initialized")
 
 
 _manager: PerceptionStreamManager | None = None

@@ -80,6 +80,57 @@ todo_extraction:
 
     只返回JSON，不要返回其他任何信息。
 
+# ====================================
+# 感知流 Todo Intent 文本提取（LLM）
+# ====================================
+perception_todo_intent_extraction:
+  system_assistant: |
+    你是一个待办提取助手。你的输入是多来源聚合文本（音频/OCR/用户输入），请提取用户“将要执行或需要跟进”的待办事项。
+
+    要求：
+    1. 输出必须是 JSON，且只能输出 JSON，不要解释，不要 markdown。
+    2. 优先提取有明确动作/对象/时间约束的任务。
+    3. 若只是闲聊、教程、示例、广播号召，不要误提取。
+    4. 时间字段尽量输出 ISO 8601（例如 2026-02-20T15:00:00+08:00），无法确定可为 null。
+    5. source_text 尽量保留原文片段，便于前端展示证据。
+
+  user_prompt: |
+    请从以下文本中提取待办，返回 JSON：
+
+    文本来源：{source_set}
+    应用：{app_name}
+    窗口：{window_title}
+    说话人：{speaker}
+    strict_json={strict_json}
+
+    文本内容：
+    <text>
+    {text}
+    </text>
+
+    返回格式：
+    {{
+      "todos": [
+        {{
+          "name": "待办标题（必填）",
+          "description": "描述（可选）",
+          "start_time": "ISO 时间或 null",
+          "due": "ISO 时间或 null",
+          "deadline": "ISO 时间或 null",
+          "time_zone": "时区或 null",
+          "priority": "high|medium|low|none",
+          "tags": ["标签1", "标签2"],
+          "confidence": 0.0,
+          "source_text": "证据原文片段"
+        }}
+      ]
+    }}
+
+    无待办时返回：
+    {{
+      "todos": []
+    }}
+
 # ===== 自动待办检测 =====
 auto_todo_detection:
   system_assistant: |

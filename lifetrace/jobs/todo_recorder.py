@@ -20,6 +20,7 @@ from mss import tools as mss_tools
 from PIL import Image
 
 from lifetrace.llm.auto_todo_detection_service import get_whitelist_apps
+from lifetrace.perception.todo_intent_flags import should_disable_legacy_auto_extraction
 from lifetrace.storage import screenshot_mgr
 from lifetrace.util.logging_config import get_logger
 from lifetrace.util.path_utils import get_screenshots_dir
@@ -251,6 +252,9 @@ class TodoScreenRecorder:
             app_name: 应用名称
         """
         _ = app_name
+        if should_disable_legacy_auto_extraction():
+            logger.info("[Todo录制器] 已启用 todo_intent，跳过旧自动待办检测链路")
+            return
 
         def _detect_todos():
             try:
