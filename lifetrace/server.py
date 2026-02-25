@@ -15,6 +15,7 @@ from lifetrace.core.module_registry import (
     register_modules,
 )
 from lifetrace.jobs.job_manager import get_job_manager
+from lifetrace.memory.manager import init_memory_manager, shutdown_memory_manager
 from lifetrace.perception.manager import init_perception_manager, shutdown_perception_manager
 from lifetrace.services.config_service import is_llm_configured
 from lifetrace.util.base_paths import get_user_logs_dir
@@ -41,6 +42,18 @@ async def lifespan(app: FastAPI):
     perception_config = settings.get("perception", {}) or {}
     if perception_config.get("enabled", True):
         app.state.perception_manager = await init_perception_manager(perception_config)
+
+    # 初始化 Memory 模块（订阅 Perception Stream）
+    memory_config = settings.get("memory", {}) or {}
+    if memory_config.get("enabled", True):
+        perception_stream = None
+        pm = getattr(app.state, "perception_manager", None)
+        if pm is not None:
+            perception_stream = pm.stream
+        app.state.memory_manager = await init_memory_manager(
+            config=memory_config,
+            perception_stream=perception_stream,
+        )
 
     # 初始化任务管理器
     manager = get_job_manager()
@@ -72,6 +85,9 @@ async def lifespan(app: FastAPI):
     manager = getattr(app.state, "job_manager", None)
     if manager:
         manager.stop_all()
+
+    with suppress(Exception):
+        await shutdown_memory_manager()
 
     with suppress(Exception):
         await shutdown_perception_manager()

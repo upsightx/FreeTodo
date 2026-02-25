@@ -83,11 +83,13 @@ dev = [
     "pyright>=1.1.408",
     "pyinstaller>=6.18.0",
     "ruff>=0.14.14",
+    "pytest-asyncio>=0.23",
 ]
 
-[tool.pytest]
+[tool.pytest.ini_options]
 testpaths = ["tests"]
 norecursedirs = [".venv", "build", "dist"]
+asyncio_mode = "auto"
 
 # Ruff 配置 - Python linter 和 formatter
 [tool.ruff]
@@ -155,7 +157,7 @@ max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
 # 测试文件可以使用 assert
-"tests/*.py" = ["S101"]
+"tests/*.py" = ["S101", "DTZ001", "DTZ005", "PLR2004", "TC003"]
 # 硬件音频路由在运行时需要这些导入
 "lifetrace/routers/hardware_audio.py" = ["TC001", "TC002"]
 

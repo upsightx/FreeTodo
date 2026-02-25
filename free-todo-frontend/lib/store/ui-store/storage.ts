@@ -154,16 +154,6 @@ export const createUiStoreStorage = () =>
 					state.notificationPopupEnabled =
 						DEFAULT_PANEL_STATE.notificationPopupEnabled;
 				}
-				if (
-					typeof state.notificationPopupIntervalSeconds !== "number" ||
-					Number.isNaN(state.notificationPopupIntervalSeconds) ||
-					state.notificationPopupIntervalSeconds < 3 ||
-					state.notificationPopupIntervalSeconds > 3600
-				) {
-					state.notificationPopupIntervalSeconds =
-						DEFAULT_PANEL_STATE.notificationPopupIntervalSeconds;
-				}
-
 				// 校验 customLayouts（默认空数组）
 					if (Array.isArray(state.customLayouts)) {
 						const seenNames = new Set<string>();

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Play, Square } from "lucide-react";
+import { Play, Square } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useCrawlerStore } from "../store";

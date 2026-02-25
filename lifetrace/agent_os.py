@@ -12,6 +12,7 @@ from lifetrace.llm.agent_os_tools import (
     get_all_freetodo_tools,
 )
 from lifetrace.llm.agno_agent import DEFAULT_LANG, AgnoAgentService
+from lifetrace.llm.agno_tools.memory_toolkit import MemoryToolkit
 from lifetrace.util.agent_os_utils import select_agent_os_port, write_agent_os_port_file
 from lifetrace.util.settings import settings
 
@@ -37,6 +38,11 @@ def _build_agent():
     agent_id = settings.get("agno.agent_os.agent_id", "freetodo-agent")
     agent_name = settings.get("agno.agent_os.agent_name", "FreeTodo Agent")
     extra_tools = build_agent_os_external_tools(allowed_tools=external_tools)
+
+    memory_config = settings.get("memory", {}) or {}
+    if memory_config.get("enabled", True):
+        extra_tools.append(MemoryToolkit(lang=lang))
+
     tool_hooks = [agent_os_tool_guard]
     pre_hooks = [agent_os_session_start]
     post_hooks = [agent_os_session_end]

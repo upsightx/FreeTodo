@@ -1,0 +1,82 @@
+"""L0 Writer — append PerceptionEvent to daily Markdown files."""
+
+from __future__ import annotations
+
+import asyncio
+from typing import TYPE_CHECKING
+
+from lifetrace.util.logging_config import get_logger
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from lifetrace.perception.models import PerceptionEvent
+
+logger = get_logger()
+
+
+class MemoryWriter:
+    """Append-only writer: PerceptionEvent → daily Markdown file.
+
+    Each day produces one file at ``{memory_dir}/raw/{YYYY-MM-DD}.md``.
+    The writer is safe for concurrent async calls thanks to an asyncio.Lock.
+    """
+
+    def __init__(self, memory_dir: Path):
+        self._memory_dir = memory_dir
+        self._raw_dir = memory_dir / "raw"
+        self._raw_dir.mkdir(parents=True, exist_ok=True)
+        self._lock = asyncio.Lock()
+        self._current_date: str | None = None
+        self._current_file: Path | None = None
+        self._write_count = 0
+
+    async def on_event(self, event: PerceptionEvent) -> None:
+        """PerceptionStream subscriber callback."""
+        try:
+            line = self._format_event(event)
+            date_str = event.timestamp.strftime("%Y-%m-%d")
+
+            async with self._lock:
+                if date_str != self._current_date:
+                    self._rotate_file(date_str)
+
+                assert self._current_file is not None
+                with open(self._current_file, "a", encoding="utf-8") as f:
+                    f.write(line)
+                self._write_count += 1
+        except Exception:
+            logger.exception("MemoryWriter failed to persist event %s", event.event_id)
+
+    def _format_event(self, event: PerceptionEvent) -> str:
+        ts = event.timestamp.strftime("%H:%M")
+        source = event.source.value
+
+        parts: list[str] = [ts, source]
+        meta = event.metadata
+        if meta.get("app"):
+            parts.append(str(meta["app"]))
+        if meta.get("speaker"):
+            speaker = str(meta["speaker"])
+            if meta.get("target"):
+                speaker = f"{speaker} → {meta['target']}"
+            parts.append(speaker)
+
+        header = " | ".join(parts)
+        content = event.content_text.strip()
+        return f"\n## {header}\n{content}\n"
+
+    def _rotate_file(self, date_str: str) -> None:
+        self._current_date = date_str
+        self._current_file = self._raw_dir / f"{date_str}.md"
+        if not self._current_file.exists():
+            with open(self._current_file, "w", encoding="utf-8") as f:
+                f.write(f"# {date_str} 感知记录\n")
+            logger.info("MemoryWriter created new raw file: %s", self._current_file.name)
+
+    def get_stats(self) -> dict:
+        return {
+            "current_date": self._current_date,
+            "write_count": self._write_count,
+            "raw_dir": str(self._raw_dir),
+        }

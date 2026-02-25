@@ -43,6 +43,7 @@ backend_modules:
     - perception
     - proactive_ocr
     - plugin
+    - memory
 
 # 感知流（Perception Stream）配置
 perception:

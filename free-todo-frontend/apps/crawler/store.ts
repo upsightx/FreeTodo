@@ -510,7 +510,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 	
 	// 启动爬虫（调用后端 API，支持多平台循环爬取）
 	startCrawler: async () => {
-		const { keywords, platforms, crawlerType, syncKeywordsToBackend, extractedKeywords, excludedKeywords, clearExtractedKeywords } = get();
+		const { keywords, platforms, crawlerType, syncKeywordsToBackend, extractedKeywords, excludedKeywords } = get();
 		
 		// 优先使用提取的关键词，如果没有则使用输入框中的关键词
 		const finalKeywords = extractedKeywords.length > 0 
@@ -992,7 +992,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 				console.log("[Crawler] 关键词提取服务暂时不可用，将使用原始输入");
 				set({ extractingKeywords: false });
 			}
-		} catch (error) {
+		} catch {
 			// 网络错误或超时，静默处理
 			console.log("[Crawler] 关键词提取请求失败，将使用原始输入");
 			set({ extractingKeywords: false });
