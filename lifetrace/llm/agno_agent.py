@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from contextvars import ContextVar
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from agno.agent import Agent, Message, RunEvent
@@ -95,6 +96,18 @@ def get_available_external_tools() -> list[str]:
     return _get_available_external_tools()
 
 
+def _get_current_date_instruction(lang: str) -> str:
+    """获取当前日期的指令字符串"""
+    now = datetime.now(tz=UTC)
+    date_str = now.strftime("%Y-%m-%d")
+    weekday_zh = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"][now.weekday()]
+    weekday_en = now.strftime("%A")
+
+    if lang == "zh":
+        return f"当前日期：{date_str}（{weekday_zh}）。"
+    return f"Current date: {date_str} ({weekday_en})."
+
+
 def _build_instructions(
     lang: str,
     has_tools: bool,
@@ -112,29 +125,36 @@ def _build_instructions(
     Returns:
         instructions 列表或 None
     """
+    date_instruction = _get_current_date_instruction(lang)
+
     if use_all_freetodo_tools and not has_external_tools:
         # Load full instructions from agno_tools/{lang}/instructions.yaml
         instructions = get_message(lang, "instructions")
-        return [instructions] if instructions and instructions != "[instructions]" else None
+        if instructions and instructions != "[instructions]":
+            return [date_instruction, instructions]
+        return [date_instruction]
 
     # 简化的 instructions
     if lang == "zh":
         if has_tools:
             return [
+                date_instruction,
                 "你是 FreeTodo 智能助手，可以帮助用户管理待办事项和执行各种任务。"
-                "请根据用户的问题选择合适的工具来完成任务。"
+                "请根据用户的问题选择合适的工具来完成任务。",
             ]
-        return ["你是 FreeTodo 智能助手。当前没有启用任何工具，请直接回答用户的问题。"]
+        return [date_instruction, "你是 FreeTodo 智能助手。当前没有启用任何工具，请直接回答用户的问题。"]
 
     # English
     if has_tools:
         return [
+            date_instruction,
             "You are the FreeTodo assistant that helps users manage their todos "
-            "and perform various tasks. Use the appropriate tools to complete tasks."
+            "and perform various tasks. Use the appropriate tools to complete tasks.",
         ]
     return [
+        date_instruction,
         "You are the FreeTodo assistant. No tools are currently enabled. "
-        "Please answer the user's questions directly."
+        "Please answer the user's questions directly.",
     ]
 
 

@@ -634,6 +634,7 @@
 				"conflict": "Conflict Detection",
 				"stats": "Statistics",
 				"tags": "Tag Management",
+				"memory": "Memory Recall",
 				"search": "Web Search"
 			},
 			"externalCategories": {
@@ -685,6 +686,10 @@
 				"local_fs": "File Write",
 				"shell": "Shell Command",
 				"sleep": "Sleep",
+				"recall_today": "Recall Today",
+				"recall_date": "Recall Date",
+				"search_memory": "Search Memory",
+				"list_memory_dates": "Memory Dates",
 				"unknown": "Unknown Tool"
 			}
 		}

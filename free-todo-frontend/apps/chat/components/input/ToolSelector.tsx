@@ -31,6 +31,11 @@ const FREETODO_TOOLS = [
 	{ id: "list_tags", category: "tags" },
 	{ id: "get_todos_by_tag", category: "tags" },
 	{ id: "suggest_tags", category: "tags" },
+	// 记忆工具（4个）
+	{ id: "recall_today", category: "memory" },
+	{ id: "recall_date", category: "memory" },
+	{ id: "search_memory", category: "memory" },
+	{ id: "list_memory_dates", category: "memory" },
 ] as const;
 
 /**
