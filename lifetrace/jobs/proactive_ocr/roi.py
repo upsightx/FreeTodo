@@ -55,12 +55,13 @@ class ROIExtractor:
             app_type: 应用类型
 
         Returns:
-            ROI 提取结果，包含主题信息
+            ROI 提取结果；返回 None 表示 prior 要求跳过此帧
         """
         prior = get_prior(app_type)
 
         if prior is None:
-            return None
+            h, w = image.shape[:2]
+            return ROIResult(image=image, x=0, y=0, width=w, height=h, theme="unknown")
 
         return prior.extract_chat_roi(image)
 

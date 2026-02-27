@@ -43,7 +43,7 @@ class ProactiveOCRService:
         self.ocr_backend = settings.get("jobs.proactive_ocr.ocr_backend", "auto")
         self.winrt_lang = settings.get("jobs.proactive_ocr.winrt_lang", "zh-Hans-CN")
         self.use_roi = settings.get("jobs.proactive_ocr.use_roi", True)
-        self.resize_max_side = settings.get("jobs.proactive_ocr.resize_max_side", 800)
+        self.resize_max_side = settings.get("jobs.proactive_ocr.resize_max_side", 0)
         self.det_limit_side_len = settings.get("jobs.proactive_ocr.det_limit_side_len", 640)
         self.rec_batch_num = settings.get("jobs.proactive_ocr.rec_batch_num", 8)
         self.use_cls = settings.get("jobs.proactive_ocr.use_cls", False)
@@ -116,7 +116,7 @@ class ProactiveOCRService:
             # 等待间隔时间
             self._stop_event.wait(self.interval)
 
-    def run_once(self) -> dict[str, Any] | None:
+    def run_once(self) -> dict[str, Any] | None:  # noqa: C901, PLR0911, PLR0915
         """
         执行一次检测和处理
 
@@ -163,7 +163,7 @@ class ProactiveOCRService:
 
         # 检测空白/全黑图像（PrintWindow 偶尔返回空白帧）
         img_std = float(np.std(frame.data))
-        if img_std < 5.0:
+        if img_std < 5.0:  # noqa: PLR2004
             logger.warning(
                 f"ProactiveOCR: Captured image appears blank/uniform "
                 f"(std={img_std:.1f}), skipping OCR"
@@ -180,6 +180,13 @@ class ProactiveOCRService:
             t0 = time.perf_counter()
             roi_result = self.roi_extractor.extract_with_details(frame.data, app_type)
             timings["roi"] = (time.perf_counter() - t0) * 1000
+
+            if roi_result is None:
+                logger.info(
+                    f"ProactiveOCR: ROI prior rejected frame for {app_type.value} "
+                    f"(not in target state), skipping OCR (roi={timings['roi']:.1f}ms)"
+                )
+                return None
 
             if roi_result:
                 # 安全网：如果 ROI 区域面积不到原图的 10%，说明裁切可能出错，回退全图
@@ -298,7 +305,7 @@ class ProactiveOCRService:
                     break
                 except OSError:
                     continue
-        except Exception:
+        except Exception:  # nosec B110
             pass
 
         if font is None:
@@ -311,9 +318,9 @@ class ProactiveOCRService:
             x2, y2 = bbox.x + bbox.width, bbox.y + bbox.height
 
             # 根据置信度选择颜色：高置信度绿色，中等黄色，低置信度红色
-            if line.score >= 0.95:
+            if line.score >= 0.95:  # noqa: PLR2004
                 box_color = (0, 200, 0)  # 绿色
-            elif line.score >= 0.85:
+            elif line.score >= 0.85:  # noqa: PLR2004
                 box_color = (0, 160, 255)  # 蓝色
             else:
                 box_color = (255, 140, 0)  # 橙色
@@ -346,7 +353,7 @@ class ProactiveOCRService:
 
         return vis_img
 
-    def _save_to_database(
+    def _save_to_database(  # noqa: C901, PLR0913, PLR0912, PLR0915
         self,
         frame,
         window,

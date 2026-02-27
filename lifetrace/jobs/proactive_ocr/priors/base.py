@@ -79,7 +79,7 @@ class AppPrior(ABC):
         return self.themes[0] if self.themes else None
 
     @abstractmethod
-    def extract_chat_roi(self, image: np.ndarray) -> ROIResult:
+    def extract_chat_roi(self, image: np.ndarray) -> ROIResult | None:
         """
         提取聊天区域 ROI
 
@@ -87,7 +87,7 @@ class AppPrior(ABC):
             image: 完整窗口截图 (RGB)
 
         Returns:
-            ROI 提取结果
+            ROI 提取结果；返回 None 表示当前帧应跳过 OCR
         """
         pass
 
