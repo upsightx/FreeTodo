@@ -56,5 +56,7 @@ whisper_flutter_new/
 /android/app/google-services.json
 /ios/Runner/GoogleService-Info.plist
 
-# Envied generated files (rebuild with `dart run build_runner build`)
+# Generated .g.dart files — normally ignored, but we force-track the
+# stubs needed to compile without running build_runner.
+# Use `git add -f <file>` to add new ones if needed.
 *.g.dart

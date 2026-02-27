@@ -86,6 +86,7 @@ dist-backend/
 **/Cargo.lock
 **/WixTools/
 **/gen/
+!phone/lib/gen/
 /pop
 
 # 实验性项目（不提交）
