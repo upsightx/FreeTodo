@@ -52,7 +52,7 @@ echo.
 
 REM Check Center connectivity
 echo Checking Center connectivity...
-curl -s -o nul -w "%%{http_code}" "%CENTER_URL%/api/health" > "%TEMP%\lt_health.tmp" 2>nul
+curl -s -o nul -w "%%{http_code}" "%CENTER_URL%/health" > "%TEMP%\lt_health.tmp" 2>nul
 set /p HEALTH_CODE=<"%TEMP%\lt_health.tmp"
 del "%TEMP%\lt_health.tmp" 2>nul
 

@@ -307,7 +307,7 @@ class SensorDaemon:
     # ------------------------------------------------------------------
 
     async def heartbeat(self) -> None:
-        url = f"{self.center_url}/api/health"
+        url = f"{self.center_url}/health"
         try:
             resp = await self.client.get(url)
             resp.raise_for_status()

@@ -82,7 +82,7 @@ REM ================================================================
 REM  4. Build and start frontend (NEXT_PUBLIC_API_URL -> cpolar URL)
 REM ================================================================
 echo [4/6] Building frontend (API = %BACKEND_PUBLIC_URL%)...
-start "LifeTrace Center Frontend" cmd /k "pushd %REPO_ROOT%\free-todo-frontend && set NEXT_PUBLIC_API_URL=%BACKEND_PUBLIC_URL% && pnpm build:frontend:web && pnpm start --port %FRONTEND_PORT% --hostname 0.0.0.0"
+start "LifeTrace Center Frontend" cmd /k "pushd %REPO_ROOT%\free-todo-frontend && set NEXT_PUBLIC_API_URL=%BACKEND_PUBLIC_URL%&& pnpm build:frontend:web && pnpm start --port %FRONTEND_PORT% --hostname 0.0.0.0"
 echo Waiting for frontend build (~30s)...
 timeout /t 30 /nobreak >nul
 
