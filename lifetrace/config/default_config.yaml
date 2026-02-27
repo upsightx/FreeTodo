@@ -50,6 +50,12 @@ backend_modules:
     - proactive_ocr
     - plugin
     - memory
+    - omi_compat
+
+# Omi App / 硬件兼容层配置
+omi_compat:
+  token: "lifetrace-omi-compat-2026"
+  uid: "lifetrace-user"
 
 # 远程感知节点 (Sensor) 配置
 sensor:

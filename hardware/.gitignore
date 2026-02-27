@@ -1,0 +1,15 @@
+# Build artifacts
+build/
+_build/
+*.o
+*.a
+*.elf
+*.hex
+*.bin
+*.map
+*.lst
+
+# IDE
+.vscode/
+.idea/
+*.iml

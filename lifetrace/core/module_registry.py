@@ -83,6 +83,10 @@ MODULES: tuple[ModuleDefinition, ...] = (
         router_module="lifetrace.routers.memory",
         requires=("perception",),
     ),
+    ModuleDefinition(
+        id="omi_compat",
+        router_module="lifetrace.routers.omi_compat",
+    ),
 )
 
 MODULE_INDEX = {module.id: module for module in MODULES}
