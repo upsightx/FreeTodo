@@ -140,22 +140,23 @@ Future _init() async {
   // Service manager
   await ServiceManager.init();
 
-  // Firebase
-  if (Firebase.apps.isEmpty) {
-    final options = (PlatformService.isWindows || F.env == Environment.prod)
-        ? prod.DefaultFirebaseOptions.currentPlatform
-        : dev.DefaultFirebaseOptions.currentPlatform;
-    await Firebase.initializeApp(options: options);
-  } else {
-    // Firebase may already be initialized by native SDK (macOS)
-    debugPrint('Firebase already initialized.');
+  // Firebase — skip entirely in LifeTrace self-hosted mode
+  if (!_kLifeTraceMode) {
+    if (Firebase.apps.isEmpty) {
+      final options = (PlatformService.isWindows || F.env == Environment.prod)
+          ? prod.DefaultFirebaseOptions.currentPlatform
+          : dev.DefaultFirebaseOptions.currentPlatform;
+      await Firebase.initializeApp(options: options);
+    } else {
+      debugPrint('Firebase already initialized.');
+    }
   }
 
   await PlatformManager.initializeServices();
   await NotificationService.instance.initialize();
 
-  // Register FCM background message handler
-  if (PlatformManager().isFCMSupported) {
+  // Register FCM background message handler (skip in LifeTrace mode)
+  if (!_kLifeTraceMode && PlatformManager().isFCMSupported) {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
 
@@ -221,14 +222,19 @@ Future _init() async {
       SharedPreferencesUtil().uid,
     );
   }
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-  };
-
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
+  if (!_kLifeTraceMode) {
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    };
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  } else {
+    FlutterError.onError = (FlutterErrorDetails details) {
+      debugPrint('Flutter error: ${details.exception}');
+    };
+  }
 
   await ServiceManager.instance().start();
   return;
@@ -237,16 +243,17 @@ Future _init() async {
 void main() {
   runZonedGuarded(
     () async {
-      // Ensure
       WidgetsFlutterBinding.ensureInitialized();
       await _init();
       runApp(const MyApp());
     },
-    (error, stack) => FirebaseCrashlytics.instance.recordError(
-      error,
-      stack,
-      fatal: true,
-    ),
+    (error, stack) {
+      if (!_kLifeTraceMode) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      } else {
+        debugPrint('Uncaught error: $error\n$stack');
+      }
+    },
   );
 }
 
