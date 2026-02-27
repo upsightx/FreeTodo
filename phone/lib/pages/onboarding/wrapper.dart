@@ -251,11 +251,13 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> with TickerProvid
       NameWidget(
         goNext: () {
           _goNext(); // Go to Primary Language page
-          IntercomManager.instance.updateUser(
-            FirebaseAuth.instance.currentUser!.email,
-            FirebaseAuth.instance.currentUser!.displayName,
-            FirebaseAuth.instance.currentUser!.uid,
-          );
+          if (FirebaseAuth.instance.currentUser != null) {
+            IntercomManager.instance.updateUser(
+              FirebaseAuth.instance.currentUser!.email,
+              FirebaseAuth.instance.currentUser!.displayName,
+              FirebaseAuth.instance.currentUser!.uid,
+            );
+          }
           MixpanelManager().onboardingStepCompleted('Name');
         },
       ),

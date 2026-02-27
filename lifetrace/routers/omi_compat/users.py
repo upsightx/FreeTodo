@@ -7,7 +7,7 @@ runs without 404s in LifeTrace self-hosted mode.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 
 from lifetrace.routers.omi_compat.auth import verify_token
 from lifetrace.util.logging_config import get_logger
@@ -224,7 +224,9 @@ async def set_daily_summary_settings(uid: str = Depends(verify_token)):
 
 @router.get("/v1/users/daily-summaries")
 async def list_daily_summaries(
-    limit: int = 10, offset: int = 0, uid: str = Depends(verify_token),
+    limit: int = 10,
+    offset: int = 0,
+    uid: str = Depends(verify_token),
 ):
     return []
 
@@ -262,138 +264,3 @@ async def webhooks_status(uid: str = Depends(verify_token)):
 @router.get("/v1/users/export")
 async def export_data(uid: str = Depends(verify_token)):
     return {"status": "not_available"}
-
-
-# ---------------------------------------------------------------------------
-# Apps / plugins stubs (App store UI)
-# ---------------------------------------------------------------------------
-
-
-@router.get("/v1/apps/enabled")
-async def enabled_apps(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v2/apps")
-async def list_apps(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/apps/popular")
-async def popular_apps(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/app-categories")
-async def app_categories(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/app-capabilities")
-async def app_capabilities(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/apps/proactive-notification-scopes")
-async def proactive_scopes(uid: str = Depends(verify_token)):
-    return []
-
-
-# ---------------------------------------------------------------------------
-# Chat / messages stubs
-# ---------------------------------------------------------------------------
-
-
-@router.get("/v2/messages")
-async def list_messages(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v2/messages")
-async def send_message(request: Request, uid: str = Depends(verify_token)):
-    body = await request.json()
-    text = body.get("text", "")
-    return {
-        "id": "stub",
-        "text": f"LifeTrace chat not yet integrated. You said: {text}",
-        "sender": "ai",
-        "type": "text",
-        "created_at": "2026-01-01T00:00:00Z",
-    }
-
-
-@router.get("/v2/initial-message")
-async def initial_message(uid: str = Depends(verify_token)):
-    return {"text": ""}
-
-
-# ---------------------------------------------------------------------------
-# Action items stubs
-# ---------------------------------------------------------------------------
-
-
-@router.get("/v1/action-items")
-async def list_action_items(
-    limit: int = 25, offset: int = 0, uid: str = Depends(verify_token),
-):
-    return []
-
-
-# ---------------------------------------------------------------------------
-# Goals stubs
-# ---------------------------------------------------------------------------
-
-
-@router.get("/v1/goals/all")
-async def list_goals(uid: str = Depends(verify_token)):
-    return []
-
-
-# ---------------------------------------------------------------------------
-# Folders stubs
-# ---------------------------------------------------------------------------
-
-
-@router.get("/v1/folders")
-async def list_folders(uid: str = Depends(verify_token)):
-    return []
-
-
-# ---------------------------------------------------------------------------
-# Knowledge graph stubs
-# ---------------------------------------------------------------------------
-
-
-@router.get("/v1/knowledge-graph/{path:path}")
-async def kg_stub(path: str, uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/knowledge-graph/{path:path}")
-async def kg_post_stub(path: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-# ---------------------------------------------------------------------------
-# Calendar stubs
-# ---------------------------------------------------------------------------
-
-
-@router.get("/v1/calendar/meetings")
-async def list_meetings(uid: str = Depends(verify_token)):
-    return []
-
-
-# ---------------------------------------------------------------------------
-# Integrations stubs
-# ---------------------------------------------------------------------------
-
-
-@router.get("/v1/integrations/{app_key}")
-async def get_integration(app_key: str, uid: str = Depends(verify_token)):
-    return {"enabled": False}
-
-
-@router.get("/v1/task-integrations")
-async def list_task_integrations(uid: str = Depends(verify_token)):
-    return []

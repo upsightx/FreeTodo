@@ -4,6 +4,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import 'package:omi/env/lifetrace_env.dart';
 import 'package:omi/utils/debug_log_manager.dart';
 import 'package:omi/utils/l10n_extensions.dart';
 
@@ -12,6 +13,10 @@ class CrashlyticsTalkerObserver extends TalkerObserver {
 
   @override
   void onError(err) {
+    if (LifeTraceEnv.enabled) {
+      debugPrint('TalkerError: ${err.error}');
+      return;
+    }
     FirebaseCrashlytics.instance.recordError(
       err.error,
       err.stackTrace,
@@ -21,6 +26,10 @@ class CrashlyticsTalkerObserver extends TalkerObserver {
 
   @override
   void onException(err) {
+    if (LifeTraceEnv.enabled) {
+      debugPrint('TalkerException: ${err.exception}');
+      return;
+    }
     FirebaseCrashlytics.instance.recordError(
       err.exception,
       err.stackTrace,

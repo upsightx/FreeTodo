@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:omi/env/lifetrace_env.dart';
 import 'package:omi/utils/l10n_extensions.dart';
 import 'package:provider/provider.dart';
 
@@ -179,7 +180,7 @@ class _SocialHandleScreenState extends State<SocialHandleScreen> {
                             FocusScope.of(context).unfocus();
                             if (_formKey.currentState!.validate()) {
                               provider.setIsLoading(true);
-                              if (FirebaseAuth.instance.currentUser == null) {
+                              if (!LifeTraceEnv.enabled && FirebaseAuth.instance.currentUser == null) {
                                 Logger.debug('User is not signed in, signing in anonymously');
                                 await AuthService.instance.signInAnonymously();
                               }
@@ -218,7 +219,7 @@ class _SocialHandleScreenState extends State<SocialHandleScreen> {
                                 ),
                         ),
                         SizedBox(height: MediaQuery.of(context).textScaleFactor > 1.0 ? 18 : 32),
-                        FirebaseAuth.instance.currentUser == null || FirebaseAuth.instance.currentUser!.isAnonymous
+                        !LifeTraceEnv.enabled && (FirebaseAuth.instance.currentUser == null || FirebaseAuth.instance.currentUser!.isAnonymous)
                             ? TextButton(
                                 onPressed: () async {
                                   FocusScope.of(context).unfocus();

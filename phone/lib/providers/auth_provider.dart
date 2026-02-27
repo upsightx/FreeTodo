@@ -162,6 +162,11 @@ class AuthenticationProvider extends BaseProvider {
   }
 
   void _signIn(Function() onSignIn) async {
+    if (LifeTraceEnv.enabled) {
+      onSignIn();
+      return;
+    }
+
     String? token = await _getIdToken();
 
     if (token != null) {
@@ -207,6 +212,7 @@ class AuthenticationProvider extends BaseProvider {
   }
 
   Future<void> linkWithGoogle() async {
+    if (LifeTraceEnv.enabled) return;
     setLoading(true);
     try {
       final result = await AuthService.instance.linkWithGoogle();
@@ -234,6 +240,7 @@ class AuthenticationProvider extends BaseProvider {
   }
 
   Future<void> linkWithApple() async {
+    if (LifeTraceEnv.enabled) return;
     setLoading(true);
     try {
       final appleProvider = AppleAuthProvider();

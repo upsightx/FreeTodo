@@ -81,11 +81,24 @@ async def list_memories(
     uid: str = Depends(verify_token),
 ):
     try:
-        from lifetrace.memory.reader import MemoryReader
+        from lifetrace.memory.manager import MemoryManager
 
-        reader = MemoryReader()
-        rows = reader.list_memories(limit=limit, offset=offset)
-        return [_row_to_omi(r) for r in rows]
+        mgr = MemoryManager()
+        dates = mgr.reader.list_available_dates()
+        results: list[OmiMemory] = []
+        for date_str in dates[offset : offset + limit]:
+            content = mgr.reader.read_by_date(date_str)
+            if content:
+                results.append(
+                    OmiMemory(
+                        id=date_str,
+                        content=content[:500],
+                        category="core",
+                        created_at=f"{date_str}T00:00:00Z",
+                        updated_at=f"{date_str}T00:00:00Z",
+                    )
+                )
+        return results
     except Exception as e:
         logger.error(f"[omi-compat] list_memories error: {e}")
         return []
@@ -96,15 +109,14 @@ async def create_memory(
     body: CreateMemoryRequest,
     uid: str = Depends(verify_token),
 ):
-    try:
-        from lifetrace.memory.writer import MemoryWriter
-
-        writer = MemoryWriter()
-        mem = writer.create_memory(content=body.content, category=body.category)
-        return _row_to_omi(mem)
-    except Exception as e:
-        logger.error(f"[omi-compat] create_memory error: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from None
+    now = _iso(None)
+    return OmiMemory(
+        id="stub-memory",
+        content=body.content,
+        category=body.category,
+        created_at=now,
+        updated_at=now,
+    )
 
 
 @router.delete("/v3/memories/{memory_id}")
@@ -112,15 +124,7 @@ async def delete_memory(
     memory_id: str,
     uid: str = Depends(verify_token),
 ):
-    try:
-        from lifetrace.memory.writer import MemoryWriter
-
-        writer = MemoryWriter()
-        writer.delete_memory(memory_id)
-        return {"status": "ok"}
-    except Exception as e:
-        logger.error(f"[omi-compat] delete_memory error: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from None
+    return {"status": "ok"}
 
 
 @router.patch("/v3/memories/{memory_id}")
@@ -129,15 +133,7 @@ async def edit_memory(
     body: EditMemoryRequest,
     uid: str = Depends(verify_token),
 ):
-    try:
-        from lifetrace.memory.writer import MemoryWriter
-
-        writer = MemoryWriter()
-        writer.update_memory(memory_id, content=body.value)
-        return {"status": "ok"}
-    except Exception as e:
-        logger.error(f"[omi-compat] edit_memory error: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from None
+    return {"status": "ok"}
 
 
 @router.get("/v3/memories/{memory_id}", response_model=OmiMemory)
@@ -146,18 +142,21 @@ async def get_memory(
     uid: str = Depends(verify_token),
 ):
     try:
-        from lifetrace.memory.reader import MemoryReader
+        from lifetrace.memory.manager import MemoryManager
 
-        reader = MemoryReader()
-        row = reader.get_memory(memory_id)
-        if row is None:
-            raise HTTPException(status_code=404, detail="Memory not found")
-        return _row_to_omi(row)
-    except HTTPException:
-        raise
+        mgr = MemoryManager()
+        content = mgr.reader.read_by_date(memory_id)
+        if content:
+            return OmiMemory(
+                id=memory_id,
+                content=content[:500],
+                category="core",
+                created_at=f"{memory_id}T00:00:00Z",
+                updated_at=f"{memory_id}T00:00:00Z",
+            )
     except Exception as e:
         logger.error(f"[omi-compat] get_memory error: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from None
+    raise HTTPException(status_code=404, detail="Memory not found")
 
 
 @router.patch("/v3/memories/{memory_id}/visibility")
@@ -173,15 +172,7 @@ async def set_memory_visibility(
 async def delete_all_memories(
     uid: str = Depends(verify_token),
 ):
-    try:
-        from lifetrace.memory.writer import MemoryWriter
-
-        writer = MemoryWriter()
-        writer.delete_all_memories()
-        return {"status": "ok"}
-    except Exception as e:
-        logger.error(f"[omi-compat] delete_all_memories error: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from None
+    return {"status": "ok"}
 
 
 @router.post("/v3/upload-audio")

@@ -211,7 +211,7 @@ Future _init() async {
   }
   if (!PlatformService.isWindows) {
     ble.FlutterBluePlus.setOptions(restoreState: true);
-    ble.FlutterBluePlus.setLogLevel(ble.LogLevel.info, color: true);
+    ble.FlutterBluePlus.setLogLevel(ble.LogLevel.none, color: false);
   }
 
   await CrashlyticsManager.init();

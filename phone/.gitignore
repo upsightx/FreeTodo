@@ -48,6 +48,21 @@ app.*.map.json
 # Local clone of forked dependencies
 whisper_flutter_new/
 
+# iOS Flutter generated / ephemeral build files
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/flutter_export_environment.sh
+/ios/Flutter/ephemeral/
+/ios/Runner/GeneratedPluginRegistrant.h
+/ios/Runner/GeneratedPluginRegistrant.m
+
+# Linux / Windows generated plugin registrant
+/linux/flutter/generated_plugin_registrant.cc
+/linux/flutter/generated_plugin_registrant.h
+/linux/flutter/generated_plugins.cmake
+/windows/flutter/generated_plugin_registrant.cc
+/windows/flutter/generated_plugin_registrant.h
+/windows/flutter/generated_plugins.cmake
+
 # LifeTrace: local env with actual cpolar domain / secrets
 .env
 .dev.env

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
+import 'package:omi/env/lifetrace_env.dart';
 import 'package:omi/gen/assets.gen.dart';
 import 'package:omi/pages/chat/clone_chat_page.dart';
 import 'package:omi/pages/persona/persona_provider.dart';
@@ -27,7 +28,7 @@ class CloneSuccessScreen extends StatefulWidget {
 
 class _CloneSuccessScreenState extends State<CloneSuccessScreen> {
   void _handleNavigation() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = LifeTraceEnv.enabled ? null : FirebaseAuth.instance.currentUser;
 
     // If user is not anonymous (signed in with Google/Apple), they came from create/update flow
     if (user != null && !user.isAnonymous) {
@@ -64,7 +65,7 @@ class _CloneSuccessScreenState extends State<CloneSuccessScreen> {
                     SvgPicture.asset(Assets.images.checkbox),
                     const SizedBox(height: 24),
                     Text(
-                      FirebaseAuth.instance.currentUser?.isAnonymous == false
+                      !LifeTraceEnv.enabled && FirebaseAuth.instance.currentUser?.isAnonymous == false
                           ? 'X Connected Successfully!'
                           : 'Your Omi clone is\nverified and live!',
                       textAlign: TextAlign.center,
@@ -180,7 +181,7 @@ class _CloneSuccessScreenState extends State<CloneSuccessScreen> {
                           )
                         : const SizedBox(),
                     const Spacer(flex: 2),
-                    if (FirebaseAuth.instance.currentUser?.isAnonymous == true)
+                    if (!LifeTraceEnv.enabled && FirebaseAuth.instance.currentUser?.isAnonymous == true)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: ElevatedButton(
@@ -211,7 +212,7 @@ class _CloneSuccessScreenState extends State<CloneSuccessScreen> {
                         provider.onTwitterVerifiedCompleted();
                       },
                       child: Text(
-                        FirebaseAuth.instance.currentUser?.isAnonymous == false
+                        !LifeTraceEnv.enabled && FirebaseAuth.instance.currentUser?.isAnonymous == false
                             ? 'Continue creating your persona'
                             : 'Share public link',
                         style: TextStyle(

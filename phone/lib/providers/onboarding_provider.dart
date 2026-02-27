@@ -156,7 +156,7 @@ class OnboardingProvider extends BaseProvider with MessageNotifierMixin implemen
 
   Future askForBluetoothPermissions() async {
     if (!PlatformService.isWindows) {
-      FlutterBluePlus.setLogLevel(LogLevel.info, color: true);
+      FlutterBluePlus.setLogLevel(LogLevel.none, color: false);
     }
 
     if (PlatformService.isDesktop) {

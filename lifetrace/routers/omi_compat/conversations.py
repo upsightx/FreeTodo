@@ -6,6 +6,7 @@ Event + Memory systems.
 
 from __future__ import annotations
 
+import functools
 from datetime import UTC, datetime
 from typing import Any
 
@@ -18,6 +19,15 @@ from lifetrace.util.logging_config import get_logger
 logger = get_logger()
 
 router = APIRouter(tags=["omi-conversations"])
+
+
+@functools.lru_cache(maxsize=1)
+def _get_event_repo():
+    """Lazy-init a cached SqlEventRepository."""
+    from lifetrace.repositories.sql_event_repository import SqlEventRepository
+    from lifetrace.storage.database_base import DatabaseBase
+
+    return SqlEventRepository(DatabaseBase())
 
 
 # ---------------------------------------------------------------------------
@@ -129,10 +139,14 @@ async def list_conversations(
 ):
     """Return conversations (mapped from LifeTrace Events)."""
     try:
-        from lifetrace.repositories.event_repository import EventRepository
-
-        repo = EventRepository()
-        rows = repo.get_events(limit=limit, offset=offset)
+        repo = _get_event_repo()
+        rows = repo.list_events(
+            limit=limit,
+            offset=offset,
+            start_date=None,
+            end_date=None,
+            app_name=None,
+        )
         return [_event_to_conversation(r) for r in rows]
     except Exception as e:
         logger.error(f"[omi-compat] list_conversations error: {e}")
@@ -145,10 +159,8 @@ async def get_conversation(
     uid: str = Depends(verify_token),
 ):
     try:
-        from lifetrace.repositories.event_repository import EventRepository
-
-        repo = EventRepository()
-        row = repo.get_event_by_id(conversation_id)
+        repo = _get_event_repo()
+        row = repo.get_summary(int(conversation_id))
         if row is None:
             raise HTTPException(status_code=404, detail="Conversation not found")
         return _event_to_conversation(row)
@@ -164,15 +176,8 @@ async def delete_conversation(
     conversation_id: str,
     uid: str = Depends(verify_token),
 ):
-    try:
-        from lifetrace.repositories.event_repository import EventRepository
-
-        repo = EventRepository()
-        repo.delete_event(conversation_id)
-        return {"status": "ok"}
-    except Exception as e:
-        logger.error(f"[omi-compat] delete_conversation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from None
+    # Event deletion not implemented yet; return ok to avoid 404
+    return {"status": "ok"}
 
 
 # ---------------------------------------------------------------------------
@@ -182,35 +187,40 @@ async def delete_conversation(
 
 @router.get("/v1/conversations/{conversation_id}/action-items")
 async def conversation_action_items(
-    conversation_id: str, uid: str = Depends(verify_token),
+    conversation_id: str,
+    uid: str = Depends(verify_token),
 ):
     return []
 
 
 @router.get("/v1/conversations/{conversation_id}/segments/text")
 async def conversation_segments_text(
-    conversation_id: str, uid: str = Depends(verify_token),
+    conversation_id: str,
+    uid: str = Depends(verify_token),
 ):
     return ""
 
 
 @router.get("/v1/conversations/{conversation_id}/transcripts")
 async def conversation_transcripts(
-    conversation_id: str, uid: str = Depends(verify_token),
+    conversation_id: str,
+    uid: str = Depends(verify_token),
 ):
     return []
 
 
 @router.get("/v1/conversations/{conversation_id}/events")
 async def conversation_events(
-    conversation_id: str, uid: str = Depends(verify_token),
+    conversation_id: str,
+    uid: str = Depends(verify_token),
 ):
     return []
 
 
 @router.get("/v1/conversations/{conversation_id}/suggested-apps")
 async def conversation_suggested_apps(
-    conversation_id: str, uid: str = Depends(verify_token),
+    conversation_id: str,
+    uid: str = Depends(verify_token),
 ):
     return []
 

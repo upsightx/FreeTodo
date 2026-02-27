@@ -500,13 +500,14 @@ class AuthService {
 
   Future<void> updateGivenName(String fullName) async {
     try {
-      var user = FirebaseAuth.instance.currentUser;
-
       SharedPreferencesUtil().givenName = fullName.split(' ')[0];
       if (fullName.split(' ').length > 1) {
         SharedPreferencesUtil().familyName = fullName.split(' ').sublist(1).join(' ');
       }
 
+      if (LifeTraceEnv.enabled) return;
+
+      var user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         Logger.debug('Firebase user is null, skipping Firebase profile update');
         return;

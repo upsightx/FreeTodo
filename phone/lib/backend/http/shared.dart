@@ -115,28 +115,32 @@ Future<http.Response?> makeApiCall({
     );
 
     if (requireAuthCheck && response.statusCode == 401) {
-      Logger.log('Token expired on 1st attempt');
-      SharedPreferencesUtil().authToken = await AuthService.instance.getIdToken() ?? '';
-      if (SharedPreferencesUtil().authToken.isNotEmpty) {
-        builtHeaders = await buildHeaders(
-          requireAuthCheck: requireAuthCheck,
-          fromHeaders: headers,
-        );
-        response = await HttpPoolManager.instance.send(
-          () => _buildRequest(url, builtHeaders, body, method),
-          timeout: effectiveTimeout,
-          retries: 0,
-        );
-        Logger.log('Token refreshed and request retried');
-        if (response.statusCode == 401) {
+      if (LifeTraceEnv.enabled) {
+        Logger.log('LifeTrace 401: static token rejected by server');
+      } else {
+        Logger.log('Token expired on 1st attempt');
+        SharedPreferencesUtil().authToken = await AuthService.instance.getIdToken() ?? '';
+        if (SharedPreferencesUtil().authToken.isNotEmpty) {
+          builtHeaders = await buildHeaders(
+            requireAuthCheck: requireAuthCheck,
+            fromHeaders: headers,
+          );
+          response = await HttpPoolManager.instance.send(
+            () => _buildRequest(url, builtHeaders, body, method),
+            timeout: effectiveTimeout,
+            retries: 0,
+          );
+          Logger.log('Token refreshed and request retried');
+          if (response.statusCode == 401) {
+            await AuthService.instance.signOut();
+            Logger.handle(Exception('Authentication failed. Please sign in again.'), StackTrace.current,
+                message: 'Authentication failed. Please sign in again.');
+          }
+        } else {
           await AuthService.instance.signOut();
           Logger.handle(Exception('Authentication failed. Please sign in again.'), StackTrace.current,
               message: 'Authentication failed. Please sign in again.');
         }
-      } else {
-        await AuthService.instance.signOut();
-        Logger.handle(Exception('Authentication failed. Please sign in again.'), StackTrace.current,
-            message: 'Authentication failed. Please sign in again.');
       }
     }
 
