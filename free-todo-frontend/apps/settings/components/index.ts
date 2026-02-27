@@ -15,6 +15,7 @@ export { OnboardingSection } from "./OnboardingSection";
 export { PanelSwitchesSection } from "./PanelSwitchesSection";
 export { RecorderConfigSection } from "./RecorderConfigSection";
 export { SchedulerSection } from "./SchedulerSection";
+export { SensorNodesSection } from "./SensorNodesSection";
 export {
 	type SettingsCategory,
 	type SettingsCategoryId,

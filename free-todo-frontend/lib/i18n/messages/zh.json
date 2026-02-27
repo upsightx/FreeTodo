@@ -797,6 +797,30 @@
 			"lifetrace": "LifeTrace 模式"
 		}
 	},
+	"sensorNodes": {
+		"title": "感知节点管理",
+		"description": "管理远程 Sensor 感知节点的运行状态和采集配置",
+		"connectedNodes": "已连接节点",
+		"online": "在线",
+		"offline": "离线",
+		"noNodes": "暂无感知节点连接。启动 Sensor 守护进程后将自动显示。",
+		"refresh": "刷新",
+		"uptime": "运行",
+		"lastSeen": "最近",
+		"screenshot": "截屏OCR",
+		"proactiveOcr": "主动OCR",
+		"running": "运行中",
+		"paused": "已暂停",
+		"captureSettings": "采集配置",
+		"screenshotOcr": "截屏 OCR",
+		"screenshotOcrDesc": "定时截取屏幕并进行文字识别，将结果发送到中心节点",
+		"proactiveOcrDesc": "自动检测微信/飞书等目标窗口并进行OCR识别（仅Windows）",
+		"interval": "间隔: ",
+		"seconds": "秒",
+		"intervalMustBePositive": "间隔必须大于0",
+		"saved": "已保存，Sensor 将在下次轮询时应用",
+		"saveFailed": "保存失败: {error}"
+	},
 	"scheduler": {
 		"title": "定时任务管理",
 		"description": "管理后台定时任务的运行状态和执行间隔",

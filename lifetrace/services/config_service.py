@@ -69,6 +69,7 @@ _SIMPLE_PREFIX_MAP: dict[str, tuple[int, str]] = {
     "chat_": (5, "chat"),
     "dify_": (5, "dify"),
     "tavily_": (7, "tavily"),
+    "sensor_": (7, "sensor"),
 }
 
 # ASR 配置键名映射（保留下划线的键名）

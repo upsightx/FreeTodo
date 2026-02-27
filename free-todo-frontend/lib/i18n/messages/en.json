@@ -797,6 +797,30 @@
 			"lifetrace": "LifeTrace Mode"
 		}
 	},
+	"sensorNodes": {
+		"title": "Sensor Nodes",
+		"description": "Manage remote Sensor perception nodes and their capture settings",
+		"connectedNodes": "Connected Nodes",
+		"online": "Online",
+		"offline": "Offline",
+		"noNodes": "No sensor nodes connected. Start a Sensor daemon to see it here.",
+		"refresh": "Refresh",
+		"uptime": "Uptime",
+		"lastSeen": "Last seen",
+		"screenshot": "Screenshot OCR",
+		"proactiveOcr": "Proactive OCR",
+		"running": "Running",
+		"paused": "Paused",
+		"captureSettings": "Capture Settings",
+		"screenshotOcr": "Screenshot OCR",
+		"screenshotOcrDesc": "Periodically capture screen and run OCR, send results to Center",
+		"proactiveOcrDesc": "Auto-detect WeChat/Feishu windows and run OCR (Windows only)",
+		"interval": "Interval: ",
+		"seconds": "s",
+		"intervalMustBePositive": "Interval must be greater than 0",
+		"saved": "Saved. Sensor will apply on next poll.",
+		"saveFailed": "Save failed: {error}"
+	},
 	"scheduler": {
 		"title": "Scheduler Management",
 		"description": "Manage background scheduled jobs and their intervals",

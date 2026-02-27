@@ -3,6 +3,10 @@
 Run on the sensing PC to capture screen / proactive-OCR data and forward
 PerceptionEvents to the remote Center node via HTTP POST.
 
+The daemon periodically polls the Center for configuration updates
+(screenshot/proactive-OCR enable/disable, intervals, blacklist) so the
+user can control it from the frontend settings panel.
+
 Usage:
     python -m lifetrace.sensor --center-url https://xxx.cpolar.top --node-id MY-PC
 """
@@ -13,6 +17,8 @@ import argparse
 import asyncio
 import hashlib
 import platform
+import time
+from typing import Any
 
 import httpx
 import numpy as np
@@ -107,6 +113,8 @@ _MIN_OCR_CONFIDENCE = 0.8
 _MIN_TEXT_LEN = 5
 _BLANK_IMAGE_STD_THRESHOLD = 5.0
 _MIN_ROI_AREA_RATIO = 0.10
+_CONFIG_POLL_INTERVAL = 15.0
+_HEARTBEAT_INTERVAL = 30.0
 
 
 def _text_hash(text: str) -> str:
@@ -130,6 +138,19 @@ class SensorDaemon:
         self._last_proactive_hash: str = ""
         self._consecutive_post_failures: int = 0
         self._max_backoff: float = 120.0
+
+        # Dynamic config (can be updated via config polling)
+        self._screenshot_enabled: bool = True
+        self._proactive_ocr_enabled: bool = True
+        self._screenshot_interval: float = 10.0
+        self._proactive_ocr_interval: float = 1.0
+        self._blacklist_enabled: bool = False
+        self._blacklist_apps: list[str] = []
+
+        # Timestamps for status reporting
+        self._last_screenshot_at: str | None = None
+        self._last_proactive_ocr_at: str | None = None
+        self._start_time: float = time.time()
 
     # ------------------------------------------------------------------
     # Network helpers
@@ -162,7 +183,7 @@ class SensorDaemon:
             return True
         except Exception as exc:
             self._consecutive_post_failures += 1
-            logger.warning(f"POST 失败 (连续 {self._consecutive_post_failures}): {exc}")
+            logger.warning(f"POST failed (consecutive {self._consecutive_post_failures}): {exc}")
             return False
 
     def _post_backoff(self) -> float:
@@ -171,11 +192,73 @@ class SensorDaemon:
         return min(2 ** (self._consecutive_post_failures - 1), self._max_backoff)
 
     # ------------------------------------------------------------------
+    # Config polling
+    # ------------------------------------------------------------------
+
+    async def poll_config(self) -> None:
+        url = f"{self.center_url}/api/sensor/config"
+        try:
+            resp = await self.client.get(url)
+            resp.raise_for_status()
+            self._apply_config(resp.json())
+        except Exception as exc:
+            logger.debug(f"Config poll failed: {exc}")
+
+    def _apply_config(self, config: dict[str, Any]) -> None:
+        new_ss = bool(config.get("screenshot_enabled", True))
+        if new_ss != self._screenshot_enabled:
+            logger.info(f"Screenshot OCR: {'enabled' if new_ss else 'disabled'} (remote)")
+        self._screenshot_enabled = new_ss
+
+        new_po = bool(config.get("proactive_ocr_enabled", True))
+        if new_po != self._proactive_ocr_enabled:
+            logger.info(f"Proactive OCR: {'enabled' if new_po else 'disabled'} (remote)")
+        self._proactive_ocr_enabled = new_po
+
+        new_ss_int = float(config.get("screenshot_interval", 10.0))
+        if new_ss_int != self._screenshot_interval:
+            logger.info(f"Screenshot interval: {self._screenshot_interval}s -> {new_ss_int}s")
+        self._screenshot_interval = new_ss_int
+
+        new_po_int = float(config.get("proactive_ocr_interval", 1.0))
+        if new_po_int != self._proactive_ocr_interval:
+            logger.info(f"Proactive OCR interval: {self._proactive_ocr_interval}s -> {new_po_int}s")
+        self._proactive_ocr_interval = new_po_int
+
+        self._blacklist_enabled = bool(config.get("recorder_blacklist_enabled", False))
+        self._blacklist_apps = list(config.get("recorder_blacklist_apps", []))
+
+    # ------------------------------------------------------------------
+    # Heartbeat (status report)
+    # ------------------------------------------------------------------
+
+    async def heartbeat(self) -> None:
+        url = f"{self.center_url}/api/sensor/heartbeat"
+        payload = {
+            "node_id": self.node_id,
+            "screenshot_running": self._screenshot_enabled,
+            "proactive_ocr_running": self._proactive_ocr_enabled,
+            "screenshot_interval": self._screenshot_interval,
+            "proactive_ocr_interval": self._proactive_ocr_interval,
+            "last_screenshot_at": self._last_screenshot_at,
+            "last_proactive_ocr_at": self._last_proactive_ocr_at,
+            "uptime_seconds": round(time.time() - self._start_time, 1),
+        }
+        try:
+            resp = await self.client.post(url, json=payload)
+            resp.raise_for_status()
+            logger.debug("Heartbeat OK")
+        except Exception as exc:
+            logger.warning(f"Heartbeat failed: {exc}")
+
+    # ------------------------------------------------------------------
     # Screenshot + OCR cycle
     # ------------------------------------------------------------------
 
     async def run_screenshot_ocr_cycle(self) -> None:
-        """截取主屏幕 → OCR → 生成 PerceptionEvent → POST 到 Center。"""
+        if not self._screenshot_enabled:
+            return
+
         image = await asyncio.to_thread(_mss_grab_in_thread)
         if image is None:
             return
@@ -185,7 +268,7 @@ class SensorDaemon:
 
         valid_lines = [ln for ln in ocr_result.lines if ln.score >= _MIN_OCR_CONFIDENCE]
         if not valid_lines:
-            logger.debug("截屏 OCR: 无有效文本")
+            logger.debug("Screenshot OCR: no valid text")
             return
 
         text = "\n".join(ln.text for ln in valid_lines)
@@ -194,7 +277,7 @@ class SensorDaemon:
 
         h = _text_hash(text)
         if h == self._last_screenshot_hash:
-            logger.debug("截屏 OCR: 文本未变化，跳过")
+            logger.debug("Screenshot OCR: text unchanged, skipping")
             return
         self._last_screenshot_hash = h
 
@@ -210,14 +293,14 @@ class SensorDaemon:
         )
         ok = await self._safe_post(event)
         if ok:
-            logger.info(f"截屏 OCR → Center: {len(valid_lines)} 行, {len(text)} 字符")
+            self._last_screenshot_at = get_utc_now().isoformat()
+            logger.info(f"Screenshot OCR -> Center: {len(valid_lines)} lines, {len(text)} chars")
 
     # ------------------------------------------------------------------
     # Proactive OCR cycle (WeChat / Feishu)
     # ------------------------------------------------------------------
 
     async def _capture_target_window(self):
-        """检测并截取前台目标窗口，返回 (frame, image_to_ocr, app_type, window) 或 None。"""
         capture = _get_window_capture()
         router = _get_app_router()
 
@@ -233,12 +316,12 @@ class SensorDaemon:
 
         frame = await asyncio.to_thread(capture.capture_window, window)
         if frame is None:
-            logger.debug(f"主动 OCR: 窗口截取失败 ({app_type.value})")
+            logger.debug(f"Proactive OCR: window capture failed ({app_type.value})")
             return None
 
         img_std = float(np.std(frame.data))
         if img_std < _BLANK_IMAGE_STD_THRESHOLD:
-            logger.debug("主动 OCR: 截图疑似空白，跳过")
+            logger.debug("Proactive OCR: blank image, skipping")
             return None
 
         image_to_ocr = await self._apply_roi(frame, app_type)
@@ -262,7 +345,9 @@ class SensorDaemon:
         return frame.data
 
     async def run_proactive_ocr_cycle(self) -> None:
-        """检测前台微信/飞书 → 截取窗口 → ROI → OCR → POST。"""
+        if not self._proactive_ocr_enabled:
+            return
+
         result = await self._capture_target_window()
         if result is None:
             return
@@ -298,61 +383,81 @@ class SensorDaemon:
         )
         ok = await self._safe_post(event)
         if ok:
+            self._last_proactive_ocr_at = get_utc_now().isoformat()
             logger.info(
-                f"主动 OCR ({app_type.value}) → Center: {len(valid_lines)} 行, {len(text)} 字符"
+                f"Proactive OCR ({app_type.value}) -> Center: "
+                f"{len(valid_lines)} lines, {len(text)} chars"
             )
 
     # ------------------------------------------------------------------
-    # Heartbeat
+    # Internal loops
     # ------------------------------------------------------------------
 
-    async def heartbeat(self) -> None:
-        url = f"{self.center_url}/health"
-        try:
-            resp = await self.client.get(url)
-            resp.raise_for_status()
-            logger.debug("Heartbeat OK")
-        except Exception as exc:
-            logger.warning(f"Heartbeat failed: {exc}")
+    async def _screenshot_loop(self) -> None:
+        while True:
+            try:
+                await self.run_screenshot_ocr_cycle()
+            except Exception as exc:
+                logger.error(f"Screenshot OCR error: {exc}", exc_info=True)
+            await asyncio.sleep(self._screenshot_interval + self._post_backoff())
+
+    async def _proactive_ocr_loop(self) -> None:
+        while True:
+            try:
+                await self.run_proactive_ocr_cycle()
+            except Exception as exc:
+                logger.error(f"Proactive OCR error: {exc}", exc_info=True)
+            await asyncio.sleep(self._proactive_ocr_interval + self._post_backoff())
+
+    async def _heartbeat_loop(self) -> None:
+        while True:
+            await self.heartbeat()
+            await asyncio.sleep(_HEARTBEAT_INTERVAL)
+
+    async def _config_poll_loop(self) -> None:
+        await asyncio.sleep(5)
+        while True:
+            await self.poll_config()
+            await asyncio.sleep(_CONFIG_POLL_INTERVAL)
 
     # ------------------------------------------------------------------
     # Main loop
     # ------------------------------------------------------------------
 
-    async def run(self, screenshot_interval: float, proactive_ocr_interval: float) -> None:
+    async def run(
+        self,
+        screenshot_interval: float,
+        proactive_ocr_interval: float,
+        *,
+        no_screenshot: bool = False,
+        no_proactive_ocr: bool = False,
+    ) -> None:
+        self._screenshot_interval = screenshot_interval
+        self._proactive_ocr_interval = proactive_ocr_interval
+        self._screenshot_enabled = not no_screenshot
+        self._proactive_ocr_enabled = not no_proactive_ocr
+
+        if not self._screenshot_enabled:
+            logger.info("Screenshot OCR disabled (--no-screenshot)")
+        if not self._proactive_ocr_enabled:
+            logger.info("Proactive OCR disabled (--no-proactive-ocr)")
+
         logger.info(
-            f"Sensor 事件循环启动 "
-            f"(截屏间隔={screenshot_interval}s, 主动OCR间隔={proactive_ocr_interval}s)"
+            f"Sensor event loop starting "
+            f"(screenshot={self._screenshot_enabled}/{self._screenshot_interval}s, "
+            f"proactive_ocr={self._proactive_ocr_enabled}/{self._proactive_ocr_interval}s)"
         )
 
-        async def screenshot_loop() -> None:
-            while True:
-                try:
-                    await self.run_screenshot_ocr_cycle()
-                except Exception as exc:
-                    logger.error(f"截屏 OCR 异常: {exc}", exc_info=True)
-                backoff = self._post_backoff()
-                await asyncio.sleep(screenshot_interval + backoff)
-
-        async def proactive_ocr_loop() -> None:
-            while True:
-                try:
-                    await self.run_proactive_ocr_cycle()
-                except Exception as exc:
-                    logger.error(f"主动 OCR 异常: {exc}", exc_info=True)
-                backoff = self._post_backoff()
-                await asyncio.sleep(proactive_ocr_interval + backoff)
-
-        async def heartbeat_loop() -> None:
-            while True:
-                await self.heartbeat()
-                await asyncio.sleep(30)
-
-        await asyncio.gather(
-            screenshot_loop(),
-            proactive_ocr_loop(),
-            heartbeat_loop(),
-        )
+        tasks = [
+            asyncio.create_task(self._screenshot_loop()),
+            asyncio.create_task(self._proactive_ocr_loop()),
+            asyncio.create_task(self._heartbeat_loop()),
+            asyncio.create_task(self._config_poll_loop()),
+        ]
+        try:
+            await asyncio.gather(*tasks)
+        finally:
+            await self.close()
 
     async def close(self) -> None:
         await self.client.aclose()
@@ -364,91 +469,51 @@ class SensorDaemon:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="LifeTrace Sensor 感知守护进程")
+    parser = argparse.ArgumentParser(description="LifeTrace Sensor daemon")
     parser.add_argument(
         "--center-url",
         required=True,
-        help="Center 节点地址，如 https://xxx.cpolar.top",
+        help="Center node URL, e.g. https://xxx.cpolar.top",
     )
     parser.add_argument(
         "--node-id",
         default=platform.node(),
-        help="节点 ID（默认主机名）",
+        help="Node ID (defaults to hostname)",
     )
     parser.add_argument(
         "--screenshot-interval",
         type=float,
         default=10.0,
-        help="截屏 OCR 间隔（秒，默认 10）",
+        help="Screenshot OCR interval in seconds (default 10)",
     )
     parser.add_argument(
         "--proactive-ocr-interval",
         type=float,
         default=1.0,
-        help="主动 OCR 间隔（秒，默认 1）",
+        help="Proactive OCR interval in seconds (default 1)",
     )
     parser.add_argument(
         "--no-screenshot",
         action="store_true",
-        help="禁用截屏 OCR（只运行主动 OCR + 心跳）",
+        help="Disable screenshot OCR (only proactive OCR + heartbeat)",
     )
     parser.add_argument(
         "--no-proactive-ocr",
         action="store_true",
-        help="禁用主动 OCR（只运行截屏 + 心跳）",
+        help="Disable proactive OCR (only screenshot + heartbeat)",
     )
     return parser.parse_args()
 
 
-def _make_loop(coro_fn, interval_fn):
-    """Create an infinite retry loop coroutine."""
-
-    async def _loop() -> None:
-        while True:
-            try:
-                await coro_fn()
-            except Exception as exc:
-                logger.error(f"{coro_fn.__name__} 异常: {exc}", exc_info=True)
-            await asyncio.sleep(interval_fn())
-
-    return _loop
-
-
 async def _run(args: argparse.Namespace) -> None:
     daemon = SensorDaemon(center_url=args.center_url, node_id=args.node_id)
-    logger.info(f"Sensor 启动: node_id={args.node_id}, center={args.center_url}")
-
-    tasks: list[asyncio.Task] = []
-
-    if not args.no_screenshot:
-        loop_fn = _make_loop(
-            daemon.run_screenshot_ocr_cycle,
-            lambda: args.screenshot_interval + daemon._post_backoff(),
-        )
-        tasks.append(asyncio.create_task(loop_fn()))
-    else:
-        logger.info("截屏 OCR 已禁用 (--no-screenshot)")
-
-    if not args.no_proactive_ocr:
-        loop_fn = _make_loop(
-            daemon.run_proactive_ocr_cycle,
-            lambda: args.proactive_ocr_interval + daemon._post_backoff(),
-        )
-        tasks.append(asyncio.create_task(loop_fn()))
-    else:
-        logger.info("主动 OCR 已禁用 (--no-proactive-ocr)")
-
-    async def heartbeat_loop() -> None:
-        while True:
-            await daemon.heartbeat()
-            await asyncio.sleep(30)
-
-    tasks.append(asyncio.create_task(heartbeat_loop()))
-
-    try:
-        await asyncio.gather(*tasks)
-    finally:
-        await daemon.close()
+    logger.info(f"Sensor starting: node_id={args.node_id}, center={args.center_url}")
+    await daemon.run(
+        screenshot_interval=args.screenshot_interval,
+        proactive_ocr_interval=args.proactive_ocr_interval,
+        no_screenshot=args.no_screenshot,
+        no_proactive_ocr=args.no_proactive_ocr,
+    )
 
 
 if __name__ == "__main__":

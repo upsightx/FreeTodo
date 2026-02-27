@@ -72,6 +72,10 @@ MODULES: tuple[ModuleDefinition, ...] = (
         id="perception_ingest",
         router_module="lifetrace.routers.perception_ingest",
     ),
+    ModuleDefinition(
+        id="sensor_control",
+        router_module="lifetrace.routers.sensor_control",
+    ),
     ModuleDefinition(id="proactive_ocr", router_module="lifetrace.routers.proactive_ocr"),
     ModuleDefinition(id="plugin", router_module="lifetrace.routers.plugin"),
     ModuleDefinition(

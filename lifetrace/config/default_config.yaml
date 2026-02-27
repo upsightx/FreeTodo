@@ -46,9 +46,17 @@ backend_modules:
     - audio
     - perception
     - perception_ingest
+    - sensor_control
     - proactive_ocr
     - plugin
     - memory
+
+# 远程感知节点 (Sensor) 配置
+sensor:
+  screenshot_enabled: true
+  screenshot_interval: 10.0
+  proactive_ocr_enabled: true
+  proactive_ocr_interval: 1.0
 
 # 感知流（Perception Stream）配置
 perception:

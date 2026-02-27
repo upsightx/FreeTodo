@@ -25,6 +25,7 @@ import {
 	PanelSwitchesSection,
 	RecorderConfigSection,
 	SchedulerSection,
+	SensorNodesSection,
 	type SettingsCategory,
 	type SettingsCategoryId,
 	SettingsCategoryPanel,
@@ -161,8 +162,9 @@ export function SettingsPanel() {
 		return (
 			<>
 				{/* <DifyConfigSection config={config} loading={loading} /> */}
-				<SchedulerSection loading={loading} />
-				<RecorderConfigSection config={config} loading={loading} />
+			<SensorNodesSection config={config} loading={loading} />
+			<SchedulerSection loading={loading} />
+			<RecorderConfigSection config={config} loading={loading} />
 					{isAudioPanelEnabled && (
 						<>
 							<AudioConfigSection config={config} loading={loading} />
