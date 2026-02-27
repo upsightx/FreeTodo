@@ -24,8 +24,8 @@ wheels/
 # Virtual Environment
 venv/
 .venv/
-ENV/
-env/
+/ENV/
+/env/
 
 # IDEs
 .vscode/
