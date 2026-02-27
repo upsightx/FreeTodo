@@ -634,6 +634,7 @@
 				"conflict": "冲突检测",
 				"stats": "统计分析",
 				"tags": "标签管理",
+				"memory": "记忆回溯",
 				"search": "联网搜索"
 			},
 			"externalCategories": {
@@ -685,6 +686,10 @@
 				"local_fs": "文件写入",
 				"shell": "命令行",
 				"sleep": "暂停执行",
+				"recall_today": "回忆今天",
+				"recall_date": "回忆指定日期",
+				"search_memory": "搜索记忆",
+				"list_memory_dates": "记忆日期列表",
 				"unknown": "未知工具"
 			}
 		}

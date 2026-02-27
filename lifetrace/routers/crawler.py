@@ -495,7 +495,7 @@ async def update_proxy_config(config: KdlProxyConfigUpdate):
         raise
     except Exception as e:
         logger.error(f"更新代理配置失败: {e}")
-        raise HTTPException(status_code=500, detail=f"更新代理配置失败: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"更新代理配置失败: {e!s}") from e
 
 
 # ============== Cookies 管理 ==============

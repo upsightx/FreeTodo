@@ -6,6 +6,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from lifetrace.util.logging_config import get_logger
+from lifetrace.util.time_utils import to_local
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -35,7 +36,9 @@ class MemoryWriter:
         """PerceptionStream subscriber callback."""
         try:
             line = self._format_event(event)
-            date_str = event.timestamp.strftime("%Y-%m-%d")
+            # 按本地时区取日期，便于按“自然日”分文件
+            local_ts = to_local(event.timestamp)
+            date_str = (local_ts or event.timestamp).strftime("%Y-%m-%d")
 
             async with self._lock:
                 if date_str != self._current_date:
@@ -49,7 +52,9 @@ class MemoryWriter:
             logger.exception("MemoryWriter failed to persist event %s", event.event_id)
 
     def _format_event(self, event: PerceptionEvent) -> str:
-        ts = event.timestamp.strftime("%H:%M")
+        # 写入 md 时使用本地时间显示，避免 UTC 造成困惑（如 14:20 实为本地 22:20）
+        local_ts = to_local(event.timestamp)
+        ts = (local_ts or event.timestamp).strftime("%H:%M")
         source = event.source.value
 
         parts: list[str] = [ts, source]
