@@ -818,7 +818,7 @@
 		"interval": "间隔: ",
 		"seconds": "秒",
 		"intervalMustBePositive": "间隔必须大于0",
-		"saved": "已保存，Sensor 将在下次轮询时应用",
+		"saved": "已保存",
 		"saveFailed": "保存失败: {error}"
 	},
 	"scheduler": {

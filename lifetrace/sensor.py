@@ -129,10 +129,11 @@ def _text_hash(text: str) -> str:
 class SensorDaemon:
     """轻量感知守护进程，采集本地屏幕/OCR 数据并转发到 Center。"""
 
-    def __init__(self, center_url: str, node_id: str):
+    def __init__(self, center_url: str, node_id: str, *, debug_images: bool = False):
         self.center_url = center_url.rstrip("/")
         self.node_id = node_id
         self.client = httpx.AsyncClient(timeout=30)
+        self._debug_images = debug_images
 
         self._last_screenshot_hash: str = ""
         self._last_proactive_hash: str = ""
@@ -151,6 +152,13 @@ class SensorDaemon:
         self._last_screenshot_at: str | None = None
         self._last_proactive_ocr_at: str | None = None
         self._start_time: float = time.time()
+
+        if self._debug_images:
+            from pathlib import Path  # noqa: PLC0415
+
+            self._debug_dir = Path("sensor_debug")
+            self._debug_dir.mkdir(exist_ok=True)
+            logger.info(f"Debug images will be saved to {self._debug_dir.resolve()}")
 
     # ------------------------------------------------------------------
     # Network helpers
@@ -344,6 +352,16 @@ class SensorDaemon:
                 return roi_result.image
         return frame.data
 
+    def _save_debug_image(self, image: np.ndarray, label: str) -> None:
+        if not self._debug_images:
+            return
+        from PIL import Image  # noqa: PLC0415
+
+        ts = time.strftime("%Y%m%d_%H%M%S")
+        path = self._debug_dir / f"{label}_{ts}.png"
+        Image.fromarray(image).save(path)
+        logger.debug(f"Debug image saved: {path}")
+
     async def run_proactive_ocr_cycle(self) -> None:
         if not self._proactive_ocr_enabled:
             return
@@ -352,6 +370,9 @@ class SensorDaemon:
         if result is None:
             return
         _frame, image_to_ocr, app_type, window = result
+
+        self._save_debug_image(_frame.data, f"proactive_{app_type.value}_full")
+        self._save_debug_image(image_to_ocr, f"proactive_{app_type.value}_roi")
 
         engine = _get_ocr_engine()
         ocr_result = await asyncio.to_thread(engine.ocr, image_to_ocr)
@@ -502,11 +523,20 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Disable proactive OCR (only screenshot + heartbeat)",
     )
+    parser.add_argument(
+        "--debug-images",
+        action="store_true",
+        help="Save debug images (full frame + ROI) to sensor_debug/ folder",
+    )
     return parser.parse_args()
 
 
 async def _run(args: argparse.Namespace) -> None:
-    daemon = SensorDaemon(center_url=args.center_url, node_id=args.node_id)
+    daemon = SensorDaemon(
+        center_url=args.center_url,
+        node_id=args.node_id,
+        debug_images=args.debug_images,
+    )
     logger.info(f"Sensor starting: node_id={args.node_id}, center={args.center_url}")
     await daemon.run(
         screenshot_interval=args.screenshot_interval,
