@@ -3,16 +3,31 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
+import 'package:omi/env/env.dart';
+import 'package:omi/env/lifetrace_env.dart';
+
 class ConnectivityService {
   static final ConnectivityService _instance = ConnectivityService._internal();
   factory ConnectivityService() => _instance;
 
   ConnectivityService._internal();
 
-  final InternetConnection _internetConnection = InternetConnection.createInstance(
-    useDefaultOptions: false,
-    checkInterval: const Duration(seconds: 10),
-    customCheckOptions: [
+  static List<InternetCheckOption> get _checkOptions {
+    if (LifeTraceEnv.enabled) {
+      // In LifeTrace mode, check against our own Center backend
+      // (avoids connecting to Cloudflare/Google which are blocked in China)
+      return [
+        InternetCheckOption(
+          uri: Uri.parse(Env.apiBaseUrl ?? 'https://tybbackend.cpolar.top/'),
+          timeout: const Duration(seconds: 5),
+        ),
+        InternetCheckOption(
+          uri: Uri.parse('https://www.baidu.com'),
+          timeout: const Duration(seconds: 3),
+        ),
+      ];
+    }
+    return [
       InternetCheckOption(
         uri: Uri.parse('https://one.one.one.one'),
         timeout: const Duration(seconds: 3),
@@ -21,7 +36,13 @@ class ConnectivityService {
         uri: Uri.parse('https://icanhazip.com'),
         timeout: const Duration(seconds: 3),
       ),
-    ],
+    ];
+  }
+
+  final InternetConnection _internetConnection = InternetConnection.createInstance(
+    useDefaultOptions: false,
+    checkInterval: const Duration(seconds: 10),
+    customCheckOptions: _checkOptions,
   );
   InternetConnection get internetConnection => _internetConnection;
   final Connectivity _connectivity = Connectivity();

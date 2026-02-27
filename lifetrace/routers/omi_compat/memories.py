@@ -140,11 +140,39 @@ async def edit_memory(
         raise HTTPException(status_code=500, detail=str(e)) from None
 
 
+@router.get("/v3/memories/{memory_id}", response_model=OmiMemory)
+async def get_memory(
+    memory_id: str,
+    uid: str = Depends(verify_token),
+):
+    try:
+        from lifetrace.memory.reader import MemoryReader
+
+        reader = MemoryReader()
+        row = reader.get_memory(memory_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="Memory not found")
+        return _row_to_omi(row)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[omi-compat] get_memory error: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from None
+
+
+@router.patch("/v3/memories/{memory_id}/visibility")
+async def set_memory_visibility(
+    memory_id: str,
+    value: str = "private",
+    uid: str = Depends(verify_token),
+):
+    return {"status": "ok"}
+
+
 @router.delete("/v3/memories")
 async def delete_all_memories(
     uid: str = Depends(verify_token),
 ):
-    """Bulk delete – omi App sends this on "clear all"."""
     try:
         from lifetrace.memory.writer import MemoryWriter
 
@@ -154,3 +182,13 @@ async def delete_all_memories(
     except Exception as e:
         logger.error(f"[omi-compat] delete_all_memories error: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from None
+
+
+@router.post("/v3/upload-audio")
+async def upload_audio_stub(uid: str = Depends(verify_token)):
+    return {"status": "ok"}
+
+
+@router.post("/v3/speech-profile/expand")
+async def expand_speech_profile(uid: str = Depends(verify_token)):
+    return {"status": "ok"}

@@ -4,14 +4,16 @@
 
 import 'dart:io' show Platform;
 
+import 'package:omi/env/lifetrace_env.dart';
 import 'package:omi/services/notifications/notification_interface.dart';
 import 'package:omi/services/notifications/notification_service_basic.dart' as basic;
 import 'package:omi/services/notifications/notification_service_fcm.dart' as fcm;
 
 /// Factory function to create the appropriate notification service based on platform capabilities
 NotificationInterface _createPlatformNotificationService() {
-  if (Platform.isWindows) {
-    // Windows: Basic local notifications only (Firebase Messaging not supported)
+  if (LifeTraceEnv.enabled || Platform.isWindows) {
+    // LifeTrace mode: use basic service to avoid FCM/Google dependency
+    // Windows: Firebase Messaging not supported
     return basic.createNotificationService();
   } else {
     // iOS, Android, macOS, web, Linux: Full FCM support

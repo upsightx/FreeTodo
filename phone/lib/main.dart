@@ -187,15 +187,15 @@ Future _init() async {
     }
   }
 
-  // DEBUG: Log Firebase Auth state before getIdToken
-  print('DEBUG main: Before getIdToken - currentUser=${FirebaseAuth.instance.currentUser?.uid}');
   bool isAuth;
   if (_kLifeTraceMode) {
-    isAuth = true; // Already injected above
+    isAuth = true;
+    debugPrint('LifeTrace mode: auth=true (static token)');
   } else {
+    print('DEBUG main: Before getIdToken - currentUser=${FirebaseAuth.instance.currentUser?.uid}');
     isAuth = (await AuthService.instance.getIdToken()) != null;
+    print('DEBUG main: After getIdToken - isAuth=$isAuth, currentUser=${FirebaseAuth.instance.currentUser?.uid}');
   }
-  print('DEBUG main: After getIdToken - isAuth=$isAuth, currentUser=${_kLifeTraceMode ? "lifetrace" : FirebaseAuth.instance.currentUser?.uid}');
   if (isAuth && !_kLifeTraceMode) {
     PlatformManager.instance.mixpanel.identify();
     if (!SharedPreferencesUtil().onboardingCompleted) {

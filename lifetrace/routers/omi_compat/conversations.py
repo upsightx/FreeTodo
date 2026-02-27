@@ -173,3 +173,53 @@ async def delete_conversation(
     except Exception as e:
         logger.error(f"[omi-compat] delete_conversation error: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from None
+
+
+# ---------------------------------------------------------------------------
+# Sub-resource stubs (action-items, segments, etc.)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/v1/conversations/{conversation_id}/action-items")
+async def conversation_action_items(
+    conversation_id: str, uid: str = Depends(verify_token),
+):
+    return []
+
+
+@router.get("/v1/conversations/{conversation_id}/segments/text")
+async def conversation_segments_text(
+    conversation_id: str, uid: str = Depends(verify_token),
+):
+    return ""
+
+
+@router.get("/v1/conversations/{conversation_id}/transcripts")
+async def conversation_transcripts(
+    conversation_id: str, uid: str = Depends(verify_token),
+):
+    return []
+
+
+@router.get("/v1/conversations/{conversation_id}/events")
+async def conversation_events(
+    conversation_id: str, uid: str = Depends(verify_token),
+):
+    return []
+
+
+@router.get("/v1/conversations/{conversation_id}/suggested-apps")
+async def conversation_suggested_apps(
+    conversation_id: str, uid: str = Depends(verify_token),
+):
+    return []
+
+
+@router.post("/v1/conversations/search")
+async def search_conversations(uid: str = Depends(verify_token)):
+    return []
+
+
+@router.post("/v1/conversations")
+async def create_conversation(uid: str = Depends(verify_token)):
+    return {"id": "", "status": "created"}
