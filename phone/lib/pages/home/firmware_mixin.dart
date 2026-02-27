@@ -1,16 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 
-import 'package:flutter_archive/flutter_archive.dart';
-import 'package:mcumgr_flutter/mcumgr_flutter.dart' as mcumgr;
 import 'package:nordic_dfu/nordic_dfu.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 
 import 'package:omi/backend/http/api/device.dart';
 import 'package:omi/backend/http/shared.dart';
@@ -18,7 +14,6 @@ import 'package:omi/backend/schema/bt_device/bt_device.dart';
 import 'package:omi/providers/device_provider.dart';
 import 'package:omi/utils/device.dart';
 import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/manifest/manifest.dart';
 
 mixin FirmwareMixin<T extends StatefulWidget> on State<T> {
   Map latestFirmwareDetails = {};
@@ -30,140 +25,18 @@ mixin FirmwareMixin<T extends StatefulWidget> on State<T> {
   int installProgress = 0;
   bool isLegacySecureDFU = true;
   List<String> otaUpdateSteps = [];
-  final mcumgr.FirmwareUpdateManagerFactory? managerFactory = mcumgr.FirmwareUpdateManagerFactory();
-  mcumgr.FirmwareUpdateManager? _mcuUpdateManager;
-
-  /// Process ZIP file and return firmware image list
-  Future<List<mcumgr.Image>> processZipFile(Uint8List zipFileData) async {
-    // Create temporary directory
-    final prefix = 'firmware_${Uuid().v4()}';
-    final systemTempDir = await getTemporaryDirectory();
-    final tempDir = Directory('${systemTempDir.path}/$prefix');
-    await tempDir.create();
-
-    try {
-      // Write ZIP data to temporary file
-      final firmwareFile = File('${tempDir.path}/firmware.zip');
-      await firmwareFile.writeAsBytes(zipFileData);
-
-      // Create destination directory for extraction
-      final destinationDir = Directory('${tempDir.path}/firmware');
-      await destinationDir.create();
-
-      // Extract ZIP file
-      await ZipFile.extractToDirectory(
-        zipFile: firmwareFile,
-        destinationDir: destinationDir,
-      );
-
-      // Read and parse manifest.json
-      final manifestFile = File('${destinationDir.path}/manifest.json');
-      final manifestString = await manifestFile.readAsString();
-      final manifestJson = json.decode(manifestString);
-      final manifest = Manifest.fromJson(manifestJson);
-
-      // Process firmware files
-      final List<mcumgr.Image> firmwareImages = [];
-      for (final file in manifest.files) {
-        final firmwareFile = File('${destinationDir.path}/${file.file}');
-        final firmwareFileData = await firmwareFile.readAsBytes();
-        final image = mcumgr.Image(
-          image: file.image,
-          data: firmwareFileData,
-        );
-        firmwareImages.add(image);
-      }
-
-      return firmwareImages;
-    } catch (e) {
-      throw Exception('Failed to process ZIP file: $e');
-    } finally {
-      // Cleanup: Delete temporary directory
-      await tempDir.delete(recursive: true);
-    }
-  }
 
   Future<void> startDfu(BtDevice btDevice, {bool fileInAssets = false, String? zipFilePath}) async {
     if (isLegacySecureDFU) {
       return startLegacyDfu(btDevice, fileInAssets: fileInAssets);
     }
-    return startMCUDfu(btDevice, fileInAssets: fileInAssets, zipFilePath: zipFilePath);
-  }
-
-  Future<void> killMcuUpdateManager() async {
-    if (_mcuUpdateManager != null) {
-      try {
-        await _mcuUpdateManager!.kill();
-      } catch (e) {
-        Logger.debug('Error killing update manager: $e');
-      }
-      _mcuUpdateManager = null;
-    }
-  }
-
-  Future<void> startMCUDfu(BtDevice btDevice, {bool fileInAssets = false, String? zipFilePath}) async {
+    Logger.debug('MCU DFU not available – mcumgr_flutter removed for LifeTrace build');
     setState(() {
-      isInstalling = true;
+      isInstalling = false;
     });
-    await Provider.of<DeviceProvider>(context, listen: false).prepareDFU();
-    await Future.delayed(const Duration(seconds: 2));
-
-    String firmwareFile = zipFilePath ?? '${(await getApplicationDocumentsDirectory()).path}/firmware.zip';
-    final file = File(firmwareFile);
-    if (!await file.exists()) {
-      Logger.debug('Firmware file not found: $firmwareFile');
-      if (mounted) {
-        setState(() {
-          isInstalling = false;
-        });
-      }
-      return;
-    }
-    final bytes = await file.readAsBytes();
-    const configuration = mcumgr.FirmwareUpgradeConfiguration(
-      estimatedSwapTime: Duration(seconds: 0),
-      eraseAppSettings: true,
-      pipelineDepth: 1,
-    );
-
-    await killMcuUpdateManager();
-    final updateManager = await managerFactory!.getUpdateManager(btDevice.id);
-    _mcuUpdateManager = updateManager;
-    final images = await processZipFile(bytes);
-
-    final updateStream = updateManager.setup();
-
-    updateStream.listen((state) {
-      if (state == mcumgr.FirmwareUpgradeState.success) {
-        Logger.debug('update success');
-        killMcuUpdateManager();
-        setState(() {
-          isInstalling = false;
-          isInstalled = true;
-        });
-      } else {
-        Logger.debug('update state: $state');
-      }
-    });
-
-    updateManager.progressStream.listen((progress) {
-      Logger.debug('progress: $progress');
-      setState(() {
-        installProgress = (progress.bytesSent / progress.imageSize * 100).round();
-      });
-    });
-
-    updateManager.logger.logMessageStream
-        .where((log) => log.level.rawValue > 1) // Filter debug messages
-        .listen((log) {
-      Logger.debug('dfu log: ${log.message}');
-    });
-
-    await updateManager.update(
-      images,
-      configuration: configuration,
-    );
   }
+
+  Future<void> killMcuUpdateManager() async {}
 
   Future<void> startLegacyDfu(BtDevice btDevice, {bool fileInAssets = false}) async {
     setState(() {
@@ -199,7 +72,6 @@ mixin FirmwareMixin<T extends StatefulWidget> on State<T> {
         setState(() {
           isInstalling = false;
         });
-        // Reset firmware update state on error
         final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
         deviceProvider.resetFirmwareUpdateState();
       },
@@ -250,7 +122,6 @@ mixin FirmwareMixin<T extends StatefulWidget> on State<T> {
       setState(() {
         isDownloading = false;
       });
-      // Reset firmware update state on error
       final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
       deviceProvider.resetFirmwareUpdateState();
       return;
