@@ -101,6 +101,13 @@ app = FastAPI(
 )
 
 
+_server_role: str = "standalone"
+
+
+def get_server_role() -> str:
+    return _server_role
+
+
 def get_cors_origins() -> list[str]:
     """
     生成 CORS 允许的来源列表，支持动态端口。
@@ -108,12 +115,13 @@ def get_cors_origins() -> list[str]:
     为了支持 Build 版和开发版同时运行，需要允许端口范围：
     - 前端端口范围：3000-3200（包括 3200，Build 版默认端口）
     - 后端端口范围：8000-8200（包括 8200，Build 版默认端口）
+    center 模式下额外允许所有来源（远程浏览器 / cpolar 域名）。
     """
+    if _server_role == "center":
+        return ["*"]
     origins = []
-    # 前端端口范围 3000-3200（包括 3200）
     for port in range(3000, 3201):
         origins.extend([f"http://localhost:{port}", f"http://127.0.0.1:{port}"])
-    # 后端端口范围 8000-8200（包括 8200）
     for port in range(8000, 8201):
         origins.extend([f"http://localhost:{port}", f"http://127.0.0.1:{port}"])
     return origins
@@ -125,7 +133,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["X-Session-Id"],  # 允许前端读取会话ID，支持多轮对话
+    expose_headers=["X-Session-Id"],
 )
 
 # 向量服务、RAG服务和OCR处理器均改为延迟加载
@@ -251,11 +259,21 @@ def parse_args():
         default="dev",
         help="服务器模式：dev（开发模式）或 build（打包模式）",
     )
+    parser.add_argument(
+        "--role",
+        type=str,
+        choices=["standalone", "center"],
+        default="standalone",
+        help="部署角色：standalone（单机）或 center（中心节点，绑定 0.0.0.0）",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
+
+    # 设置部署角色（需在 CORS 中间件生效前写入）
+    _server_role = args.role
 
     # 设置服务器模式
     from lifetrace.routers.health import set_server_mode
@@ -266,6 +284,10 @@ if __name__ == "__main__":
     server_port = args.port if args.port else settings.server.port
     server_debug = settings.server.debug
 
+    if args.role == "center":
+        server_host = "0.0.0.0"
+        logger.info("Center 模式：绑定 0.0.0.0，接受远程连接")
+
     # 动态端口分配：如果默认端口被占用，自动尝试下一个可用端口
     try:
         actual_port = find_available_port(server_host, server_port)
@@ -274,7 +296,7 @@ if __name__ == "__main__":
         raise
 
     logger.info(f"启动服务器: http://{server_host}:{actual_port}")
-    logger.info(f"服务器模式: {args.mode}")
+    logger.info(f"服务器模式: {args.mode}  部署角色: {args.role}")
     logger.info(f"调试模式: {'开启' if server_debug else '关闭'}")
     if actual_port != server_port:
         logger.info(f"注意: 原始端口 {server_port} 已被占用，已自动切换到 {actual_port}")

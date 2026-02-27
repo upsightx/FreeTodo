@@ -21,24 +21,44 @@ def _track_handler_task(task_set: set[asyncio.Task], coro) -> None:
     task.add_done_callback(task_set.discard)
 
 
-async def _publish_perception_audio_sentence(*, text: str, logger) -> None:
+async def _publish_perception_audio_sentence(
+    *, text: str, logger, ws_source: str = "mic_pc", ws_node_id: str = "local"
+) -> None:
     try:
         from lifetrace.perception.manager import try_get_perception_manager  # noqa: PLC0415
+        from lifetrace.perception.models import SourceType  # noqa: PLC0415
 
         mgr = try_get_perception_manager()
         if mgr is None:
             return
-        await mgr.try_publish_audio_transcription(text, metadata={"source": "audio_ws"})
+        try:
+            source_type = SourceType(ws_source)
+        except ValueError:
+            source_type = None
+        await mgr.try_publish_audio_transcription(
+            text,
+            metadata={"source": "audio_ws", "node_id": ws_node_id},
+            source=source_type,
+        )
     except Exception as exc:
         logger.debug(f"Perception publish skipped: {exc}")
 
 
-def _wrap_on_final_sentence_with_perception(*, base_on_final_sentence, logger, task_set):
+def _wrap_on_final_sentence_with_perception(
+    *,
+    base_on_final_sentence,
+    logger,
+    task_set,
+    ws_source: str = "mic_pc",
+    ws_node_id: str = "local",
+):
     def on_final_sentence(text: str) -> None:
         base_on_final_sentence(text)
         _track_handler_task(
             task_set,
-            _publish_perception_audio_sentence(text=text, logger=logger),
+            _publish_perception_audio_sentence(
+                text=text, logger=logger, ws_source=ws_source, ws_node_id=ws_node_id
+            ),
         )
 
     return on_final_sentence
@@ -466,6 +486,10 @@ async def _handle_transcribe_ws(*, websocket: WebSocket, logger, asr_client, aud
     state = await _setup_websocket_connection(websocket=websocket, logger=logger)
     segment_task: asyncio.Task | None = None
 
+    ws_source = websocket.query_params.get("source", "mic_pc")
+    ws_node_id = websocket.query_params.get("node_id", "local")
+    logger.info(f"Audio WS params: source={ws_source}, node_id={ws_node_id}")
+
     base_on_final_sentence, cancel_realtime_nlp = await _create_nlp_handler(
         websocket=websocket,
         logger=logger,
@@ -478,6 +502,8 @@ async def _handle_transcribe_ws(*, websocket: WebSocket, logger, asr_client, aud
         base_on_final_sentence=base_on_final_sentence,
         logger=logger,
         task_set=state["task_set"],
+        ws_source=ws_source,
+        ws_node_id=ws_node_id,
     )
 
     async def stop_segment_task():

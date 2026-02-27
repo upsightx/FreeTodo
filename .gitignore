@@ -74,6 +74,7 @@ FreeTodo/
 
 # Local startup scripts
 scripts/start-all.bat
+scripts/local-env.bat
 
 # Build
 dist-backend/

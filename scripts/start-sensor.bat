@@ -1,0 +1,90 @@
+@echo off
+chcp 65001 >nul 2>nul
+REM ================================================================
+REM  LifeTrace Sensor Node - One-click Startup
+REM  Start perception daemon + open browser to Center
+REM ================================================================
+setlocal enabledelayedexpansion
+
+cd /d "%~dp0\.."
+set "REPO_ROOT=%cd%"
+
+REM ================================================================
+REM  Load local config (if exists)
+REM ================================================================
+if exist "%~dp0local-env.bat" (
+    call "%~dp0local-env.bat"
+)
+
+REM Fallback defaults (override in scripts/local-env.bat)
+if "%CPOLAR_BACKEND_DOMAIN%"=="" set "CPOLAR_BACKEND_DOMAIN=YOUR_BACKEND_SUBDOMAIN"
+if "%CPOLAR_FRONTEND_DOMAIN%"=="" set "CPOLAR_FRONTEND_DOMAIN=YOUR_FRONTEND_SUBDOMAIN"
+if "%CPOLAR_DOMAIN_SUFFIX%"=="" set "CPOLAR_DOMAIN_SUFFIX=cpolar.cn"
+
+set "CENTER_URL=https://%CPOLAR_BACKEND_DOMAIN%.%CPOLAR_DOMAIN_SUFFIX%"
+set "CENTER_FRONTEND_URL=https://%CPOLAR_FRONTEND_DOMAIN%.%CPOLAR_DOMAIN_SUFFIX%"
+
+REM Node ID (defaults to computer name)
+set "NODE_ID=%COMPUTERNAME%"
+
+REM ================================================================
+REM  Validate config
+REM ================================================================
+if "%CPOLAR_BACKEND_DOMAIN%"=="YOUR_BACKEND_SUBDOMAIN" (
+    echo [ERROR] Please create scripts\local-env.bat with your cpolar subdomains.
+    echo.
+    pause
+    exit /b 1
+)
+
+REM ================================================================
+REM  Startup
+REM ================================================================
+
+echo ================================================
+echo    LifeTrace Sensor Node Startup
+echo ================================================
+echo.
+echo Center backend:  %CENTER_URL%
+echo Center frontend: %CENTER_FRONTEND_URL%
+echo Node ID:         %NODE_ID%
+echo.
+
+REM Check Center connectivity
+echo Checking Center connectivity...
+curl -s -o nul -w "%%{http_code}" "%CENTER_URL%/api/health" > "%TEMP%\lt_health.tmp" 2>nul
+set /p HEALTH_CODE=<"%TEMP%\lt_health.tmp"
+del "%TEMP%\lt_health.tmp" 2>nul
+
+if "%HEALTH_CODE%"=="200" (
+    echo Center connection OK
+) else (
+    echo [WARNING] Center not reachable (HTTP %HEALTH_CODE%)
+    echo Sensor will keep retrying...
+)
+echo.
+
+REM Build sensor command
+set "SENSOR_CMD=uv run python -m lifetrace.sensor --center-url %CENTER_URL% --node-id %NODE_ID%"
+
+REM Start perception daemon
+echo [1/2] Starting perception daemon...
+start "LifeTrace Sensor" cmd /k "pushd %REPO_ROOT% && %SENSOR_CMD%"
+
+REM Open browser
+echo [2/2] Opening browser...
+timeout /t 2 /nobreak >nul
+start "" "%CENTER_FRONTEND_URL%"
+
+echo.
+echo ================================================
+echo    Sensor Node Started
+echo ================================================
+echo.
+echo Perception daemon: screenshot + OCR + proactive OCR = %CENTER_URL%
+echo Browser opened:    %CENTER_FRONTEND_URL%
+echo.
+echo Tip: close the "LifeTrace Sensor" window to stop.
+echo.
+pause
+endlocal
