@@ -27,20 +27,31 @@ logger = get_logger()
 # Lazy singletons for heavy components (created on first use)
 # ---------------------------------------------------------------------------
 
-_mss_instance = None
 _window_capture = None
 _app_router = None
 _roi_extractor = None
 _ocr_engine = None
 
 
-def _get_mss():
-    global _mss_instance  # noqa: PLW0603
-    if _mss_instance is None:
-        import mss  # noqa: PLC0415
+def _mss_grab_in_thread() -> np.ndarray | None:
+    """Capture primary monitor inside the calling thread.
 
-        _mss_instance = mss.mss()
-    return _mss_instance
+    mss uses thread-local Win32 DC handles, so we must create and
+    close the instance within the same thread.
+    """
+    import mss  # noqa: PLC0415
+
+    try:
+        with mss.mss() as sct:
+            monitor = sct.monitors[1]
+            shot = sct.grab(monitor)
+            arr = np.array(shot)
+            if arr.shape[2] == BGRA_CHANNELS:
+                arr = arr[:, :, :3]
+            return arr[:, :, ::-1].copy()
+    except Exception as exc:
+        logger.error(f"mss screenshot failed: {exc}")
+        return None
 
 
 def _get_window_capture():
@@ -96,22 +107,6 @@ _MIN_OCR_CONFIDENCE = 0.8
 _MIN_TEXT_LEN = 5
 _BLANK_IMAGE_STD_THRESHOLD = 5.0
 _MIN_ROI_AREA_RATIO = 0.10
-
-
-def _mss_grab_active_screen() -> np.ndarray | None:
-    """Capture the primary monitor as an RGB numpy array."""
-    try:
-        sct = _get_mss()
-        monitor = sct.monitors[1]
-        shot = sct.grab(monitor)
-        arr = np.array(shot)
-        if arr.shape[2] == BGRA_CHANNELS:
-            arr = arr[:, :, :3]
-        arr = arr[:, :, ::-1].copy()
-        return arr
-    except Exception as exc:
-        logger.error(f"mss 截屏失败: {exc}")
-        return None
 
 
 def _text_hash(text: str) -> str:
@@ -181,7 +176,7 @@ class SensorDaemon:
 
     async def run_screenshot_ocr_cycle(self) -> None:
         """截取主屏幕 → OCR → 生成 PerceptionEvent → POST 到 Center。"""
-        image = await asyncio.to_thread(_mss_grab_active_screen)
+        image = await asyncio.to_thread(_mss_grab_in_thread)
         if image is None:
             return
 
