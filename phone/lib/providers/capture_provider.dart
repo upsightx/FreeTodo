@@ -35,6 +35,7 @@ import 'package:omi/services/services.dart';
 import 'package:omi/services/sockets/transcription_service.dart';
 import 'package:omi/services/wals.dart';
 import 'package:omi/utils/alerts/app_snackbar.dart';
+import 'package:omi/utils/audio/ios_background_keepalive.dart';
 import 'package:omi/utils/analytics/mixpanel.dart';
 import 'package:omi/utils/debug_log_manager.dart';
 import 'package:omi/utils/enums.dart';
@@ -210,10 +211,17 @@ class CaptureProvider extends ChangeNotifier
   }
 
   void _handleAppBackgrounded(AppLifecycleState state) {
+    final isRecording = recordingState == RecordingState.deviceRecord ||
+        recordingState == RecordingState.record;
+
     Logger.debug('[Background] App state → ${state.name}, '
         'recording=${recordingState.name}, '
         'device=${_recordingDevice?.id ?? "none"}, '
         'socket=${_socket?.state == SocketServiceState.connected ? "connected" : "disconnected"}');
+
+    if (isRecording && !_isPaused && Platform.isIOS) {
+      IosBackgroundKeepAlive.instance.start();
+    }
   }
 
   void _handleAppResumed() async {
@@ -244,6 +252,10 @@ class CaptureProvider extends ChangeNotifier
   }
 
   Future<void> _handleMobileResumed() async {
+    if (Platform.isIOS) {
+      IosBackgroundKeepAlive.instance.stop();
+    }
+
     final isDeviceRecording = recordingState == RecordingState.deviceRecord;
     final isPhoneRecording = recordingState == RecordingState.record;
     if (!isDeviceRecording && !isPhoneRecording) return;
