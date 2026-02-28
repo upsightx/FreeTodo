@@ -19,8 +19,11 @@ import uuid
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 
+from lifetrace.perception.manager import try_get_perception_manager
+from lifetrace.perception.models import Modality, PerceptionEvent, SourceType
 from lifetrace.routers.omi_compat.auth import verify_ws_token
 from lifetrace.util.logging_config import get_logger
+from lifetrace.util.time_utils import get_utc_now
 
 logger = get_logger()
 
@@ -204,6 +207,23 @@ async def omi_listen(  # noqa: C901, PLR0913, PLR0915
                 await websocket.send_json(_transcript_event(session_id, [seg]))
         except Exception:
             pass
+
+        if is_final and text.strip():
+            mgr = try_get_perception_manager()
+            if mgr is not None:
+                event = PerceptionEvent(
+                    timestamp=get_utc_now(),
+                    source=SourceType.MIC_HARDWARE,
+                    modality=Modality.AUDIO,
+                    content_text=text.strip(),
+                    metadata={
+                        "session_id": session_id,
+                        "uid": uid,
+                        "source_endpoint": "/v4/listen",
+                    },
+                    priority=2,
+                )
+                await mgr.publish_event(event)
 
     result_queue: asyncio.Queue[tuple[str, bool]] = asyncio.Queue()
 

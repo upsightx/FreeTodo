@@ -71,7 +71,12 @@ whisper_flutter_new/
 /android/app/google-services.json
 /ios/Runner/GoogleService-Info.plist
 
-# Generated .g.dart files — normally ignored, but we force-track the
-# stubs needed to compile without running build_runner.
-# Use `git add -f <file>` to add new ones if needed.
+# Kotlin compiler cache
+/android/.kotlin/
+
+# Generated .g.dart files (build_runner output)
+# Run `dart run build_runner build` to regenerate after clone.
 *.g.dart
+
+# Generated .gen.dart files (flutter_gen output)
+*.gen.dart
