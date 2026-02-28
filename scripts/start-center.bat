@@ -21,7 +21,11 @@ if exist "%~dp0local-env.bat" (
 REM Fallback defaults (override in scripts/local-env.bat)
 if "%CPOLAR_BACKEND_DOMAIN%"=="" set "CPOLAR_BACKEND_DOMAIN=YOUR_BACKEND_SUBDOMAIN"
 if "%CPOLAR_FRONTEND_DOMAIN%"=="" set "CPOLAR_FRONTEND_DOMAIN=YOUR_FRONTEND_SUBDOMAIN"
-if "%CPOLAR_DOMAIN_SUFFIX%"=="" set "CPOLAR_DOMAIN_SUFFIX=cpolar.cn"
+REM Support per-tunnel suffix (cpolar may assign .cpolar.cn and .cpolar.top to different tunnels)
+if "%CPOLAR_BACKEND_SUFFIX%"=="" if "%CPOLAR_DOMAIN_SUFFIX%"=="" set "CPOLAR_BACKEND_SUFFIX=cpolar.cn"
+if "%CPOLAR_FRONTEND_SUFFIX%"=="" if "%CPOLAR_DOMAIN_SUFFIX%"=="" set "CPOLAR_FRONTEND_SUFFIX=cpolar.cn"
+if "%CPOLAR_BACKEND_SUFFIX%"=="" set "CPOLAR_BACKEND_SUFFIX=%CPOLAR_DOMAIN_SUFFIX%"
+if "%CPOLAR_FRONTEND_SUFFIX%"=="" set "CPOLAR_FRONTEND_SUFFIX=%CPOLAR_DOMAIN_SUFFIX%"
 
 REM Ports
 set "BACKEND_PORT=8001"
@@ -30,8 +34,8 @@ set "FRONTEND_PORT=3001"
 REM ================================================================
 REM  Derive public URLs
 REM ================================================================
-set "BACKEND_PUBLIC_URL=https://%CPOLAR_BACKEND_DOMAIN%.%CPOLAR_DOMAIN_SUFFIX%"
-set "FRONTEND_PUBLIC_URL=https://%CPOLAR_FRONTEND_DOMAIN%.%CPOLAR_DOMAIN_SUFFIX%"
+set "BACKEND_PUBLIC_URL=https://%CPOLAR_BACKEND_DOMAIN%.%CPOLAR_BACKEND_SUFFIX%"
+set "FRONTEND_PUBLIC_URL=https://%CPOLAR_FRONTEND_DOMAIN%.%CPOLAR_FRONTEND_SUFFIX%"
 
 REM ================================================================
 REM  Validate config
