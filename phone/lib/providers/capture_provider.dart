@@ -173,11 +173,11 @@ class CaptureProvider extends ChangeNotifier
       onConnectionStateChanged(isConnected);
     });
 
+    _initializeAppLifecycleListener();
+
     if (PlatformService.isDesktop) {
       _screenCaptureChannel = const MethodChannel('screenCapturePlatform');
       _controlBarChannel = const MethodChannel('com.omi/floating_control_bar');
-
-      _initializeAppLifecycleListener();
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _controlBarChannel.setMethodCallHandler(_handleFloatingControlBarMethodCall);
@@ -204,12 +204,28 @@ class CaptureProvider extends ChangeNotifier
 
     if (state == AppLifecycleState.resumed) {
       _handleAppResumed();
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _handleAppBackgrounded(state);
     }
   }
 
-  void _handleAppResumed() async {
-    if (!PlatformService.isDesktop || !_shouldAutoResumeAfterWake) return;
+  void _handleAppBackgrounded(AppLifecycleState state) {
+    Logger.debug('[Background] App state → ${state.name}, '
+        'recording=${recordingState.name}, '
+        'device=${_recordingDevice?.id ?? "none"}, '
+        'socket=${_socket?.state == SocketServiceState.connected ? "connected" : "disconnected"}');
+  }
 
+  void _handleAppResumed() async {
+    if (PlatformService.isDesktop) {
+      await _handleDesktopResumed();
+      return;
+    }
+    await _handleMobileResumed();
+  }
+
+  Future<void> _handleDesktopResumed() async {
+    if (!_shouldAutoResumeAfterWake) return;
     try {
       final nativeRecording = await _screenCaptureChannel.invokeMethod('isRecording') ?? false;
 
@@ -223,7 +239,38 @@ class CaptureProvider extends ChangeNotifier
         await streamSystemAudioRecording();
       }
     } catch (e) {
-      Logger.debug('[AutoRecord] Resume error: $e');
+      Logger.debug('[AutoRecord] Desktop resume error: $e');
+    }
+  }
+
+  Future<void> _handleMobileResumed() async {
+    final isDeviceRecording = recordingState == RecordingState.deviceRecord;
+    final isPhoneRecording = recordingState == RecordingState.record;
+    if (!isDeviceRecording && !isPhoneRecording) return;
+    if (_isPaused) return;
+
+    Logger.debug('[MobileResume] Checking connection health...');
+
+    final socketAlive = _socket?.state == SocketServiceState.connected;
+
+    if (!socketAlive) {
+      Logger.debug('[MobileResume] WebSocket dead, triggering reconnect');
+      _startKeepAliveServices();
+    }
+
+    if (isDeviceRecording && _recordingDevice != null) {
+      try {
+        final connection = await ServiceManager.instance().device.ensureConnection(_recordingDevice!.id);
+        if (connection == null) {
+          Logger.debug('[MobileResume] BLE device lost, attempting full re-stream');
+          await _initiateDeviceAudioStreaming();
+        } else if (_bleBytesStream == null) {
+          Logger.debug('[MobileResume] BLE audio stream lost, restarting');
+          await _initiateDeviceAudioStreaming();
+        }
+      } catch (e) {
+        Logger.debug('[MobileResume] Reconnect error: $e');
+      }
     }
   }
 
