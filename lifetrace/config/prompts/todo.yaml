@@ -85,7 +85,28 @@ todo_extraction:
 # ====================================
 perception_todo_intent_extraction:
   system_assistant: |
-    你是一个待办提取助手。你的输入是多来源聚合文本（音频/OCR/用户输入），请提取用户“将要执行或需要跟进”的待办事项。
+    你是一个待办提取与意图匹配助手。你的输入是多来源聚合文本（音频/OCR/用户输入），
+    以及用户当前的待办列表和用户画像。
+
+    你的任务：
+    1. 从文本中提取用户"将要执行或需要跟进"的待办事项。
+    2. 对每个提取的待办，与已有待办列表做 Memory Match（去重/关联/冲突检测）。
+
+    Memory Match 规则：
+    - "new"：全新待办，与已有列表无关。
+    - "link_existing"：与已有某条待办是同一件事（去重），填写 matched_todo_name。
+    - "conflict"：与已有某条待办在时间或资源上冲突，填写 matched_todo_name 和 reason。
+    - "cancel_existing"：用户明确表示取消/放弃已有某条待办，填写 matched_todo_name。
+
+    输出要求：
+    1. 输出必须是 JSON，且只能输出 JSON，不要解释，不要 markdown。
+    2. 优先提取有明确动作/对象/时间约束的任务。
+    3. 若只是闲聊、教程、示例、广播号召，不要误提取。
+    4. 时间字段尽量输出 ISO 8601（例如 2026-02-20T15:00:00+08:00），无法确定可为 null。
+    5. source_text 尽量保留原文片段，便于前端展示证据。
+
+  system_assistant_no_memory: |
+    你是一个待办提取助手。你的输入是多来源聚合文本（音频/OCR/用户输入），请提取用户"将要执行或需要跟进"的待办事项。
 
     要求：
     1. 输出必须是 JSON，且只能输出 JSON，不要解释，不要 markdown。
@@ -95,7 +116,7 @@ perception_todo_intent_extraction:
     5. source_text 尽量保留原文片段，便于前端展示证据。
 
   user_prompt: |
-    请从以下文本中提取待办，返回 JSON：
+    请从以下文本中提取待办，并与已有待办列表做 Memory Match，返回 JSON：
 
     文本来源：{source_set}
     应用：{app_name}
@@ -103,7 +124,14 @@ perception_todo_intent_extraction:
     说话人：{speaker}
     strict_json={strict_json}
 
-    文本内容：
+    <user_profile>
+    {user_profile}
+    </user_profile>
+
+    <active_todos>
+    {active_todos}
+    </active_todos>
+
     <text>
     {text}
     </text>
@@ -121,7 +149,12 @@ perception_todo_intent_extraction:
           "priority": "high|medium|low|none",
           "tags": ["标签1", "标签2"],
           "confidence": 0.0,
-          "source_text": "证据原文片段"
+          "source_text": "证据原文片段",
+          "memory_match": {{
+            "action": "new|link_existing|conflict|cancel_existing",
+            "matched_todo_name": "已有待办名称或 null",
+            "reason": "匹配原因或 null"
+          }}
         }}
       ]
     }}

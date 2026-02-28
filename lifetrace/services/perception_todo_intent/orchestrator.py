@@ -16,11 +16,14 @@ from lifetrace.services.perception_todo_intent.extractor import TodoIntentExtrac
 from lifetrace.services.perception_todo_intent.gate import TodoIntentGate
 from lifetrace.services.perception_todo_intent.integration import TodoIntentIntegrationService
 from lifetrace.services.perception_todo_intent.normalizer import TodoIntentPostProcessor
+from lifetrace.util.logging_config import get_logger
 from lifetrace.util.settings import settings
 from lifetrace.util.time_utils import get_utc_now
 
 if TYPE_CHECKING:
     from lifetrace.perception.models import PerceptionEvent
+
+logger = get_logger()
 
 
 class TodoIntentOrchestrator:
@@ -234,6 +237,27 @@ class TodoIntentOrchestrator:
         context = self.build_context_from_event(event)
         return await self.process_context(context)
 
+    @staticmethod
+    def _load_memory_context() -> tuple[str, str]:
+        """Load L3 active todos snapshot and L4 user profile from Memory.
+
+        Returns (active_todos, user_profile). Both default to empty string
+        if MemoryManager is unavailable.
+        """
+        try:
+            from lifetrace.memory.manager import try_get_memory_manager  # noqa: PLC0415
+
+            mgr = try_get_memory_manager()
+            if mgr is None:
+                return "", ""
+            reader = mgr.reader
+            active_todos = reader.get_active_todos_snapshot()
+            user_profile = reader.get_user_profile()
+            return active_todos, user_profile
+        except Exception:
+            logger.debug("Failed to load memory context for intent extraction", exc_info=True)
+            return "", ""
+
     async def process_context(self, context: TodoIntentContext) -> TodoIntentProcessingRecord:
         self._counters["contexts_total"] += 1
         dedupe_hit = False
@@ -259,12 +283,22 @@ class TodoIntentOrchestrator:
                 gate_decision=gate_decision,
             )
 
+        active_todos, user_profile = self._load_memory_context()
+
         try:
-            candidates = await self._extractor.extract(context)
+            candidates = await self._extractor.extract(
+                context,
+                active_todos=active_todos,
+                user_profile=user_profile,
+            )
         except Exception:
             try:
-                # Retry once with stricter JSON instruction.
-                candidates = await self._extractor.extract(context, strict_json=True)
+                candidates = await self._extractor.extract(
+                    context,
+                    strict_json=True,
+                    active_todos=active_todos,
+                    user_profile=user_profile,
+                )
             except Exception as exc:
                 return self._build_record(
                     context=context,

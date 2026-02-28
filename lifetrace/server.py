@@ -38,22 +38,21 @@ async def lifespan(app: FastAPI):
     # 启动逻辑
     logger.info("Web服务器启动")
 
-    # 初始化 Perception Stream（轻量内存总线，副作用可控）
+    # 初始化 Memory 模块（先创建 deduper，暂不订阅 Perception Stream）
+    memory_config = settings.get("memory", {}) or {}
+    if memory_config.get("enabled", True):
+        app.state.memory_manager = await init_memory_manager(config=memory_config)
+
+    # 初始化 Perception Stream（subscriber 可通过 MemoryDeduper 订阅 L1 去重流）
     perception_config = settings.get("perception", {}) or {}
     if perception_config.get("enabled", True):
         app.state.perception_manager = await init_perception_manager(perception_config)
 
-    # 初始化 Memory 模块（订阅 Perception Stream）
-    memory_config = settings.get("memory", {}) or {}
-    if memory_config.get("enabled", True):
-        perception_stream = None
-        pm = getattr(app.state, "perception_manager", None)
-        if pm is not None:
-            perception_stream = pm.stream
-        app.state.memory_manager = await init_memory_manager(
-            config=memory_config,
-            perception_stream=perception_stream,
-        )
+    # 将 Memory 订阅到 Perception Stream（L0 写入 + L1 去重）
+    mm = getattr(app.state, "memory_manager", None)
+    pm = getattr(app.state, "perception_manager", None)
+    if mm is not None and pm is not None:
+        await mm.start(pm.stream)
 
     # 初始化任务管理器
     manager = get_job_manager()

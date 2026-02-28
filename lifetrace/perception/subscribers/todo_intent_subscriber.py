@@ -24,7 +24,11 @@ logger = get_logger()
 
 
 class TodoIntentSubscriber:
-    """PerceptionStream subscriber with event batching + processing worker pool."""
+    """Subscriber for L1 deduped stream (or raw PerceptionStream as fallback).
+
+    Receives PerceptionEvents, batches them within an aggregation window,
+    and dispatches to the TodoIntentOrchestrator worker pool.
+    """
 
     @staticmethod
     def _modality_sort_key(modality: str) -> int:
@@ -77,28 +81,48 @@ class TodoIntentSubscriber:
         self._processed_total = 0
         self._failed_total = 0
 
-    async def start(self, stream) -> None:
+    async def start(self, stream, *, deduper=None) -> None:
+        """Start the subscriber.
+
+        If *deduper* is provided (a ``MemoryDeduper`` instance), subscribe to
+        the L1 deduped stream instead of the raw PerceptionStream.  This avoids
+        processing duplicate events that have already been filtered out by the
+        Memory deduplication layer.
+
+        Falls back to subscribing to *stream* directly when no deduper is given.
+        """
         if not self._enabled:
             return
         if self._batcher_task is not None and not self._batcher_task.done():
             return
-        stream.subscribe(self.on_event)
+
+        self._event_source = deduper if deduper is not None else stream
+        self._event_source.subscribe(self.on_event)
+
+        source_label = "MemoryDeduper L1" if deduper is not None else "PerceptionStream"
         self._batcher_task = asyncio.create_task(self._batcher_loop())
         self._worker_tasks = [
             asyncio.create_task(self._worker_loop(worker_id=index + 1))
             for index in range(self._processing_workers)
         ]
         logger.info(
-            "TodoIntentSubscriber started: "
-            f"event_queue_maxsize={self._event_queue.maxsize} "
-            f"context_queue_maxsize={self._context_queue.maxsize} "
-            f"aggregation_window_seconds={self._aggregation_window_seconds} "
-            f"max_context_chars={self._max_context_chars} "
-            f"processing_workers={self._processing_workers}"
+            "TodoIntentSubscriber started (source=%s): "
+            "event_queue_maxsize=%d context_queue_maxsize=%d "
+            "aggregation_window_seconds=%.1f max_context_chars=%d "
+            "processing_workers=%d",
+            source_label,
+            self._event_queue.maxsize,
+            self._context_queue.maxsize,
+            self._aggregation_window_seconds,
+            self._max_context_chars,
+            self._processing_workers,
         )
 
-    async def stop(self, stream) -> None:
-        stream.unsubscribe(self.on_event)
+    async def stop(self, stream=None) -> None:
+        source = getattr(self, "_event_source", stream)
+        if source is not None:
+            source.unsubscribe(self.on_event)
+        self._event_source = None
         tasks: list[asyncio.Task[None]] = []
         if self._batcher_task is not None:
             tasks.append(self._batcher_task)

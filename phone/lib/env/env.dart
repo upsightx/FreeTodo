@@ -38,7 +38,7 @@ abstract class Env {
   /// Can be overridden via Env.overrideAgentProxyWsUrl() for local testing.
   static String get agentProxyWsUrl {
     if (_agentProxyWsUrlOverride != null) return _agentProxyWsUrlOverride!;
-    final base = apiBaseUrl ?? 'https://tybbackend.cpolar.top';
+    final base = apiBaseUrl ?? 'https://tybbackend.cpolar.cn';
     final host = Uri.parse(base).host;
     return 'wss://$host/v1/agent/ws';
   }

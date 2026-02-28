@@ -8,11 +8,19 @@ from pydantic import BaseModel, Field
 
 
 class MemoryLevel(str, Enum):
-    RAW = "raw"
-    EVENT = "event"
-    ACTIVITY = "activity"
-    SUMMARY = "summary"
-    ENTITY = "entity"
+    RAW = "raw"             # L0 原始感知流
+    DEDUPED = "deduped"     # L1 去重流
+    EVENT = "event"         # L2 事件摘要
+    TASK = "task"           # L3 任务（与 Todo 对应，远期）
+    PROFILE = "profile"     # L4 用户画像（远期）
+
+
+class DedupeVerdict(str, Enum):
+    """L1 去重判定结果。"""
+
+    DUPLICATE = "duplicate"
+    INCREMENTAL = "incremental"
+    NEW = "new"
 
 
 class MemoryEntry(BaseModel):
@@ -28,7 +36,7 @@ class MemoryEntry(BaseModel):
 
 
 class EventSummary(BaseModel):
-    """L1 event summary produced by compressor."""
+    """L2 event summary produced by compressor."""
 
     title: str
     time_start: datetime

@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from lifetrace.memory.compressor import MemoryCompressor
+from lifetrace.memory.deduper import MemoryDeduper
+from lifetrace.memory.profile_builder import ProfileBuilder
 from lifetrace.memory.reader import MemoryReader
+from lifetrace.memory.task_linker import TaskLinker
 from lifetrace.memory.writer import MemoryWriter
 from lifetrace.util.base_paths import get_user_data_dir
 from lifetrace.util.logging_config import get_logger
@@ -18,7 +22,7 @@ logger = get_logger()
 
 
 class MemoryManager:
-    """Manage Memory module lifecycle: writer + compressor + reader."""
+    """Manage Memory module lifecycle: writer + deduper + compressor + task_linker + profile_builder + reader."""
 
     def __init__(self, config: dict | None = None):
         config = dict(config or {})
@@ -31,50 +35,165 @@ class MemoryManager:
         self._memory_dir.mkdir(parents=True, exist_ok=True)
 
         self.writer = MemoryWriter(self._memory_dir)
+        self.deduper: MemoryDeduper | None = None
         self.reader = MemoryReader(self._memory_dir)
         self.compressor: MemoryCompressor | None = None
+        self.task_linker: TaskLinker | None = None
+        self.profile_builder: ProfileBuilder | None = None
 
         self._config = config
         self._subscribed = False
+        self._profile_task: asyncio.Task | None = None
 
         if config.get("auto_compress", True):
-            self._init_compressor()
+            self._init_llm_components()
 
-    def _init_compressor(self) -> None:
+    def _init_llm_components(self) -> None:
+        """Initialize LLM-dependent components."""
         try:
             from lifetrace.llm.llm_client import LLMClient  # noqa: PLC0415
 
             llm = LLMClient()
-            if llm.is_available():
-                self.compressor = MemoryCompressor(self._memory_dir, llm)
-                logger.info("MemoryCompressor initialized")
-            else:
-                logger.warning("LLM not available — MemoryCompressor disabled")
+            if not llm.is_available():
+                logger.warning("LLM not available — LLM-dependent memory components disabled")
+                return
+
+            # L1 Deduper
+            dedup_cfg = self._config.get("dedup", {}) or {}
+            self.deduper = MemoryDeduper(
+                self._memory_dir,
+                llm,
+                model=dedup_cfg.get("model", "qwen-flash"),
+                window_seconds=dedup_cfg.get("window_seconds", 10.0),
+                window_max_items=dedup_cfg.get("window_max_items", 10),
+            )
+            logger.info("MemoryDeduper initialized")
+
+            # L2 Compressor
+            self.compressor = MemoryCompressor(self._memory_dir, llm)
+            logger.info("MemoryCompressor initialized")
+
+            # L3 TaskLinker
+            linker_cfg = self._config.get("task_linker", {}) or {}
+            self.task_linker = TaskLinker(
+                self._memory_dir,
+                llm,
+                model=linker_cfg.get("model", "qwen-flash"),
+            )
+            logger.info("TaskLinker initialized")
+
+            # L4 ProfileBuilder
+            profile_cfg = self._config.get("profile", {}) or {}
+            profile_model = profile_cfg.get("model") or None
+            self.profile_builder = ProfileBuilder(
+                self._memory_dir,
+                llm,
+                model=profile_model,
+            )
+            logger.info("ProfileBuilder initialized")
+
         except Exception:
-            logger.exception("Failed to initialize MemoryCompressor")
+            logger.exception("Failed to initialize LLM-dependent memory components")
+
+    # ------------------------------------------------------------------
+    # Lifecycle
+    # ------------------------------------------------------------------
 
     async def start(self, perception_stream: PerceptionStream | None = None) -> None:
         """Start the memory module, optionally subscribing to perception stream."""
         if perception_stream and not self._subscribed:
             perception_stream.subscribe(self.writer.on_event)
+            if self.deduper:
+                perception_stream.subscribe(self.deduper.on_event)
+                logger.info("MemoryDeduper subscribed to PerceptionStream")
             self._subscribed = True
             logger.info("MemoryWriter subscribed to PerceptionStream")
 
+        if self.profile_builder and self._profile_task is None:
+            profile_cfg = self._config.get("profile", {}) or {}
+            interval = profile_cfg.get("interval_seconds", 3600)
+            self._profile_task = asyncio.create_task(
+                self._profile_loop(interval),
+                name="memory-profile-loop",
+            )
+            logger.info("ProfileBuilder periodic task started (interval=%ds)", interval)
+
     async def stop(self, perception_stream: PerceptionStream | None = None) -> None:
         """Stop the memory module, unsubscribing from perception stream."""
+        if self._profile_task and not self._profile_task.done():
+            self._profile_task.cancel()
+            try:
+                await self._profile_task
+            except asyncio.CancelledError:
+                pass
+            self._profile_task = None
+            logger.info("ProfileBuilder periodic task stopped")
+
         if perception_stream and self._subscribed:
             perception_stream.unsubscribe(self.writer.on_event)
+            if self.deduper:
+                perception_stream.unsubscribe(self.deduper.on_event)
+                logger.info("MemoryDeduper unsubscribed from PerceptionStream")
             self._subscribed = False
             logger.info("MemoryWriter unsubscribed from PerceptionStream")
 
+    # ------------------------------------------------------------------
+    # Periodic profile update loop
+    # ------------------------------------------------------------------
+
+    async def _profile_loop(self, interval: int) -> None:
+        """Background loop: update L4 user profile every *interval* seconds."""
+        await asyncio.sleep(30)
+        while True:
+            try:
+                await self.profile_builder.update()  # type: ignore[union-attr]
+            except Exception:
+                logger.exception("ProfileBuilder periodic update failed")
+            await asyncio.sleep(interval)
+
+    # ------------------------------------------------------------------
+    # Manual triggers
+    # ------------------------------------------------------------------
+
+    async def compress_and_link(self, date_str: str) -> dict:
+        """Run L2 compression then L3 task linking for a given date.
+
+        Returns a summary dict of what happened.
+        """
+        result: dict = {"date": date_str, "compressed": False, "linked": 0}
+
+        if self.compressor:
+            path = await self.compressor.compress_day(date_str)
+            result["compressed"] = path is not None
+
+        if self.task_linker and result["compressed"]:
+            linked = await self.task_linker.link_day(date_str)
+            result["linked"] = linked
+
+        return result
+
+    # ------------------------------------------------------------------
+    # Status
+    # ------------------------------------------------------------------
+
     def get_status(self) -> dict:
-        return {
+        status: dict = {
             "memory_dir": str(self._memory_dir),
             "subscribed": self._subscribed,
+            "deduper_available": self.deduper is not None,
             "compressor_available": self.compressor is not None,
+            "task_linker_available": self.task_linker is not None,
+            "profile_builder_available": self.profile_builder is not None,
             "writer": self.writer.get_stats(),
             "available_dates": self.reader.list_available_dates()[:10],
         }
+        if self.deduper:
+            status["deduper"] = self.deduper.get_stats()
+        if self.task_linker:
+            status["task_linker"] = self.task_linker.get_stats()
+        if self.profile_builder:
+            status["profile_builder"] = self.profile_builder.get_stats()
+        return status
 
     @property
     def memory_dir(self) -> Path:

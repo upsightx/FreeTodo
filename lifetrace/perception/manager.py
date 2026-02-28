@@ -385,9 +385,25 @@ class PerceptionStreamManager:
             processing_queue_maxsize=processing_queue_maxsize,
             enabled=True,
         )
-        await subscriber.start(self.stream)
+
+        deduper = self._resolve_memory_deduper()
+        await subscriber.start(self.stream, deduper=deduper)
         self._todo_intent_subscriber = subscriber
-        logger.info("Perception todo-intent subscriber initialized")
+        source_label = "L1 deduped stream" if deduper else "raw PerceptionStream"
+        logger.info("Perception todo-intent subscriber initialized (source=%s)", source_label)
+
+    @staticmethod
+    def _resolve_memory_deduper():
+        """Try to obtain the MemoryDeduper for L1 subscription."""
+        try:
+            from lifetrace.memory.manager import try_get_memory_manager  # noqa: PLC0415
+
+            mgr = try_get_memory_manager()
+            if mgr is not None and mgr.deduper is not None:
+                return mgr.deduper
+        except Exception:
+            pass
+        return None
 
 
 _manager: PerceptionStreamManager | None = None

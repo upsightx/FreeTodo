@@ -9,6 +9,23 @@ from pydantic import BaseModel, Field
 from lifetrace.perception.models import SourceType  # noqa: TC001
 
 
+class MemoryMatchAction(str, Enum):
+    """How a newly extracted intent relates to existing todos in Memory."""
+
+    NEW = "new"
+    LINK_EXISTING = "link_existing"
+    CONFLICT = "conflict"
+    CANCEL_EXISTING = "cancel_existing"
+
+
+class MemoryMatch(BaseModel):
+    """Result of matching a candidate against the existing Todo snapshot."""
+
+    action: MemoryMatchAction = MemoryMatchAction.NEW
+    matched_todo_name: str | None = None
+    reason: str | None = None
+
+
 class IntegrationAction(str, Enum):
     CREATED = "created"
     UPDATED = "updated"
@@ -53,6 +70,7 @@ class ExtractedTodoCandidate(BaseModel):
     confidence: float = 0.0
     source_text: str | None = None
     source_event_ids: list[str] = Field(default_factory=list)
+    memory_match: MemoryMatch = Field(default_factory=MemoryMatch)
 
 
 class TodoIntegrationResult(BaseModel):

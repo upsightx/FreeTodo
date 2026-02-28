@@ -228,6 +228,17 @@ settings = Dynaconf(
             default=500,
             is_type_of=int,
         ),
+        # Memory 模块配置
+        Validator("memory.enabled", default=True, is_type_of=bool),
+        Validator("memory.auto_compress", default=True, is_type_of=bool),
+        Validator("memory.dedup.model", default="qwen-flash"),
+        Validator("memory.dedup.temperature", default=0.0),
+        Validator("memory.dedup.max_tokens", default=100, is_type_of=int),
+        Validator("memory.dedup.window_seconds", default=10.0),
+        Validator("memory.dedup.window_max_items", default=10, is_type_of=int),
+        Validator("memory.task_linker.model", default="qwen-flash"),
+        Validator("memory.profile.model", default=""),
+        Validator("memory.profile.interval_seconds", default=3600, is_type_of=int),
     ],
 )
 

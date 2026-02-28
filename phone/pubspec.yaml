@@ -185,6 +185,7 @@ flutter:
     - assets/integration_app_logos/
     - assets/competitor-logos/
     - shorebird.yaml
+    - assets/audio/
     - assets/device_assets/frame_lib.lua
   fonts:
     - family: "SF Pro Display"
