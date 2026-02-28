@@ -8,7 +8,7 @@ The daemon periodically polls the Center for configuration updates
 user can control it from the frontend settings panel.
 
 Usage:
-    python -m lifetrace.sensor --center-url https://xxx.cpolar.top --node-id MY-PC
+    python -m lifetrace.sensor --center-url https://xxx.cpolar.cn --node-id MY-PC
 """
 
 from __future__ import annotations
@@ -494,7 +494,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--center-url",
         required=True,
-        help="Center node URL, e.g. https://xxx.cpolar.top",
+        help="Center node URL, e.g. https://xxx.cpolar.cn",
     )
     parser.add_argument(
         "--node-id",

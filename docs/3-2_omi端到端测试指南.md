@@ -8,7 +8,7 @@
 
 | 配置项 | 值 | 文件 |
 |--------|-----|------|
-| Center API 地址 | `https://tybbackend.cpolar.top/` | `phone/lib/env/lifetrace_env.dart` |
+| Center API 地址 | `https://tybbackend.cpolar.cn/` | `phone/lib/env/lifetrace_env.dart` |
 | LifeTrace 模式 | `true` | `phone/lib/main.dart` (`_kLifeTraceMode`) |
 | 认证 Token | `lifetrace-omi-compat-2026` | `lifetrace_env.dart` ↔ `config.yaml → omi_compat.token` |
 | 用户 UID | `lifetrace-user` | `lifetrace_env.dart` ↔ `config.yaml → omi_compat.uid` |
@@ -23,7 +23,7 @@
 | Python | 3.11+ |
 | Flutter | 3.24+ (Dart 3.5+) |
 | Center 后端 | `omi_compat` 模块已启用（`config.yaml → backend_modules.enabled` 含 `omi_compat`） |
-| cpolar | 后端隧道已配置（`tybbackend.cpolar.top` → `127.0.0.1:8001`） |
+| cpolar | 后端隧道已配置（`tybbackend.cpolar.cn` → `127.0.0.1:8001`） |
 | 手机 | Android 或 iOS，可访问公网 |
 | omi 硬件 | 可选，纯 App 测试可跳过 |
 
@@ -58,7 +58,7 @@ uv run python scripts/test_omi_compat.py http://127.0.0.1:8001
 通过 cpolar 公网测试（验证隧道通畅）：
 
 ```bash
-uv run python scripts/test_omi_compat.py https://tybbackend.cpolar.top
+uv run python scripts/test_omi_compat.py https://tybbackend.cpolar.cn
 ```
 
 预期 9 项全部 `[OK]`：
@@ -148,7 +148,7 @@ A: Token 不匹配。当前配置：
 
 ### Q: WebSocket 连接失败
 
-A: App 通过 cpolar HTTPS 访问，WebSocket URL 自动推导为 `wss://tybbackend.cpolar.top/v4/listen`。
+A: App 通过 cpolar HTTPS 访问，WebSocket URL 自动推导为 `wss://tybbackend.cpolar.cn/v4/listen`。
 确认 cpolar 隧道正在运行（`cpolar http 8001 -subdomain=tybbackend`）。
 
 ### Q: Opus 解码失败
@@ -171,11 +171,11 @@ A: 检查 `config.yaml` 中 DashScope ASR 的 API Key 是否配置且有效。
 │  omi 硬件    │  ─────────────>│  omi Flutter App │
 │  (Opus 音频) │                │  (LifeTrace 模式)│
 └──────────────┘                └────────┬────────┘
-                                         │ wss://tybbackend.cpolar.top/v4/listen
-                                         │ https://tybbackend.cpolar.top/v1/...
+                                         │ wss://tybbackend.cpolar.cn/v4/listen
+                                         │ https://tybbackend.cpolar.cn/v1/...
                                          ▼
                             ┌─── cpolar 隧道 ───┐
-                            │  tybbackend.cpolar.top  │
+                            │  tybbackend.cpolar.cn  │
                             └────────┬────────┘
                                      │ → 127.0.0.1:8001
                                      ▼

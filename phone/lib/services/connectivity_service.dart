@@ -18,7 +18,7 @@ class ConnectivityService {
       // (avoids connecting to Cloudflare/Google which are blocked in China)
       return [
         InternetCheckOption(
-          uri: Uri.parse(Env.apiBaseUrl ?? 'https://tybbackend.cpolar.top/'),
+          uri: Uri.parse(Env.apiBaseUrl ?? 'https://tybbackend.cpolar.cn/'),
           timeout: const Duration(seconds: 5),
         ),
         InternetCheckOption(
