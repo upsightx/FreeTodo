@@ -8,17 +8,21 @@ from lifetrace.schemas.perception_todo_intent import (
     ExtractedTodoCandidate,
     IntegrationAction,
     IntentGateDecision,
+    MemoryMatchAction,
     TodoIntegrationResult,
     TodoIntentContext,
 )
+from lifetrace.util.logging_config import get_logger
 from lifetrace.util.time_utils import get_utc_now
+
+logger = get_logger()
 
 _NON_WORD_RE = re.compile(r"[^\w\s]", re.UNICODE)
 _MULTI_SPACE_RE = re.compile(r"\s+")
 
 
 class TodoIntentIntegrationService:
-    """In-memory integration for preview mode (no DB write)."""
+    """Integrate extracted todo candidates into the real Todo system."""
 
     def __init__(
         self,
@@ -92,12 +96,112 @@ class TodoIntentIntegrationService:
             self._cache[dedupe_key] = now_ts + self._dedupe_window_seconds
             self._cache.move_to_end(dedupe_key, last=True)
             self._evict_overflow()
-            results.append(
-                TodoIntegrationResult(
-                    action=IntegrationAction.CREATED,
-                    dedupe_key=dedupe_key,
-                    reason="memory_only_preview",
-                )
-            )
+
+            match_action = candidate.memory_match.action
+            result = self._apply_memory_match(candidate, dedupe_key, match_action)
+            results.append(result)
 
         return results
+
+    @staticmethod
+    def _apply_memory_match(
+        candidate: ExtractedTodoCandidate,
+        dedupe_key: str,
+        match_action: MemoryMatchAction,
+    ) -> TodoIntegrationResult:
+        """Route based on MemoryMatchAction: create, skip, or queue for review."""
+        if match_action == MemoryMatchAction.LINK_EXISTING:
+            return TodoIntegrationResult(
+                action=IntegrationAction.SKIPPED,
+                dedupe_key=dedupe_key,
+                reason=f"link_existing:{candidate.memory_match.matched_todo_name or '?'}",
+            )
+
+        if match_action == MemoryMatchAction.CANCEL_EXISTING:
+            logger.info(
+                "Intent requests cancellation of existing todo: %s",
+                candidate.memory_match.matched_todo_name,
+            )
+            return TodoIntegrationResult(
+                action=IntegrationAction.QUEUED_REVIEW,
+                dedupe_key=dedupe_key,
+                reason=f"cancel_existing:{candidate.memory_match.matched_todo_name or '?'}",
+            )
+
+        if match_action == MemoryMatchAction.CONFLICT:
+            return TodoIntegrationResult(
+                action=IntegrationAction.QUEUED_REVIEW,
+                dedupe_key=dedupe_key,
+                reason=(
+                    f"conflict:{candidate.memory_match.matched_todo_name or '?'}"
+                    f" — {candidate.memory_match.reason or ''}"
+                ),
+            )
+
+        # NEW — actually create the todo in DB
+        return _create_todo_from_candidate(candidate, dedupe_key)
+
+
+def _build_todo_service():
+    """Build a TodoService instance outside of FastAPI dependency injection."""
+    from lifetrace.repositories.sql_todo_repository import SqlTodoRepository  # noqa: PLC0415
+    from lifetrace.services.todo_service import TodoService  # noqa: PLC0415
+    from lifetrace.storage.database import db_base  # noqa: PLC0415
+
+    repo = SqlTodoRepository(db_base)
+    return TodoService(repo)
+
+
+_PRIORITY_MAP = {
+    "high": "high",
+    "medium": "medium",
+    "low": "low",
+}
+
+
+def _create_todo_from_candidate(
+    candidate: ExtractedTodoCandidate,
+    dedupe_key: str,
+) -> TodoIntegrationResult:
+    """Convert an ExtractedTodoCandidate to a real Todo via TodoService."""
+    try:
+        from lifetrace.schemas.todo import TodoCreate, TodoPriority  # noqa: PLC0415
+
+        priority_str = (candidate.priority or "none").lower()
+        priority = TodoPriority(_PRIORITY_MAP.get(priority_str, "none"))
+
+        tags = list(candidate.tags) if candidate.tags else []
+        tags.append("auto-detected")
+
+        create_data = TodoCreate(
+            name=candidate.name,
+            description=candidate.description,
+            start_time=candidate.start_time,
+            due=candidate.due,
+            deadline=candidate.deadline,
+            time_zone=candidate.time_zone,
+            priority=priority,
+            tags=tags,
+        )
+
+        service = _build_todo_service()
+        todo_resp = service.create_todo(create_data)
+
+        logger.info(
+            "Auto-created todo id=%s name=%r from intent extraction",
+            todo_resp.id,
+            candidate.name,
+        )
+        return TodoIntegrationResult(
+            action=IntegrationAction.CREATED,
+            todo_id=todo_resp.id,
+            dedupe_key=dedupe_key,
+            reason="auto_created",
+        )
+    except Exception:
+        logger.exception("Failed to create todo from candidate: %s", candidate.name)
+        return TodoIntegrationResult(
+            action=IntegrationAction.QUEUED_REVIEW,
+            dedupe_key=dedupe_key,
+            reason="create_failed_queued_review",
+        )

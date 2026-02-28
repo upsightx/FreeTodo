@@ -7,7 +7,11 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from lifetrace.llm.llm_client import LLMClient
-from lifetrace.schemas.perception_todo_intent import ExtractedTodoCandidate
+from lifetrace.schemas.perception_todo_intent import (
+    ExtractedTodoCandidate,
+    MemoryMatch,
+    MemoryMatchAction,
+)
 from lifetrace.util.prompt_loader import get_prompt
 from lifetrace.util.settings import settings
 
@@ -16,7 +20,12 @@ if TYPE_CHECKING:
 
 
 class TodoIntentExtractor:
-    """Todo intent extractor powered by LLM text generation."""
+    """Todo intent extractor powered by LLM text generation.
+
+    When Memory context (active_todos / user_profile) is provided, the LLM also
+    performs Memory Match to classify each candidate as new / link_existing /
+    conflict / cancel_existing relative to the existing todo list.
+    """
 
     _JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
 
@@ -120,6 +129,23 @@ class TodoIntentExtractor:
         except Exception:
             return {}
 
+    @staticmethod
+    def _parse_memory_match(raw: object) -> MemoryMatch:
+        if not isinstance(raw, dict):
+            return MemoryMatch()
+        action_str = str(raw.get("action", "new")).strip().lower()
+        try:
+            action = MemoryMatchAction(action_str)
+        except ValueError:
+            action = MemoryMatchAction.NEW
+        matched_name = raw.get("matched_todo_name")
+        reason = raw.get("reason")
+        return MemoryMatch(
+            action=action,
+            matched_todo_name=str(matched_name).strip() if matched_name else None,
+            reason=str(reason).strip() if reason else None,
+        )
+
     def _to_candidates(self, payload: dict) -> list[ExtractedTodoCandidate]:
         todos_raw = payload.get("todos")
         if not isinstance(todos_raw, list):
@@ -150,6 +176,7 @@ class TodoIntentExtractor:
                     source_text=str(item.get("source_text")).strip()
                     if item.get("source_text") is not None
                     else None,
+                    memory_match=self._parse_memory_match(item.get("memory_match")),
                 )
             )
         return out
@@ -159,6 +186,8 @@ class TodoIntentExtractor:
         context: TodoIntentContext,
         *,
         strict_json: bool = False,
+        active_todos: str = "",
+        user_profile: str = "",
     ) -> list[ExtractedTodoCandidate]:
         cfg = self._load_from_settings()
         llm_client = self._llm_client
@@ -179,7 +208,16 @@ class TodoIntentExtractor:
         if not merged_text:
             return []
 
-        system_prompt = get_prompt(prompt_category, "system_assistant")
+        has_memory = bool(active_todos.strip() or user_profile.strip())
+
+        if has_memory:
+            system_prompt = get_prompt(prompt_category, "system_assistant")
+        else:
+            system_prompt = (
+                get_prompt(prompt_category, "system_assistant_no_memory")
+                or get_prompt(prompt_category, "system_assistant")
+            )
+
         user_prompt = get_prompt(
             prompt_category,
             "user_prompt",
@@ -189,6 +227,8 @@ class TodoIntentExtractor:
             window_title=str(context.metadata.get("window_title") or ""),
             speaker=str(context.metadata.get("speaker") or ""),
             strict_json="true" if strict_json else "false",
+            active_todos=active_todos or "(无已有待办)",
+            user_profile=user_profile or "(无用户画像)",
         )
         if strict_json:
             user_prompt = (
@@ -213,6 +253,7 @@ class TodoIntentExtractor:
                 "response_type": "extract",
                 "user_query": merged_text,
                 "context_id": context.context_id,
+                "has_memory_context": has_memory,
             },
         )
         payload = self._parse_json(result_text)

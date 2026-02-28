@@ -1,4 +1,8 @@
-"""L1 Compressor — raw daily Markdown → structured event summaries via LLM."""
+"""L2 Compressor — deduped/raw daily Markdown → structured event summaries via LLM.
+
+Prefers the L1 deduped file (``deduped/{date}.md``) as input when available,
+falling back to the L0 raw file (``raw/{date}.md``).
+"""
 
 from __future__ import annotations
 
@@ -18,7 +22,7 @@ COMPRESS_SYSTEM_PROMPT = (
     "你是一个个人记忆管理助手，擅长从原始感知记录中提取有意义的事件并生成结构化摘要。"
 )
 
-COMPRESS_USER_TEMPLATE = """以下是 {date_str} 的原始感知记录。
+COMPRESS_USER_TEMPLATE = """以下是 {date_str} 的感知记录（已去重）。
 请提取所有有意义的事件，生成结构化 Markdown 摘要。
 
 要求：
@@ -40,39 +44,54 @@ COMPRESS_USER_TEMPLATE = """以下是 {date_str} 的原始感知记录。
 - **标签**: #论文项目 #张教授
 ```
 
-原始记录：
+感知记录：
 {raw_content}"""
 
 
 class MemoryCompressor:
-    """L0 raw → L1 event summaries via LLM."""
+    """L2 event aggregation: deduped/raw → structured event summaries via LLM.
+
+    Prefers the L1 deduped file as input; falls back to L0 raw file.
+    """
 
     MIN_RAW_LENGTH = 50
 
     def __init__(self, memory_dir: Path, llm_client: LLMClient):
         self._memory_dir = memory_dir
         self._raw_dir = memory_dir / "raw"
+        self._deduped_dir = memory_dir / "deduped"
         self._events_dir = memory_dir / "events"
         self._events_dir.mkdir(parents=True, exist_ok=True)
         self._llm = llm_client
 
+    def _resolve_source_file(self, date_str: str) -> Path | None:
+        """Find the best source file for compression: deduped > raw."""
+        deduped_file = self._deduped_dir / f"{date_str}.md"
+        if deduped_file.exists():
+            return deduped_file
+        raw_file = self._raw_dir / f"{date_str}.md"
+        if raw_file.exists():
+            return raw_file
+        return None
+
     async def compress_day(self, date_str: str) -> Path | None:
-        """Compress the L0 file for *date_str* into an L1 event summary.
+        """Compress the best available source file for *date_str* into
+        an L2 event summary.
 
         Returns the path to the generated events file, or ``None`` if nothing
-        was produced (missing/too-short raw file, LLM failure, etc.).
+        was produced (missing/too-short source, LLM failure, etc.).
         """
-        raw_file = self._raw_dir / f"{date_str}.md"
-        if not raw_file.exists():
-            logger.debug("No raw file for %s, skipping compression", date_str)
+        source_file = self._resolve_source_file(date_str)
+        if source_file is None:
+            logger.debug("No source file for %s, skipping compression", date_str)
             return None
 
-        raw_content = raw_file.read_text(encoding="utf-8")
-        if len(raw_content.strip()) < self.MIN_RAW_LENGTH:
-            logger.debug("Raw file for %s too short, skipping compression", date_str)
+        source_content = source_file.read_text(encoding="utf-8")
+        if len(source_content.strip()) < self.MIN_RAW_LENGTH:
+            logger.debug("Source file for %s too short, skipping compression", date_str)
             return None
 
-        prompt = COMPRESS_USER_TEMPLATE.format(date_str=date_str, raw_content=raw_content)
+        prompt = COMPRESS_USER_TEMPLATE.format(date_str=date_str, raw_content=source_content)
         messages: list[dict[str, str]] = [
             {"role": "system", "content": COMPRESS_SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
@@ -97,7 +116,10 @@ class MemoryCompressor:
 
         events_file = self._events_dir / f"{date_str}.md"
         events_file.write_text(summary, encoding="utf-8")
-        logger.info("Compressed %s → %s (%d chars)", raw_file.name, events_file.name, len(summary))
+        logger.info(
+            "Compressed %s → %s (%d chars)",
+            source_file.name, events_file.name, len(summary),
+        )
         return events_file
 
     async def compress_yesterday(self) -> Path | None:

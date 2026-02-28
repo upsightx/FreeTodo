@@ -1,4 +1,4 @@
-"""Memory REST API — read, search and compress personal memory files."""
+"""Memory REST API — read, search, compress, link and profile operations."""
 
 from __future__ import annotations
 
@@ -69,6 +69,11 @@ async def get_memory_status():
     return mgr.get_status()
 
 
+# ------------------------------------------------------------------
+# L2 Compression
+# ------------------------------------------------------------------
+
+
 @router.post("/compress/{date_str}")
 async def trigger_compress(date_str: str):
     mgr = _require_manager()
@@ -80,3 +85,78 @@ async def trigger_compress(date_str: str):
         "compressed": path is not None,
         "path": str(path) if path else None,
     }
+
+
+# ------------------------------------------------------------------
+# L1 Dedup stats
+# ------------------------------------------------------------------
+
+
+@router.get("/dedup-stats")
+async def get_dedup_stats():
+    mgr = _require_manager()
+    if mgr.deduper is None:
+        raise HTTPException(status_code=503, detail="Deduper not available (LLM not configured)")
+    return mgr.deduper.get_stats()
+
+
+# ------------------------------------------------------------------
+# L3 Task linking
+# ------------------------------------------------------------------
+
+
+@router.post("/link/{date_str}")
+async def trigger_task_link(date_str: str):
+    """Run L3 task linking for a given date (requires L2 events file to exist)."""
+    mgr = _require_manager()
+    if mgr.task_linker is None:
+        raise HTTPException(status_code=503, detail="TaskLinker not available (LLM not configured)")
+    linked = await mgr.task_linker.link_day(date_str)
+    return {"date": date_str, "linked": linked}
+
+
+@router.post("/compress-and-link/{date_str}")
+async def trigger_compress_and_link(date_str: str):
+    """Run L2 compression then L3 task linking in sequence."""
+    mgr = _require_manager()
+    result = await mgr.compress_and_link(date_str)
+    return result
+
+
+@router.get("/task-linker-stats")
+async def get_task_linker_stats():
+    mgr = _require_manager()
+    if mgr.task_linker is None:
+        raise HTTPException(status_code=503, detail="TaskLinker not available")
+    return mgr.task_linker.get_stats()
+
+
+# ------------------------------------------------------------------
+# L4 Profile
+# ------------------------------------------------------------------
+
+
+@router.get("/profile")
+async def get_profile():
+    """Read the current user profile."""
+    mgr = _require_manager()
+    content = mgr.reader.get_user_profile()
+    return {"content": content}
+
+
+@router.post("/profile/update")
+async def trigger_profile_update():
+    """Manually trigger an L4 profile update cycle."""
+    mgr = _require_manager()
+    if mgr.profile_builder is None:
+        raise HTTPException(status_code=503, detail="ProfileBuilder not available (LLM not configured)")
+    updated = await mgr.profile_builder.update()
+    return {"updated": updated, "stats": mgr.profile_builder.get_stats()}
+
+
+@router.get("/profile-stats")
+async def get_profile_stats():
+    mgr = _require_manager()
+    if mgr.profile_builder is None:
+        raise HTTPException(status_code=503, detail="ProfileBuilder not available")
+    return mgr.profile_builder.get_stats()
