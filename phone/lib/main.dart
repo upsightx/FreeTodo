@@ -174,6 +174,7 @@ Future _init() async {
     SharedPreferencesUtil().tokenExpirationTime =
         DateTime.now().add(const Duration(days: 365)).millisecondsSinceEpoch;
     SharedPreferencesUtil().onboardingCompleted = true;
+
     debugPrint('LifeTrace mode: credentials pre-populated, API → ${Env.apiBaseUrl}');
   }
 

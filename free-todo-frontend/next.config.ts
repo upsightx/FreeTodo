@@ -19,9 +19,14 @@ try {
 // 判断是 build 版还是 dev 版
 const BUILD_TYPE = process.env.NODE_ENV === "production" ? "build" : "dev";
 
-// 从环境变量读取 API 地址，如果读不到就使用 127.0.0.1:8100（Build 模式默认端口）
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
-const apiUrl = new URL(API_BASE_URL);
+// Client-side streaming (NEXT_PUBLIC_*) vs server-side rewrite (API_REWRITE_URL)
+// NEXT_PUBLIC_API_URL is baked into client JS and used by getStreamApiBaseUrl().
+// API_REWRITE_URL is server-only and used for Next.js rewrites (can be localhost).
+const CLIENT_API_URL =
+	process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
+const REWRITE_API_URL =
+	process.env.API_REWRITE_URL || CLIENT_API_URL;
+const apiUrl = new URL(CLIENT_API_URL);
 
 const nextConfig: NextConfig = {
 	output: "standalone",
@@ -48,11 +53,11 @@ const nextConfig: NextConfig = {
 		return [
 			{
 				source: "/api/:path*",
-				destination: `${API_BASE_URL}/api/:path*`,
+				destination: `${REWRITE_API_URL}/api/:path*`,
 			},
 			{
 				source: "/assets/:path*",
-				destination: `${API_BASE_URL}/assets/:path*`,
+				destination: `${REWRITE_API_URL}/assets/:path*`,
 			},
 		];
 	},

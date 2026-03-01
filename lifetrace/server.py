@@ -1,6 +1,8 @@
 import argparse
 import asyncio
+import os
 import socket
+import sys
 from contextlib import asynccontextmanager, suppress
 
 import uvicorn
@@ -100,7 +102,21 @@ app = FastAPI(
 )
 
 
-_server_role: str = "standalone"
+def _detect_server_role() -> str:
+    """Detect role early so CORS middleware is configured before __main__ runs."""
+    role = os.environ.get("LIFETRACE_ROLE")
+    if role and role in ("standalone", "center"):
+        return role
+    try:
+        idx = sys.argv.index("--role")
+        if idx + 1 < len(sys.argv) and sys.argv[idx + 1] in ("standalone", "center"):
+            return sys.argv[idx + 1]
+    except (ValueError, IndexError):
+        pass
+    return "standalone"
+
+
+_server_role: str = _detect_server_role()
 
 
 def get_server_role() -> str:
@@ -271,7 +287,8 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    # 设置部署角色（需在 CORS 中间件生效前写入）
+    # Persist role for uvicorn reload subprocesses (env var is inherited)
+    os.environ["LIFETRACE_ROLE"] = args.role
     _server_role = args.role
 
     # 设置服务器模式
