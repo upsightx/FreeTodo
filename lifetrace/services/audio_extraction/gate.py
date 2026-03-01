@@ -115,8 +115,6 @@ async def should_extract_with_llm_gate(  # noqa: PLR0911
     temperature = float(settings.get("audio.extraction_gate.temperature", 0.0))
     max_tokens = int(settings.get("audio.extraction_gate.max_tokens", 160))
 
-    llm_client._initialize_client()
-
     try:
         system_prompt = get_prompt("transcription_extraction_gate", "system_assistant")
         user_prompt = get_prompt(

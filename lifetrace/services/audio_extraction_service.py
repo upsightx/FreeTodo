@@ -430,7 +430,6 @@ class AudioExtractionService:
 
             extracted_items: list[dict[str, Any]] = []
             client = self.llm_client
-            client._initialize_client()
             openai_client = client._get_client()
 
             for index, chunk_obj in enumerate(chunk_objs):

@@ -62,7 +62,6 @@ class TodoIntentGate:
         max_tokens = int(cfg.get("max_tokens", self._max_tokens))
         prompt_category = str(cfg.get("prompt_category", self._prompt_category))
 
-        llm_client._initialize_client()
         client = llm_client._get_client()
 
         system_prompt = get_prompt(prompt_category, "system_assistant")
