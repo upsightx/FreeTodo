@@ -4,7 +4,7 @@ Subscribes to PerceptionStream alongside MemoryWriter. For each incoming
 event, compares it against the most recently kept content. If the new content
 is essentially the same (e.g. repeated OCR of the same screen), it is
 dropped; if it has incremental additions, it is kept; if completely new, it
-is kept as-is.  Output goes to ``deduped/{date}.md``.
+is kept as-is.  Output goes to ``deduped_L1/{date}.md``.
 
 The deduper itself is also a **pub/sub source**: downstream modules (e.g.
 intent recognition) can ``subscribe()`` to receive only the kept (non-duplicate)
@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from collections import deque
 from typing import TYPE_CHECKING
 
 from lifetrace.memory.models import DedupeVerdict
@@ -51,7 +52,7 @@ DEDUP_USER_TEMPLATE = """已有记录（最近保留的内容）：
 
 
 class MemoryDeduper:
-    """Real-time L1 deduplication: PerceptionEvent → deduped/{date}.md.
+    """Real-time L1 deduplication: PerceptionEvent → deduped_L1/{date}.md.
 
     Maintains a reference to the most recently *kept* record. For each
     incoming event, runs a fast character-overlap check first; only calls
@@ -63,6 +64,7 @@ class MemoryDeduper:
     """
 
     FAST_SIMILARITY_THRESHOLD = 0.96
+    FAST_DISSIMILARITY_THRESHOLD = 0.3
 
     def __init__(
         self,
@@ -74,7 +76,7 @@ class MemoryDeduper:
         window_max_items: int = 10,
     ):
         self._memory_dir = memory_dir
-        self._deduped_dir = memory_dir / "deduped"
+        self._deduped_dir = memory_dir / "deduped_L1"
         self._deduped_dir.mkdir(parents=True, exist_ok=True)
         self._llm = llm_client
         self._model = model
@@ -87,6 +89,8 @@ class MemoryDeduper:
         self._last_kept_time: float = 0.0
 
         self._subscribers: list[Callable[[PerceptionEvent], Awaitable[None]]] = []
+
+        self._recent_kept: deque[PerceptionEvent] = deque(maxlen=200)
 
         self._lock = asyncio.Lock()
         self._current_date: str | None = None
@@ -112,6 +116,11 @@ class MemoryDeduper:
             await self._process(event)
         except Exception:
             logger.exception("MemoryDeduper failed on event %s", event.event_id)
+
+    async def get_recent(self, count: int = 50) -> list[PerceptionEvent]:
+        """Return the most recent *count* kept (non-duplicate) events."""
+        items = list(self._recent_kept)
+        return items[-count:]
 
     def get_stats(self) -> dict:
         return dict(self._stats)
@@ -158,7 +167,7 @@ class MemoryDeduper:
         sim = self._char_similarity(self._last_kept_content, incoming)
         if sim >= self.FAST_SIMILARITY_THRESHOLD:
             return DedupeVerdict.DUPLICATE
-        if sim < 0.3:
+        if sim < self.FAST_DISSIMILARITY_THRESHOLD:
             return DedupeVerdict.NEW
         return None
 
@@ -203,24 +212,21 @@ class MemoryDeduper:
         """Extract verdict from LLM JSON response."""
         if not resp:
             return DedupeVerdict.NEW
+
+        text = resp
         try:
             start = resp.find("{")
             end = resp.rfind("}") + 1
             if start >= 0 and end > start:
                 data = json.loads(resp[start:end])
-                v = data.get("verdict", "").lower()
-                if v == "duplicate":
-                    return DedupeVerdict.DUPLICATE
-                if v == "incremental":
-                    return DedupeVerdict.INCREMENTAL
-                return DedupeVerdict.NEW
+                text = data.get("verdict", "")
         except (json.JSONDecodeError, KeyError):
             pass
 
-        resp_lower = resp.lower()
-        if "duplicate" in resp_lower:
+        lowered = text.lower()
+        if "duplicate" in lowered:
             return DedupeVerdict.DUPLICATE
-        if "incremental" in resp_lower:
+        if "incremental" in lowered:
             return DedupeVerdict.INCREMENTAL
         return DedupeVerdict.NEW
 
@@ -277,6 +283,7 @@ class MemoryDeduper:
         self._last_kept_source = event.source.value
         self._last_kept_time = time.monotonic()
         self._stats["kept"] += 1
+        self._recent_kept.append(event)
 
         await self._notify_subscribers(event)
 

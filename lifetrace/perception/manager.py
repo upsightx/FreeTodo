@@ -5,6 +5,7 @@ import threading
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+from lifetrace.perception.adapters.ai_output_adapter import AIOutputAdapter
 from lifetrace.perception.adapters.audio_adapter import AudioAdapter
 from lifetrace.perception.adapters.input_adapter import InputAdapter
 from lifetrace.perception.adapters.ocr_adapter import OCRAdapter
@@ -66,6 +67,9 @@ class PerceptionStreamManager:
 
         if self._config.get("input_enabled", False):
             self._adapters["input"] = InputAdapter(self.publish_event)
+
+        if self._config.get("ai_output_enabled", True):
+            self._adapters["ai_output"] = AIOutputAdapter(self.publish_event)
 
         await self._start_todo_intent_subscriber()
 
@@ -277,6 +281,43 @@ class PerceptionStreamManager:
         except Exception:
             return False
 
+    async def try_publish_ai_output(
+        self,
+        text: str,
+        *,
+        metadata: dict | None = None,
+    ) -> bool:
+        """Best-effort publish for AI output events."""
+        try:
+            adapter = self.get_ai_output_adapter()
+            if adapter is None:
+                return False
+            event = adapter.build_ai_output_event(text, metadata=metadata)
+            if event is None:
+                return False
+            await self.publish_event(event)
+            return True
+        except Exception:
+            return False
+
+    def try_publish_ai_output_threadsafe(
+        self,
+        text: str,
+        *,
+        metadata: dict | None = None,
+    ) -> bool:
+        """Best-effort publish for AI output events from non-async contexts."""
+        try:
+            adapter = self.get_ai_output_adapter()
+            if adapter is None:
+                return False
+            event = adapter.build_ai_output_event(text, metadata=metadata)
+            if event is None:
+                return False
+            return self.publish_event_threadsafe(event)
+        except Exception:
+            return False
+
     def get_status(self) -> dict[str, Any]:
         status = {
             st.value: {
@@ -328,6 +369,9 @@ class PerceptionStreamManager:
         if self._config.get("input_enabled", False):
             enabled_sources[SourceType.USER_INPUT] = True
 
+        if self._config.get("ai_output_enabled", True):
+            enabled_sources[SourceType.AI_OUTPUT] = True
+
         return enabled_sources
 
     def get_audio_adapter(self) -> AudioAdapter | None:
@@ -341,6 +385,10 @@ class PerceptionStreamManager:
     def get_ocr_adapter(self) -> OCRAdapter | None:
         adapter = self._adapters.get("ocr")
         return adapter if isinstance(adapter, OCRAdapter) else None
+
+    def get_ai_output_adapter(self) -> AIOutputAdapter | None:
+        adapter = self._adapters.get("ai_output")
+        return adapter if isinstance(adapter, AIOutputAdapter) else None
 
     def get_todo_intent_subscriber(self) -> TodoIntentSubscriber | None:
         return self._todo_intent_subscriber

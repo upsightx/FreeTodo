@@ -3,7 +3,7 @@
 Runs on a periodic schedule (default: every hour).  Collects the latest L2
 event summaries since the last update, compares them against the existing
 profile, and asks an LLM whether and how the profile should be updated.
-The profile is stored as ``profile/user_profile.md``.
+The profile is stored as ``profile_L4/user_profile.md``.
 """
 
 from __future__ import annotations
@@ -57,11 +57,11 @@ DEFAULT_PROFILE = """# 用户画像
 
 
 class ProfileBuilder:
-    """L4: maintain ``profile/user_profile.md`` via hourly incremental updates.
+    """L4: maintain ``profile_L4/user_profile.md`` via hourly incremental updates.
 
     Each update cycle:
-    1. Reads the current profile file.
-    2. Collects L2 event summaries generated since the last update.
+    1. Reads the current profile from ``profile_L4/user_profile.md``.
+    2. Collects L2 event summaries from ``events_L2/`` since the last update.
     3. Asks LLM whether the profile should change.
     4. If yes, writes the updated profile back.
     """
@@ -74,10 +74,10 @@ class ProfileBuilder:
         model: str | None = None,
     ):
         self._memory_dir = memory_dir
-        self._profile_dir = memory_dir / "profile"
+        self._profile_dir = memory_dir / "profile_L4"
         self._profile_dir.mkdir(parents=True, exist_ok=True)
         self._profile_file = self._profile_dir / "user_profile.md"
-        self._events_dir = memory_dir / "events"
+        self._events_dir = memory_dir / "events_L2"
         self._llm = llm_client
         self._model = model
 

@@ -2,6 +2,7 @@
 
 from fastapi.responses import StreamingResponse
 
+from lifetrace.routers.chat.base import publish_ai_output_to_perception
 from lifetrace.schemas.chat import ChatMessage
 from lifetrace.services.chat_service import ChatService
 from lifetrace.services.dify_client import call_dify_chat
@@ -70,6 +71,10 @@ def create_dify_streaming_response(
                     content=total_content,
                 )
                 logger.info("[stream][dify] 消息已保存到数据库")
+                publish_ai_output_to_perception(
+                    total_content,
+                    metadata={"mode": "dify", "session_id": session_id},
+                )
         except Exception as e:
             logger.error(f"[stream][dify] 生成失败: {e}")
             yield "Dify 测试模式调用失败，请检查后端 Dify 配置。"

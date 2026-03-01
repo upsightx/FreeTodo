@@ -25,11 +25,11 @@ class MemoryReader:
 
     def __init__(self, memory_dir: Path):
         self._memory_dir = memory_dir
-        self._raw_dir = memory_dir / "raw"
-        self._deduped_dir = memory_dir / "deduped"
-        self._events_dir = memory_dir / "events"
+        self._raw_dir = memory_dir / "raw_L0"
+        self._deduped_dir = memory_dir / "deduped_L1"
+        self._events_dir = memory_dir / "events_L2"
 
-    def read_by_date(self, date_str: str, level: str = "events") -> str | None:
+    def read_by_date(self, date_str: str, level: str = "events") -> str | None:  # noqa: ARG002
         """Read memory file for a given date.
 
         Priority: events (L2) → deduped (L1) → raw (L0).
@@ -55,9 +55,9 @@ class MemoryReader:
             date_str = date.strftime("%Y-%m-%d")
 
             for subdir_name, level in (
-                ("events", MemoryLevel.EVENT),
-                ("deduped", MemoryLevel.DEDUPED),
-                ("raw", MemoryLevel.RAW),
+                ("events_L2", MemoryLevel.EVENT),
+                ("deduped_L1", MemoryLevel.DEDUPED),
+                ("raw_L0", MemoryLevel.RAW),
             ):
                 file_path = self._memory_dir / subdir_name / f"{date_str}.md"
                 if not file_path.exists():
@@ -92,7 +92,7 @@ class MemoryReader:
 
     def get_user_profile(self) -> str:
         """Read L4 user profile file (manually maintained in MVP)."""
-        profile_file = self._memory_dir / "profile" / "user_profile.md"
+        profile_file = self._memory_dir / "profile_L4" / "user_profile.md"
         if profile_file.exists():
             return profile_file.read_text(encoding="utf-8")
         return ""
@@ -118,11 +118,7 @@ class MemoryReader:
                 priority = todo.get("priority", "none")
                 name = todo.get("name", "")
                 status_label = todo.get("status", "active")
-                start_time = (
-                    todo.get("dtstart")
-                    or todo.get("start_time")
-                    or todo.get("due")
-                )
+                start_time = todo.get("dtstart") or todo.get("start_time") or todo.get("due")
                 tags = todo.get("tags") or []
 
                 entry = f"{i}. [{status_label}] {name}"

@@ -19,13 +19,13 @@ logger = get_logger()
 class MemoryWriter:
     """Append-only writer: PerceptionEvent → daily Markdown file.
 
-    Each day produces one file at ``{memory_dir}/raw/{YYYY-MM-DD}.md``.
+    Each day produces one file at ``{memory_dir}/raw_L0/{YYYY-MM-DD}.md``.
     The writer is safe for concurrent async calls thanks to an asyncio.Lock.
     """
 
     def __init__(self, memory_dir: Path):
         self._memory_dir = memory_dir
-        self._raw_dir = memory_dir / "raw"
+        self._raw_dir = memory_dir / "raw_L0"
         self._raw_dir.mkdir(parents=True, exist_ok=True)
         self._lock = asyncio.Lock()
         self._current_date: str | None = None

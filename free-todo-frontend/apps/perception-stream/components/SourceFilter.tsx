@@ -14,6 +14,7 @@ const SOURCES: PerceptionSource[] = [
 	"ocr_screen",
 	"ocr_proactive",
 	"user_input",
+	"ai_output",
 ];
 
 const MODALITIES: PerceptionModality[] = ["audio", "image", "text"];

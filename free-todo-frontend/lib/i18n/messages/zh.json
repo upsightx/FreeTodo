@@ -917,6 +917,7 @@
 		"ocr_screen": "屏幕OCR",
 		"ocr_proactive": "主动OCR",
 		"user_input": "用户输入",
+		"ai_output": "AI输出",
 		"audio": "音频",
 		"image": "图片",
 		"text": "文本"

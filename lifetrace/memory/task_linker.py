@@ -2,7 +2,7 @@
 
 After L2 compression produces a day's event summaries, TaskLinker uses an LLM
 to match each event against the active Todo list.  Matched events are appended
-to ``tasks/{slug}.md``; unmatched events are silently skipped.
+to ``tasks_L3/{slug}.md``; unmatched events are silently skipped.
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ class TaskLinker:
     """L3: link L2 event summaries to active Todos, producing task files.
 
     Each active Todo that has at least one linked event gets a Markdown file
-    at ``tasks/{slug}.md`` with a chronological list of related event summaries.
+    at ``tasks_L3/{slug}.md`` with a chronological list of related event summaries.
     """
 
     def __init__(
@@ -65,13 +65,15 @@ class TaskLinker:
         model: str = "qwen-flash",
     ):
         self._memory_dir = memory_dir
-        self._tasks_dir = memory_dir / "tasks"
+        self._tasks_dir = memory_dir / "tasks_L3"
         self._tasks_dir.mkdir(parents=True, exist_ok=True)
-        self._events_dir = memory_dir / "events"
+        self._events_dir = memory_dir / "events_L2"
         self._llm = llm_client
         self._model = model
 
         self._stats = {"total_events": 0, "linked": 0, "unlinked": 0, "errors": 0}
+
+    MIN_LINK_CONFIDENCE = 0.5
 
     def get_stats(self) -> dict:
         return dict(self._stats)
@@ -111,7 +113,9 @@ class TaskLinker:
                 self._stats["unlinked"] += 1
 
         if linked:
-            logger.info("TaskLinker: linked %d/%d events for %s", linked, len(event_blocks), date_str)
+            logger.info(
+                "TaskLinker: linked %d/%d events for %s", linked, len(event_blocks), date_str
+            )
         return linked
 
     def _load_todos_snapshot(self) -> str:
@@ -187,15 +191,13 @@ class TaskLinker:
                 data = json.loads(resp[start:end])
                 idx = int(data.get("todo_index", 0))
                 conf = float(data.get("confidence", 0))
-                if idx > 0 and conf >= 0.5:
+                if idx > 0 and conf >= TaskLinker.MIN_LINK_CONFIDENCE:
                     return {"index": idx, "confidence": conf}
         except (json.JSONDecodeError, ValueError, KeyError):
             pass
         return None
 
-    async def _append_to_task_file(
-        self, todo_name: str, date_str: str, event_block: str
-    ) -> None:
+    async def _append_to_task_file(self, todo_name: str, date_str: str, event_block: str) -> None:
         """Append an event block to the corresponding task file."""
         slug = _slugify(todo_name)
         task_file = self._tasks_dir / f"{slug}.md"

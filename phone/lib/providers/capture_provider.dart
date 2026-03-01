@@ -75,8 +75,8 @@ class CaptureProvider extends ChangeNotifier
   TranscriptSegmentSocketService? _socket;
   Timer? _keepAliveTimer;
   DateTime? _keepAliveLastExecutedAt;
-  int _keepAliveIntervalSeconds = 15;
-  static const int _keepAliveMinInterval = 15;
+  int _keepAliveIntervalSeconds = 5;
+  static const int _keepAliveMinInterval = 5;
   static const int _keepAliveMaxInterval = 120;
 
   // Method channel for system audio permissions
@@ -117,6 +117,8 @@ class CaptureProvider extends ChangeNotifier
   Timer? _reconnectTimer;
   int _reconnectCountdown = 5;
   int get reconnectCountdown => _reconnectCountdown;
+
+  Timer? _backgroundWatchdog;
 
   Timer? _recordingTimer;
   int _recordingDuration = 0; // in seconds
@@ -225,6 +227,26 @@ class CaptureProvider extends ChangeNotifier
     if (isRecording && !_isPaused && Platform.isIOS) {
       IosBackgroundKeepAlive.instance.start();
     }
+
+    // Android: start a watchdog that checks WebSocket health while backgrounded
+    if (isRecording && !_isPaused && Platform.isAndroid) {
+      _startBackgroundWatchdog();
+    }
+  }
+
+  void _startBackgroundWatchdog() {
+    _backgroundWatchdog?.cancel();
+    _backgroundWatchdog = Timer.periodic(const Duration(seconds: 10), (t) {
+      if (_socket?.state != SocketServiceState.connected) {
+        Logger.debug('[BackgroundWatchdog] WebSocket dead, triggering reconnect');
+        _startKeepAliveServices();
+      }
+    });
+  }
+
+  void _stopBackgroundWatchdog() {
+    _backgroundWatchdog?.cancel();
+    _backgroundWatchdog = null;
   }
 
   void _handleAppResumed() async {
@@ -255,6 +277,8 @@ class CaptureProvider extends ChangeNotifier
   }
 
   Future<void> _handleMobileResumed() async {
+    _stopBackgroundWatchdog();
+
     if (Platform.isIOS) {
       IosBackgroundKeepAlive.instance.stop();
     }

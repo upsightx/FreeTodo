@@ -13,6 +13,7 @@ class SourceType(str, Enum):
     OCR_SCREEN = "ocr_screen"
     OCR_PROACTIVE = "ocr_proactive"
     USER_INPUT = "user_input"
+    AI_OUTPUT = "ai_output"
 
 
 class Modality(str, Enum):

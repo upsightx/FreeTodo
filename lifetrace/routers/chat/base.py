@@ -10,6 +10,27 @@ from lifetrace.util.token_usage_logger import log_token_usage
 
 logger = get_logger()
 
+
+def publish_ai_output_to_perception(
+    text: str,
+    *,
+    metadata: dict[str, Any] | None = None,
+) -> None:
+    """Best-effort publish AI output to the perception stream (sync, threadsafe)."""
+    content = (text or "").strip()
+    if not content:
+        return
+    try:
+        from lifetrace.perception.manager import try_get_perception_manager  # noqa: PLC0415
+
+        mgr = try_get_perception_manager()
+        if mgr is None:
+            return
+        mgr.try_publish_ai_output_threadsafe(content, metadata=metadata)
+    except Exception:
+        pass
+
+
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
@@ -70,6 +91,13 @@ def _create_llm_stream_generator(
                         model=rag_svc.llm_client.model,
                     )
                     logger.info("[stream] 消息已保存到数据库")
+                publish_ai_output_to_perception(
+                    total_content,
+                    metadata={
+                        "mode": meta.get("feature_type", "stream_chat"),
+                        "session_id": meta.get("session_id"),
+                    },
+                )
 
             if usage_info:
                 session_id = meta.get("session_id")

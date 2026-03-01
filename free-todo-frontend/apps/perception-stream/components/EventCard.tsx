@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { Eye, Keyboard, Mic, Monitor, X } from "lucide-react";
+import { Bot, Eye, Keyboard, Mic, Monitor, X } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -21,6 +21,7 @@ const SOURCE_STYLE_MAP: Record<PerceptionSource, SourceStyle> = {
 	ocr_screen: { icon: Monitor, accentClassName: "text-amber-600" },
 	ocr_proactive: { icon: Eye, accentClassName: "text-green-600" },
 	user_input: { icon: Keyboard, accentClassName: "text-purple-600" },
+	ai_output: { icon: Bot, accentClassName: "text-teal-600" },
 };
 
 function formatMetadataValue(value: unknown): string {

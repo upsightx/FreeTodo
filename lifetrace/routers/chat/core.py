@@ -9,7 +9,7 @@ from lifetrace.services.chat_service import ChatService
 from lifetrace.util.language import get_request_language
 from lifetrace.util.time_utils import get_utc_now
 
-from .base import _create_llm_stream_generator, logger, router
+from .base import _create_llm_stream_generator, logger, publish_ai_output_to_perception, router
 from .helpers import (
     build_stream_messages_and_temperature,
     ensure_stream_session,
@@ -64,6 +64,10 @@ async def chat_with_llm(
                 query_info=rag_result.get("query_info"),
                 retrieval_info=rag_result.get("retrieval_info"),
                 performance=rag_result.get("performance"),
+            )
+            publish_ai_output_to_perception(
+                rag_result["response"],
+                metadata={"mode": "rag"},
             )
 
             return response

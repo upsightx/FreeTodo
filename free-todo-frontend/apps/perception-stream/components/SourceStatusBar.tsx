@@ -20,6 +20,7 @@ const SOURCES: PerceptionSource[] = [
 	"ocr_screen",
 	"ocr_proactive",
 	"user_input",
+	"ai_output",
 ];
 
 async function fetchStatus(): Promise<PerceptionSourceStatusResponse | null> {

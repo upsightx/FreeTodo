@@ -1,7 +1,7 @@
-"""L2 Compressor — deduped/raw daily Markdown → structured event summaries via LLM.
+"""L2 Compressor — deduped_L1/raw_L0 daily Markdown → structured event summaries via LLM.
 
-Prefers the L1 deduped file (``deduped/{date}.md``) as input when available,
-falling back to the L0 raw file (``raw/{date}.md``).
+Prefers the L1 deduped file (``deduped_L1/{date}.md``) as input when available,
+falling back to the L0 raw file (``raw_L0/{date}.md``).
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ COMPRESS_USER_TEMPLATE = """以下是 {date_str} 的感知记录（已去重）�
 
 
 class MemoryCompressor:
-    """L2 event aggregation: deduped/raw → structured event summaries via LLM.
+    """L2 event aggregation: deduped_L1/raw_L0 → structured event summaries via LLM.
 
     Prefers the L1 deduped file as input; falls back to L0 raw file.
     """
@@ -58,9 +58,9 @@ class MemoryCompressor:
 
     def __init__(self, memory_dir: Path, llm_client: LLMClient):
         self._memory_dir = memory_dir
-        self._raw_dir = memory_dir / "raw"
-        self._deduped_dir = memory_dir / "deduped"
-        self._events_dir = memory_dir / "events"
+        self._raw_dir = memory_dir / "raw_L0"
+        self._deduped_dir = memory_dir / "deduped_L1"
+        self._events_dir = memory_dir / "events_L2"
         self._events_dir.mkdir(parents=True, exist_ok=True)
         self._llm = llm_client
 
@@ -118,7 +118,9 @@ class MemoryCompressor:
         events_file.write_text(summary, encoding="utf-8")
         logger.info(
             "Compressed %s → %s (%d chars)",
-            source_file.name, events_file.name, len(summary),
+            source_file.name,
+            events_file.name,
+            len(summary),
         )
         return events_file
 

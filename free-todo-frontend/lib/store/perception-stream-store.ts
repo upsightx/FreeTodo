@@ -5,7 +5,8 @@ export type PerceptionSource =
 	| "mic_hardware"
 	| "ocr_screen"
 	| "ocr_proactive"
-	| "user_input";
+	| "user_input"
+	| "ai_output";
 
 export type PerceptionModality = "audio" | "image" | "text";
 

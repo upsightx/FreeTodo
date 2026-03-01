@@ -917,6 +917,7 @@
 		"ocr_screen": "Screen OCR",
 		"ocr_proactive": "Proactive OCR",
 		"user_input": "User Input",
+		"ai_output": "AI Output",
 		"audio": "Audio",
 		"image": "Image",
 		"text": "Text"

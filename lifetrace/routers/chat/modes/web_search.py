@@ -3,6 +3,7 @@
 from fastapi.responses import StreamingResponse
 
 from lifetrace.llm.web_search_service import WebSearchService
+from lifetrace.routers.chat.base import publish_ai_output_to_perception
 from lifetrace.schemas.chat import ChatMessage
 from lifetrace.services.chat_service import ChatService
 from lifetrace.util.logging_config import get_logger
@@ -45,6 +46,10 @@ def create_web_search_streaming_response(
                     content=total_content,
                 )
                 logger.info("[stream][web_search] 消息已保存到数据库")
+                publish_ai_output_to_perception(
+                    total_content,
+                    metadata={"mode": "web_search", "session_id": session_id},
+                )
         except Exception as e:
             logger.error(f"[stream][web_search] 生成失败: {e}")
             yield "联网搜索处理失败，请检查后端配置。"

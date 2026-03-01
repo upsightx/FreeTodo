@@ -8,6 +8,7 @@ from agno.agent import RunEvent
 from fastapi.responses import StreamingResponse
 
 from lifetrace.llm.agno_agent import RESULT_PREVIEW_MAX_LENGTH, TOOL_EVENT_PREFIX, TOOL_EVENT_SUFFIX
+from lifetrace.routers.chat.base import publish_ai_output_to_perception
 from lifetrace.schemas.chat import ChatMessage
 from lifetrace.services.agent_os_client import AgentOSClient
 from lifetrace.services.chat_service import ChatService
@@ -205,6 +206,11 @@ def _build_agent_os_token_generator(
                     metadata=metadata,
                 )
                 logger.info("[stream][agno] 消息已保存到数据库")
+                if storage_content:
+                    publish_ai_output_to_perception(
+                        storage_content,
+                        metadata={"mode": "agno", "session_id": session_id},
+                    )
         except Exception as e:
             logger.error(f"[stream][agno] 生成失败: {e}")
             yield f"Agno Agent 处理失败: {e!s}"

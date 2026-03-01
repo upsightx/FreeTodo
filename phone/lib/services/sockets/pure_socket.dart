@@ -120,7 +120,6 @@ class PureSocket implements IPureSocket {
     _channel?.stream.listen(
       (message) {
         if (message == "ping") {
-          // Logger.debug(message);
           // Pong frame added manually https://www.rfc-editor.org/rfc/rfc6455#section-5.5.2
           _channel?.sink.add([0x8A, 0x00]);
           return;
@@ -134,7 +133,7 @@ class PureSocket implements IPureSocket {
         Logger.debug("onDone with close code: ${_channel?.closeCode}");
         that.onClosed(_channel?.closeCode);
       },
-      cancelOnError: true,
+      cancelOnError: false,
     );
 
     return true;
