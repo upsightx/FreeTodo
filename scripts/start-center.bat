@@ -105,15 +105,12 @@ timeout /t 2 /nobreak >nul
 REM ================================================================
 REM  6. Start cpolar backend tunnel (TCP - for mobile WebSocket)
 REM     TCP tunnel does raw passthrough, no HTTP/WS protocol interference.
-REM     Set CPOLAR_TCP_REMOTE_ADDR in local-env.bat for a reserved address.
+REM     Configure fixed TCP address in cpolar.yml with remote_addr parameter.
+REM     Set CPOLAR_TCP_TUNNEL_NAME in local-env.bat (default: backend_tcp).
 REM ================================================================
-if "%CPOLAR_TCP_REMOTE_ADDR%"=="" (
-    echo [6/7] Starting cpolar backend tunnel (TCP, dynamic address)...
-    start "LifeTrace cpolar Backend TCP" cmd /k "cpolar tcp -region=%CPOLAR_REGION% %BACKEND_PORT%"
-) else (
-    echo [6/7] Starting cpolar backend tunnel (TCP) = %CPOLAR_TCP_REMOTE_ADDR%
-    start "LifeTrace cpolar Backend TCP" cmd /k "cpolar tcp -region=%CPOLAR_REGION% -remote-addr=%CPOLAR_TCP_REMOTE_ADDR% %BACKEND_PORT%"
-)
+if "%CPOLAR_TCP_TUNNEL_NAME%"=="" set "CPOLAR_TCP_TUNNEL_NAME=backend_tcp"
+echo [6/7] Starting cpolar backend tunnel (TCP) via named tunnel: %CPOLAR_TCP_TUNNEL_NAME%
+start "LifeTrace cpolar Backend TCP" cmd /k "cpolar start %CPOLAR_TCP_TUNNEL_NAME%"
 timeout /t 2 /nobreak >nul
 
 REM ================================================================
