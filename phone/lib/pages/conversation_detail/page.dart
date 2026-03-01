@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -655,8 +655,8 @@ class _ConversationDetailPageState extends State<ConversationDetailPage> with Ti
                         margin: const EdgeInsets.only(right: 8),
                         decoration: BoxDecoration(
                           color: provider.conversation.starred
-                              ? Colors.amber.withValues(alpha: 0.3)
-                              : Colors.grey.withValues(alpha: 0.3),
+                              ? Colors.amber.withOpacity(0.3)
+                              : Colors.grey.withOpacity(0.3),
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
@@ -1573,7 +1573,7 @@ class _ActionItemDetailWidgetState extends State<ActionItemDetailWidget> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),

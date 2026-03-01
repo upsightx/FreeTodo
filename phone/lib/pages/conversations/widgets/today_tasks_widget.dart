@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:provider/provider.dart';
@@ -69,7 +69,7 @@ class TodayTasksWidget extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.grey.withValues(alpha: 0.12),
+                          color: Colors.grey.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(18),
                         ),
                         child: Text(

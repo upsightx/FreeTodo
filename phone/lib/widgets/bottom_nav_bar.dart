@@ -1,22 +1,19 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/pages/conversation_capturing/page.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/providers/device_provider.dart';
 import 'package:omi/providers/home_provider.dart';
+import 'package:omi/providers/notification_center_provider.dart';
+import 'package:omi/ui/mobile/mobile_tokens.dart';
 import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/enums.dart';
-import 'package:omi/utils/logger.dart';
 
 class BottomNavBar extends StatelessWidget {
   const BottomNavBar({
     super.key,
     required this.onTabTap,
-    this.showCenterButton = true,
+    this.showCenterButton = false,
   });
 
   final void Function(int index, bool isRepeat) onTabTap;
@@ -24,197 +21,148 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<HomeProvider, DeviceProvider>(
-      builder: (context, home, deviceProvider, child) {
-        final isOmiDeviceConnected = deviceProvider.isConnected && deviceProvider.connectedDevice != null;
-
-        return Stack(
-          children: [
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                width: double.infinity,
-                height: 100,
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: [0.0, 0.30, 1.0],
-                    colors: [
-                      Colors.transparent,
-                      Color.fromARGB(255, 15, 15, 15),
-                      Color.fromARGB(255, 15, 15, 15),
-                    ],
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    // Home tab
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          HapticFeedback.mediumImpact();
-                          MixpanelManager().bottomNavigationTabClicked('Home');
-                          primaryFocus?.unfocus();
-                          onTabTap(0, home.selectedIndex == 0);
-                        },
-                        child: SizedBox(
-                          height: 90,
-                          child: Center(
-                            child: Icon(
-                              FontAwesomeIcons.house,
-                              color: home.selectedIndex == 0 ? Colors.white : Colors.grey,
-                              size: 26,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Action Items tab
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          HapticFeedback.mediumImpact();
-                          MixpanelManager().bottomNavigationTabClicked('Action Items');
-                          primaryFocus?.unfocus();
-                          onTabTap(1, home.selectedIndex == 1);
-                        },
-                        child: SizedBox(
-                          height: 90,
-                          child: Center(
-                            child: Icon(
-                              FontAwesomeIcons.listCheck,
-                              color: home.selectedIndex == 1 ? Colors.white : Colors.grey,
-                              size: 26,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Center space for record button - only when no OMI device is connected
-                    if (showCenterButton && !isOmiDeviceConnected) const SizedBox(width: 80),
-                    // Memories tab
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          HapticFeedback.mediumImpact();
-                          MixpanelManager().bottomNavigationTabClicked('Memories');
-                          primaryFocus?.unfocus();
-                          onTabTap(2, home.selectedIndex == 2);
-                        },
-                        child: SizedBox(
-                          height: 90,
-                          child: Center(
-                            child: Icon(
-                              FontAwesomeIcons.brain,
-                              color: home.selectedIndex == 2 ? Colors.white : Colors.grey,
-                              size: 26,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Apps tab
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          HapticFeedback.mediumImpact();
-                          MixpanelManager().bottomNavigationTabClicked('Apps');
-                          primaryFocus?.unfocus();
-                          onTabTap(3, home.selectedIndex == 3);
-                        },
-                        child: SizedBox(
-                          height: 90,
-                          child: Center(
-                            child: Icon(
-                              FontAwesomeIcons.puzzlePiece,
-                              color: home.selectedIndex == 3 ? Colors.white : Colors.grey,
-                              size: 26,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+    return Consumer<HomeProvider>(
+      builder: (context, home, child) {
+        final bottomInset = MediaQuery.of(context).padding.bottom;
+        const double navContentHeight = 64;
+        return Material(
+          color: const Color(0xFF0C1222),
+          child: Container(
+            width: double.infinity,
+            height: navContentHeight + bottomInset,
+            padding: EdgeInsets.only(top: 4, bottom: bottomInset),
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(color: MobileTokens.border, width: 1),
               ),
             ),
-            // Central Record Button - Only show when no OMI device is connected
-            if (!isOmiDeviceConnected)
-              Positioned(
-                left: MediaQuery.of(context).size.width / 2 - 40,
-                bottom: 40,
-                child: Consumer<CaptureProvider>(
-                  builder: (context, captureProvider, child) {
-                    final isRecording = captureProvider.recordingState == RecordingState.record;
-                    final isInitializing = captureProvider.recordingState == RecordingState.initialising;
-                    if (!showCenterButton) {
-                      return const SizedBox.shrink();
-                    }
-
-                    return GestureDetector(
-                      onTap: () async {
-                        HapticFeedback.heavyImpact();
-                        if (isInitializing) return;
-                        await _handleRecordButtonPress(context, captureProvider);
-                      },
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isRecording ? Colors.red : Colors.deepPurple,
-                          border: Border.all(
-                            color: Colors.black,
-                            width: 5,
-                          ),
-                        ),
-                        child: isInitializing
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              )
-                            : Icon(
-                                isRecording ? FontAwesomeIcons.stop : FontAwesomeIcons.microphone,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                      ),
-                    );
-                  },
+            child: Row(
+              children: [
+                _buildTab(
+                  context: context,
+                  home: home,
+                  index: 0,
+                  icon: FontAwesomeIcons.inbox,
+                  label: '消息',
+                  analyticsName: 'Messages',
+                  badgeCount: context.watch<NotificationCenterProvider>().pendingCount,
                 ),
-              ),
-          ],
+                _buildTab(
+                  context: context,
+                  home: home,
+                  index: 1,
+                  icon: FontAwesomeIcons.listCheck,
+                  label: '待办',
+                  analyticsName: 'Tasks',
+                ),
+                _buildTab(
+                  context: context,
+                  home: home,
+                  index: 2,
+                  icon: FontAwesomeIcons.comments,
+                  label: '对话',
+                  analyticsName: 'Chat',
+                ),
+                _buildTab(
+                  context: context,
+                  home: home,
+                  index: 3,
+                  icon: FontAwesomeIcons.userLarge,
+                  label: '我的',
+                  analyticsName: 'My',
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
 
-  Future<void> _handleRecordButtonPress(BuildContext context, CaptureProvider captureProvider) async {
-    final recordingState = captureProvider.recordingState;
-
-    if (recordingState == RecordingState.record) {
-      await captureProvider.stopStreamRecording();
-      captureProvider.forceProcessingCurrentConversation();
-      MixpanelManager().phoneMicRecordingStopped();
-    } else if (recordingState == RecordingState.initialising) {
-      Logger.debug('initialising, have to wait');
-    } else {
-      await captureProvider.streamRecording();
-      MixpanelManager().phoneMicRecordingStarted();
-
-      if (context.mounted) {
-        final topConvoId = (captureProvider.conversationProvider?.conversations ?? []).isNotEmpty
-            ? captureProvider.conversationProvider!.conversations.first.id
-            : null;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ConversationCapturingPage(topConversationId: topConvoId),
+  Widget _buildTab({
+    required BuildContext context,
+    required HomeProvider home,
+    required int index,
+    required IconData icon,
+    required String label,
+    required String analyticsName,
+    int badgeCount = 0,
+  }) {
+    final selected = home.selectedIndex == index;
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          MixpanelManager().bottomNavigationTabClicked(analyticsName);
+          primaryFocus?.unfocus();
+          onTabTap(index, selected);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.only(top: 5, bottom: 3),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  FaIcon(
+                    icon,
+                    size: 16,
+                    color: selected ? MobileTokens.accent : MobileTokens.textSecondary,
+                  ),
+                  if (badgeCount > 0)
+                    Positioned(
+                      right: -10,
+                      top: -8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: MobileTokens.danger,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          badgeCount > 99 ? '99+' : '$badgeCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                softWrap: false,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? MobileTokens.accent : MobileTokens.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 3),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                width: selected ? 18 : 0,
+                height: 2,
+                decoration: BoxDecoration(
+                  color: MobileTokens.accent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ],
           ),
-        );
-      }
-    }
+        ),
+      ),
+    );
   }
 }

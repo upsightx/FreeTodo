@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -249,7 +249,7 @@ class _DeviceOnboardingPageState extends State<DeviceOnboardingPage> with Single
                   height: 36,
                   margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
+                    color: Colors.grey.withOpacity(0.3),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(

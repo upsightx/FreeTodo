@@ -19,9 +19,9 @@ import 'package:omi/backend/schema/app.dart';
 import 'package:omi/backend/schema/bt_device/bt_device.dart';
 import 'package:omi/backend/schema/geolocation.dart';
 import 'package:omi/main.dart';
-import 'package:omi/pages/action_items/action_items_page.dart';
 import 'package:omi/pages/apps/app_detail/app_detail.dart';
 import 'package:omi/pages/apps/page.dart';
+import 'package:omi/pages/chat/mock_chat_tab_page.dart';
 import 'package:omi/pages/chat/page.dart';
 import 'package:omi/pages/conversation_capturing/page.dart';
 import 'package:omi/pages/conversation_detail/page.dart';
@@ -29,6 +29,9 @@ import 'package:omi/pages/conversations/conversations_page.dart';
 import 'package:omi/pages/conversations/sync_page.dart';
 import 'package:omi/pages/conversations/widgets/merge_action_bar.dart';
 import 'package:omi/pages/memories/page.dart';
+import 'package:omi/pages/messages/page.dart';
+import 'package:omi/pages/my/page.dart';
+import 'package:omi/pages/tasks/mock_tasks_page.dart';
 import 'package:omi/pages/settings/daily_summary_detail_page.dart';
 import 'package:omi/pages/settings/data_privacy_page.dart';
 import 'package:omi/pages/settings/settings_drawer.dart';
@@ -43,6 +46,7 @@ import 'package:omi/providers/device_provider.dart';
 import 'package:omi/providers/announcement_provider.dart';
 import 'package:omi/providers/home_provider.dart';
 import 'package:omi/providers/message_provider.dart';
+import 'package:omi/providers/notification_center_provider.dart';
 import 'package:omi/providers/sync_provider.dart';
 import 'package:omi/services/announcement_service.dart';
 import 'package:omi/services/notifications.dart';
@@ -55,10 +59,12 @@ import 'package:omi/utils/logger.dart';
 import 'package:omi/utils/platform/platform_manager.dart';
 import 'package:omi/utils/platform/platform_service.dart';
 import 'package:omi/utils/responsive/responsive_helper.dart';
+import 'package:omi/ui/mobile/mobile_tokens.dart';
 import 'package:omi/widgets/calendar_date_picker_sheet.dart';
 import 'package:omi/widgets/freemium_switch_dialog.dart';
 import 'package:omi/widgets/upgrade_alert.dart';
 import 'package:omi/widgets/bottom_nav_bar.dart';
+import 'package:omi/widgets/top_status_bar.dart';
 import 'widgets/battery_info_widget.dart';
 
 class HomePageWrapper extends StatefulWidget {
@@ -118,10 +124,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
   bool scriptsInProgress = false;
   StreamSubscription? _notificationStreamSubscription;
 
-  final GlobalKey<State<ConversationsPage>> _conversationsPageKey = GlobalKey<State<ConversationsPage>>();
-  final GlobalKey<State<ActionItemsPage>> _actionItemsPageKey = GlobalKey<State<ActionItemsPage>>();
-  final GlobalKey<State<MemoriesPage>> _memoriesPageKey = GlobalKey<State<MemoriesPage>>();
-  final GlobalKey<AppsPageState> _appsPageKey = GlobalKey<AppsPageState>();
+  final GlobalKey<State<MessagesPage>> _messagesPageKey = GlobalKey<State<MessagesPage>>();
+  final GlobalKey<State<MockTasksPage>> _tasksPageKey = GlobalKey<State<MockTasksPage>>();
+  final GlobalKey<State<MockChatTabPage>> _chatPageKey = GlobalKey<State<MockChatTabPage>>();
+  final GlobalKey<State<MyPage>> _myPageKey = GlobalKey<State<MyPage>>();
   late final List<Widget> _pages;
 
   // Freemium switch handler for auto-switch dialogs
@@ -137,39 +143,29 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
   void _scrollToTop(int pageIndex) {
     switch (pageIndex) {
       case 0:
-        final conversationsState = _conversationsPageKey.currentState;
-        if (conversationsState != null) {
-          (conversationsState as dynamic).scrollToTop();
+        final messagesState = _messagesPageKey.currentState;
+        if (messagesState != null) {
+          (messagesState as dynamic).scrollToTop();
         }
         break;
       case 1:
-        final actionItemsState = _actionItemsPageKey.currentState;
-        if (actionItemsState != null) {
-          (actionItemsState as dynamic).scrollToTop();
+        final tasksState = _tasksPageKey.currentState;
+        if (tasksState != null) {
+          (tasksState as dynamic).scrollToTop();
         }
         break;
       case 2:
-        final memoriesState = _memoriesPageKey.currentState;
-        if (memoriesState != null) {
-          (memoriesState as dynamic).scrollToTop();
+        final chatState = _chatPageKey.currentState;
+        if (chatState != null) {
+          (chatState as dynamic).scrollToTop();
         }
         break;
       case 3:
-        final appsState = _appsPageKey.currentState;
-        if (appsState != null) {
-          appsState.scrollToTop();
+        final myState = _myPageKey.currentState;
+        if (myState != null) {
+          (myState as dynamic).scrollToTop();
         }
         break;
-    }
-  }
-
-  void _addGoal() {
-    // Navigate to conversations page
-    context.read<HomeProvider>().setIndex(0);
-    // Trigger goal creation
-    final conversationsState = _conversationsPageKey.currentState;
-    if (conversationsState != null) {
-      (conversationsState as dynamic).addGoal();
     }
   }
 
@@ -231,10 +227,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
   @override
   void initState() {
     _pages = [
-      ConversationsPage(key: _conversationsPageKey),
-      ActionItemsPage(key: _actionItemsPageKey, onAddGoal: _addGoal),
-      MemoriesPage(key: _memoriesPageKey),
-      AppsPage(key: _appsPageKey),
+      MessagesPage(key: _messagesPageKey),
+      MockTasksPage(key: _tasksPageKey),
+      MockChatTabPage(key: _chatPageKey),
+      MyPage(key: _myPageKey),
     ];
     SharedPreferencesUtil().onboardingCompleted = true;
     updateUserOnboardingState(completed: true);
@@ -257,14 +253,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
       }
 
       switch (pageAlias) {
+        case "messages":
+          homePageIdx = 0;
+          break;
         case "action-items":
+        case "todos":
           homePageIdx = 1;
           break;
-        case "memories":
-        case "facts":
+        case "chat":
           homePageIdx = 2;
           break;
-        case "apps":
+        case "my":
+        case "settings":
           homePageIdx = 3;
           break;
       }
@@ -288,8 +288,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _initiateApps();
 
-      // ForegroundUtil.requestPermissions();
+      // Request permissions before starting foreground service
       if (!PlatformService.isDesktop) {
+        await ForegroundUtil.requestPermissions();
         await ForegroundUtil.initializeForegroundService();
         await ForegroundUtil.startForegroundTask();
       }
@@ -299,6 +300,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
       if (mounted) {
         await Provider.of<CaptureProvider>(context, listen: false)
             .streamDeviceRecording(device: Provider.of<DeviceProvider>(context, listen: false).connectedDevice);
+      }
+      if (mounted) {
+        context.read<NotificationCenterProvider>().refresh(force: true);
       }
 
       // Navigate
@@ -618,9 +622,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
         child: Consumer<HomeProvider>(
           builder: (context, homeProvider, _) {
             return Scaffold(
-              backgroundColor: Theme.of(context).colorScheme.primary,
+              backgroundColor: MobileTokens.background,
               resizeToAvoidBottomInset: false,
-              appBar: homeProvider.selectedIndex == 5 ? null : _buildAppBar(context),
+              extendBody: false,
+              appBar: null,
               body: DefaultTabController(
                 length: 4,
                 initialIndex: homeProvider.selectedIndex,
@@ -630,95 +635,40 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                     // context.read<HomeProvider>().memoryFieldFocusNode.unfocus();
                     // context.read<HomeProvider>().chatFieldFocusNode.unfocus();
                   },
-                  child: Stack(
+                  child: Column(
                     children: [
-                      Column(
-                        children: [
-                          Expanded(
-                            child: IndexedStack(
-                              index: context.watch<HomeProvider>().selectedIndex,
-                              children: _pages,
-                            ),
-                          ),
-                        ],
+                      SafeArea(
+                        top: true,
+                        bottom: false,
+                        child: const TopStatusBar(),
                       ),
-                      Consumer<HomeProvider>(
-                        builder: (context, home, child) {
-                          if (home.isChatFieldFocused ||
-                              home.isAppsSearchFieldFocused ||
-                              home.isMemoriesSearchFieldFocused) {
-                            return const SizedBox.shrink();
-                          }
-
-                          return Stack(
-                            children: [
-                              BottomNavBar(
-                                onTabTap: (index, isRepeat) {
-                                  if (isRepeat) {
-                                    _scrollToTop(index);
-                                  } else {
-                                    home.setIndex(index);
-                                  }
-                                },
-                              ),
-                              if (home.selectedIndex == 0)
-                                Positioned(
-                                  right: 20,
-                                  bottom: 100,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      HapticFeedback.mediumImpact();
-                                      MixpanelManager().bottomNavigationTabClicked('Chat');
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => const ChatPage(isPivotBottom: false),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(32),
-                                        color: Colors.deepPurple,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            FontAwesomeIcons.solidComment,
-                                            size: 22,
-                                            color: Colors.white,
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Text(
-                                            context.l10n.askOmi,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 17,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-                      // Merge action bar - floats above bottom nav when in selection mode
-                      if (homeProvider.selectedIndex == 0)
-                        const Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: MergeActionBar(),
+                      Expanded(
+                        child: IndexedStack(
+                          index: context.watch<HomeProvider>().selectedIndex,
+                          children: _pages,
                         ),
+                      ),
                     ],
                   ),
                 ),
+              ),
+              bottomNavigationBar: Consumer<HomeProvider>(
+                builder: (context, home, child) {
+                  if (home.isChatFieldFocused ||
+                      home.isAppsSearchFieldFocused ||
+                      home.isMemoriesSearchFieldFocused) {
+                    return const SizedBox.shrink();
+                  }
+                  return BottomNavBar(
+                    onTabTap: (index, isRepeat) {
+                      if (isRepeat) {
+                        _scrollToTop(index);
+                      } else {
+                        home.setIndex(index);
+                      }
+                    },
+                  );
+                },
               ),
             );
           },
@@ -771,7 +721,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
           Row(
             children: [
               // Sync icon - shows when there are pending files on device or a device is paired
-              // Only shown on home page (index 0)
+              // Only shown on messages page (index 0)
               Consumer3<HomeProvider, DeviceProvider, SyncProvider>(
                 builder: (context, homeProvider, deviceProvider, syncProvider, child) {
                   final device = deviceProvider.pairedDevice;
@@ -779,7 +729,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                   final hasPendingOnDevice = syncProvider.missingWalsOnDevice.isNotEmpty;
                   final isSyncing = syncProvider.isSyncing;
 
-                  // Show sync icon only on home page and if there's a paired device OR if there are pending files on device
+                  // Show sync icon only on messages page and if there's a paired device OR if there are pending files on device
                   if (homeProvider.selectedIndex == 0 && (device != null || hasPendingOnDevice)) {
                     return GestureDetector(
                       onTap: () {
@@ -795,9 +745,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                         margin: const EdgeInsets.only(right: 8),
                         decoration: BoxDecoration(
                           color: isSyncing
-                              ? Colors.deepPurple.withValues(alpha: 0.2)
+                              ? Colors.deepPurple.withOpacity(0.2)
                               : hasPendingOnDevice
-                                  ? Colors.orange.withValues(alpha: 0.15)
+                                  ? Colors.orange.withOpacity(0.15)
                                   : const Color(0xFF1F1F25),
                           shape: BoxShape.circle,
                         ),
@@ -816,10 +766,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                   return const SizedBox.shrink();
                 },
               ),
-              // Search and Calendar buttons - only on home page
+              // Search and Calendar buttons - only on messages page (index 0)
               Consumer2<HomeProvider, ConversationProvider>(
                 builder: (context, homeProvider, convoProvider, _) {
-                  // Only show search and calendar buttons on home page (index 0)
+                  // Only show search and calendar buttons on messages page (index 0)
                   if (homeProvider.selectedIndex != 0) {
                     return const SizedBox.shrink();
                   }
@@ -835,7 +785,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                           height: 36,
                           decoration: BoxDecoration(
                             color: homeProvider.showConvoSearchBar
-                                ? Colors.deepPurple.withValues(alpha: 0.5)
+                                ? Colors.deepPurple.withOpacity(0.5)
                                 : const Color(0xFF1F1F25),
                             shape: BoxShape.circle,
                           ),
@@ -860,7 +810,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                         height: 36,
                         decoration: BoxDecoration(
                           color: convoProvider.showDailySummaries
-                              ? Colors.deepPurple.withValues(alpha: 0.5)
+                              ? Colors.deepPurple.withOpacity(0.5)
                               : const Color(0xFF1F1F25),
                           shape: BoxShape.circle,
                         ),
@@ -887,7 +837,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: Colors.deepPurple.withValues(alpha: 0.5),
+                            color: Colors.deepPurple.withOpacity(0.5),
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -1043,7 +993,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: showCompleted ? Colors.deepPurple.withValues(alpha: 0.5) : const Color(0xFF1F1F25),
+                          color: showCompleted ? Colors.deepPurple.withOpacity(0.5) : const Color(0xFF1F1F25),
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(

@@ -71,6 +71,10 @@ class ChatPageState extends State<ChatPage> with AutomaticKeepAliveClientMixin {
 
   bool _allowSpacer = false;
 
+  void scrollToTop() {
+    scrollToBottom();
+  }
+
   @override
   void initState() {
     apps = prefs.appsList;
@@ -665,7 +669,7 @@ class ChatPageState extends State<ChatPage> with AutomaticKeepAliveClientMixin {
                   }),
                 ),
                 SizedBox(height: textFieldFocusNode.hasFocus ? 12 : 0),
-                if (!textFieldFocusNode.hasFocus)
+                if (widget.isPivotBottom && !textFieldFocusNode.hasFocus)
                   BottomNavBar(
                     showCenterButton: false,
                     onTabTap: (index, isRepeat) {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:omi/pages/memories/widgets/memory_graph_page.dart';
 import 'package:omi/utils/l10n_extensions.dart';
@@ -36,7 +36,7 @@ class OnboardingKnowledgeGraphStep extends StatelessWidget {
                 context.l10n.onboardingWhatIKnowAboutYouDescription,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.65),
+                  color: Colors.white.withOpacity(0.65),
                   fontSize: 16,
                   height: 1.4,
                   fontFamily: 'Manrope',

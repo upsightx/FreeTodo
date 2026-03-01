@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1764,9 +1764,9 @@ class _DeveloperSettingsPageState extends State<DeveloperSettingsPage> {
                         margin: const EdgeInsets.symmetric(horizontal: 4),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.orange.shade900.withValues(alpha: 0.3),
+                          color: Colors.orange.shade900.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.orange.shade700.withValues(alpha: 0.5)),
+                          border: Border.all(color: Colors.orange.shade700.withOpacity(0.5)),
                         ),
                         child: Row(
                           children: [

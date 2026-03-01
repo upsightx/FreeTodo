@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -613,7 +613,7 @@ class ExploreInstallPageState extends State<ExploreInstallPage> with AutomaticKe
                               padding: const EdgeInsets.all(20),
                               margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.9),
+                                color: Colors.white.withOpacity(0.9),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Row(
@@ -796,7 +796,7 @@ class ExploreInstallPageState extends State<ExploreInstallPage> with AutomaticKe
                                           curve: Curves.easeInOut,
                                           height: 44,
                                           decoration: BoxDecoration(
-                                            color: Colors.deepPurpleAccent.withValues(alpha: 0.5),
+                                            color: Colors.deepPurpleAccent.withOpacity(0.5),
                                             borderRadius: BorderRadius.circular(AppStyles.radiusLarge),
                                           ),
                                           child: TextButton.icon(
@@ -866,7 +866,7 @@ class ExploreInstallPageState extends State<ExploreInstallPage> with AutomaticKe
                                           curve: Curves.easeInOut,
                                           height: 44,
                                           decoration: BoxDecoration(
-                                            color: Colors.deepPurpleAccent.withValues(alpha: 0.5),
+                                            color: Colors.deepPurpleAccent.withOpacity(0.5),
                                             borderRadius: BorderRadius.circular(AppStyles.radiusLarge),
                                           ),
                                           child: TextButton.icon(
@@ -938,7 +938,7 @@ class ExploreInstallPageState extends State<ExploreInstallPage> with AutomaticKe
                                           curve: Curves.easeInOut,
                                           height: 44,
                                           decoration: BoxDecoration(
-                                            color: Colors.deepPurpleAccent.withValues(alpha: 0.5),
+                                            color: Colors.deepPurpleAccent.withOpacity(0.5),
                                             borderRadius: BorderRadius.circular(AppStyles.radiusLarge),
                                           ),
                                           child: TextButton.icon(
@@ -983,7 +983,7 @@ class ExploreInstallPageState extends State<ExploreInstallPage> with AutomaticKe
                                               curve: Curves.easeInOut,
                                               decoration: BoxDecoration(
                                                 color: state.visibleFilterCount > 0
-                                                    ? Colors.deepPurpleAccent.withValues(alpha: 0.5)
+                                                    ? Colors.deepPurpleAccent.withOpacity(0.5)
                                                     : AppStyles.backgroundSecondary,
                                                 borderRadius: BorderRadius.circular(AppStyles.radiusLarge),
                                               ),

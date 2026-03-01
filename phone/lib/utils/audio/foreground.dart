@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:omi/utils/logger.dart';
 import 'package:omi/utils/platform/platform_service.dart';
@@ -83,6 +84,26 @@ class ForegroundUtil {
     }
 
     if (Platform.isAndroid) {
+      // Android 14+ requires RECORD_AUDIO permission before starting FOREGROUND_SERVICE_MICROPHONE
+      final microphoneStatus = await Permission.microphone.status;
+      if (!microphoneStatus.isGranted) {
+        Logger.debug('Requesting microphone permission for foreground service');
+        final result = await Permission.microphone.request();
+        if (!result.isGranted) {
+          Logger.debug('Microphone permission denied, foreground service may fail');
+        }
+      }
+
+      // Android 14+ requires location permission before starting FOREGROUND_SERVICE_LOCATION
+      final locationStatus = await Permission.location.status;
+      if (!locationStatus.isGranted) {
+        Logger.debug('Requesting location permission for foreground service');
+        final result = await Permission.location.request();
+        if (!result.isGranted) {
+          Logger.debug('Location permission denied, foreground service may fail');
+        }
+      }
+
       // if (!await FlutterForegroundTask.canDrawOverlays) {
       //   await FlutterForegroundTask.openSystemAlertWindowSettings();
       // }
@@ -154,6 +175,37 @@ class ForegroundUtil {
     Logger.debug('startForegroundTask');
 
     try {
+      // Android 14+ requires permissions before starting foreground service
+      if (Platform.isAndroid) {
+        // Check and request microphone permission for FOREGROUND_SERVICE_MICROPHONE
+        final microphoneStatus = await Permission.microphone.status;
+        if (!microphoneStatus.isGranted) {
+          Logger.debug('Microphone permission not granted, requesting...');
+          final micResult = await Permission.microphone.request();
+          if (!micResult.isGranted) {
+            Logger.debug('Microphone permission denied, cannot start foreground service');
+            _isStarting = false;
+            return ServiceRequestFailure(
+              error: 'Microphone permission is required to start foreground service',
+            );
+          }
+        }
+
+        // Check and request location permission for FOREGROUND_SERVICE_LOCATION
+        final locationStatus = await Permission.location.status;
+        if (!locationStatus.isGranted) {
+          Logger.debug('Location permission not granted, requesting...');
+          final locResult = await Permission.location.request();
+          if (!locResult.isGranted) {
+            Logger.debug('Location permission denied, cannot start foreground service');
+            _isStarting = false;
+            return ServiceRequestFailure(
+              error: 'Location permission is required to start foreground service',
+            );
+          }
+        }
+      }
+
       ServiceRequestResult result;
       if (await FlutterForegroundTask.isRunningService) {
         result = await FlutterForegroundTask.restartService();

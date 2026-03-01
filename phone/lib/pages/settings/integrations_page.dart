@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 import 'package:omi/widgets/shimmer_with_timeout.dart';
@@ -491,7 +491,7 @@ class _IntegrationsPageState extends State<IntegrationsPage> with WidgetsBinding
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: !isAvailable ? Colors.grey.withValues(alpha: 0.3) : Colors.white,
+                  color: !isAvailable ? Colors.grey.withOpacity(0.3) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
@@ -508,7 +508,7 @@ class _IntegrationsPageState extends State<IntegrationsPage> with WidgetsBinding
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.2),
+                  color: Colors.red.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(

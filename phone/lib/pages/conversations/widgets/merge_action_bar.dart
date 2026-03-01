@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:provider/provider.dart';
@@ -64,7 +64,7 @@ class _MergeActionBarState extends State<MergeActionBar> with SingleTickerProvid
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
+                    color: Colors.black.withOpacity(0.5),
                     blurRadius: 20,
                     offset: const Offset(0, -4),
                   ),

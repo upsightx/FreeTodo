@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:omi/ui/adaptive_widget.dart';
 import 'package:omi/ui/molecules/omi_section_header.dart';
@@ -30,15 +30,15 @@ class OmiSection extends AdaptiveWidget {
     return Container(
       padding: padding ?? const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: ResponsiveHelper.backgroundSecondary.withValues(alpha: 0.6),
+        color: ResponsiveHelper.backgroundSecondary.withOpacity(0.6),
         borderRadius: BorderRadius.circular(borderRadius ?? 16),
         border: Border.all(
-          color: ResponsiveHelper.backgroundTertiary.withValues(alpha: 0.5),
+          color: ResponsiveHelper.backgroundTertiary.withOpacity(0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),

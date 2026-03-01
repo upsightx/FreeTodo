@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -304,7 +304,7 @@ class _ImportHistoryPageState extends State<ImportHistoryPage> {
         decoration: BoxDecoration(
           color: const Color(0xFF1F1F25),
           borderRadius: BorderRadius.circular(12),
-          border: isAvailable ? Border.all(color: Colors.deepPurple.withValues(alpha: 0.3), width: 1) : null,
+          border: isAvailable ? Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 1) : null,
         ),
         child: Row(
           children: [
@@ -393,7 +393,7 @@ class _ImportHistoryPageState extends State<ImportHistoryPage> {
                       width: 30,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: Colors.deepPurple.withValues(alpha: 0.8),
+                        color: Colors.deepPurple.withOpacity(0.8),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -567,7 +567,7 @@ class _ImportHistoryPageState extends State<ImportHistoryPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.15),
+                    color: Colors.green.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -805,7 +805,7 @@ class _ImportHistoryPageState extends State<ImportHistoryPage> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.3),
+                  color: Colors.grey.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
@@ -837,7 +837,7 @@ class _ImportHistoryPageState extends State<ImportHistoryPage> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
+                    color: Colors.grey.withOpacity(0.3),
                     shape: BoxShape.circle,
                   ),
                   child: const Center(

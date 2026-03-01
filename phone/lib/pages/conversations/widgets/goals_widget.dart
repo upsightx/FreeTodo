@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -572,7 +572,7 @@ class GoalsWidgetState extends State<GoalsWidget> with WidgetsBindingObserver {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: Colors.grey.withValues(alpha: 0.12),
+                            color: Colors.grey.withOpacity(0.12),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(

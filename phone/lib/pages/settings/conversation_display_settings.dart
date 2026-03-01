@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -212,7 +212,7 @@ class _ConversationDisplaySettingsState extends State<ConversationDisplaySetting
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF22C55E).withValues(alpha: 0.2) : const Color(0xFF2A2A2E),
+                      color: isSelected ? const Color(0xFF22C55E).withOpacity(0.2) : const Color(0xFF2A2A2E),
                       borderRadius: BorderRadius.circular(8),
                       border: isSelected ? Border.all(color: const Color(0xFF22C55E), width: 1) : null,
                     ),

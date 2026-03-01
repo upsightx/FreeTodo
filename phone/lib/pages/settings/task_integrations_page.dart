@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -739,14 +739,14 @@ class _TaskIntegrationsPageState extends State<TaskIntegrationsPage> with Widget
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.yellow.withValues(alpha: 0.1),
+                  color: Colors.yellow.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
                     FaIcon(
                       FontAwesomeIcons.solidLightbulb,
-                      color: Colors.yellow.withValues(alpha: 0.5),
+                      color: Colors.yellow.withOpacity(0.5),
                       size: 20,
                     ),
                     const SizedBox(width: 12),

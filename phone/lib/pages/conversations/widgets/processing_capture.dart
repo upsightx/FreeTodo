@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -353,7 +353,7 @@ class _ConversationCaptureWidgetState extends State<ConversationCaptureWidget> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.2),
+                color: Colors.amber.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(

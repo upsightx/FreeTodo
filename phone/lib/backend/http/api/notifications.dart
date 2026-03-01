@@ -4,18 +4,134 @@ import 'package:omi/backend/http/shared.dart';
 import 'package:omi/env/env.dart';
 import 'package:omi/utils/logger.dart';
 
-Future<void> saveFcmTokenServer({required String token, required String timeZone}) async {
-  var response = await makeApiCall(
-    url: '${Env.apiBaseUrl}v1/users/fcm-token',
-    headers: {'Content-Type': 'application/json'},
-    method: 'POST',
-    body: jsonEncode({'fcm_token': token, 'time_zone': timeZone}),
-  );
+/// 通知数据模型
+class AppNotification {
+  final String id;
+  final String title;
+  final String content;
+  final DateTime timestamp;
+  final String? todoId;
+  final String? source;
+  final String? aiSuggestion;
 
-  Logger.debug('saveToken: ${response?.body}');
-  if (response?.statusCode == 200) {
-    Logger.debug("Token saved successfully");
-  } else {
-    Logger.debug("Failed to save token");
+  AppNotification({
+    required this.id,
+    required this.title,
+    required this.content,
+    required this.timestamp,
+    this.todoId,
+    this.source,
+    this.aiSuggestion,
+  });
+
+  factory AppNotification.fromJson(Map<String, dynamic> json) {
+    return AppNotification(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      content: json['content'] as String,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      todoId: json['todo_id'] as String?,
+      source: json['source'] as String?,
+      aiSuggestion: json['ai_suggestion'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'timestamp': timestamp.toIso8601String(),
+      if (todoId != null) 'todo_id': todoId,
+      if (source != null) 'source': source,
+      if (aiSuggestion != null) 'ai_suggestion': aiSuggestion,
+    };
+  }
+}
+
+/// 获取通知列表
+Future<List<AppNotification>> getNotifications() async {
+  try {
+    final response = await makeApiCall(
+      url: '${Env.apiBaseUrl}api/notifications',
+      headers: {},
+      method: 'GET',
+      body: '',
+    );
+
+    if (response == null) {
+      Logger.debug('Failed to get notifications: response is null');
+      return [];
+    }
+
+    // Handle 404 and other errors gracefully
+    if (response.statusCode == 404) {
+      Logger.debug('Notifications endpoint not found (404) - backend may not be running or endpoint not implemented');
+      return [];
+    }
+
+    if (response.statusCode != 200) {
+      Logger.debug('Failed to get notifications: ${response.statusCode} - ${response.body}');
+      return [];
+    }
+
+    // Check if response body is HTML (error page)
+    final body = response.body;
+    if (body.trim().startsWith('<!DOCTYPE') || body.trim().startsWith('<html>')) {
+      Logger.debug('Received HTML instead of JSON - backend may not be running');
+      return [];
+    }
+
+    final List<dynamic> jsonList = jsonDecode(body);
+    return jsonList.map((json) => AppNotification.fromJson(json as Map<String, dynamic>)).toList();
+  } catch (e) {
+    Logger.debug('Error getting notifications: $e');
+    return [];
+  }
+}
+
+/// 删除通知
+Future<bool> deleteNotification(String notificationId) async {
+  try {
+    final response = await makeApiCall(
+      url: '${Env.apiBaseUrl}api/notifications/$notificationId',
+      headers: {},
+      method: 'DELETE',
+      body: '',
+    );
+
+    if (response == null || response.statusCode != 200) {
+      Logger.debug('Failed to delete notification: ${response?.statusCode}');
+      return false;
+    }
+
+    final Map<String, dynamic> json = jsonDecode(response.body);
+    return json['success'] as bool? ?? false;
+  } catch (e) {
+    Logger.debug('Error deleting notification: $e');
+    return false;
+  }
+}
+
+/// 保存FCM Token到服务器（用于通知服务）
+Future<void> saveFcmTokenServer({required String token, required String timeZone}) async {
+  try {
+    // 这个方法应该在 users.dart 中，但为了兼容性先在这里实现
+    // TODO: 移动到 users.dart 或创建专门的 token API
+    final response = await makeApiCall(
+      url: '${Env.apiBaseUrl}v1/users/fcm-token',
+      headers: {},
+      method: 'POST',
+      body: jsonEncode({
+        'token': token,
+        'timezone': timeZone,
+      }),
+    );
+
+    if (response == null || response.statusCode != 200) {
+      Logger.debug('Failed to save FCM token: ${response?.statusCode}');
+    }
+  } catch (e) {
+    Logger.debug('Error saving FCM token: $e');
   }
 }

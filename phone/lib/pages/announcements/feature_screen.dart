@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:omi/models/announcement.dart';
@@ -237,7 +237,7 @@ class _FeatureScreenState extends State<FeatureScreen> with SingleTickerProvider
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: ResponsiveHelper.purplePrimary.withValues(alpha: 0.15),
+            color: ResponsiveHelper.purplePrimary.withOpacity(0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
@@ -295,7 +295,7 @@ class _FeatureScreenState extends State<FeatureScreen> with SingleTickerProvider
               style: TextStyle(
                 color: ResponsiveHelper.purplePrimary,
                 fontWeight: FontWeight.w600,
-                backgroundColor: ResponsiveHelper.purplePrimary.withValues(alpha: 0.15),
+                backgroundColor: ResponsiveHelper.purplePrimary.withOpacity(0.15),
               ),
             ),
             if (parts.length > 1) TextSpan(text: parts.sublist(1).join(highlightText)),
@@ -405,7 +405,7 @@ class _FeatureScreenState extends State<FeatureScreen> with SingleTickerProvider
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -453,7 +453,7 @@ class _FeatureScreenState extends State<FeatureScreen> with SingleTickerProvider
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -471,7 +471,7 @@ class _FeatureScreenState extends State<FeatureScreen> with SingleTickerProvider
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: Colors.black.withOpacity(0.2),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -510,7 +510,7 @@ class _FeatureScreenState extends State<FeatureScreen> with SingleTickerProvider
               style: TextStyle(
                 color: ResponsiveHelper.purplePrimary,
                 fontWeight: FontWeight.w600,
-                backgroundColor: ResponsiveHelper.purplePrimary.withValues(alpha: 0.15),
+                backgroundColor: ResponsiveHelper.purplePrimary.withOpacity(0.15),
               ),
             ),
             if (parts.length > 1) TextSpan(text: parts.sublist(1).join(highlightText)),
@@ -579,7 +579,7 @@ class _FeatureScreenState extends State<FeatureScreen> with SingleTickerProvider
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: Colors.black.withOpacity(0.15),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),

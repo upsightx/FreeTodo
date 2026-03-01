@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -74,7 +74,7 @@ class _UsagePageState extends State<UsagePage> with TickerProviderStateMixin {
       text: TextSpan(
         text: 'omi.me',
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.8),
+          color: Colors.white.withOpacity(0.8),
           fontSize: 14 * 3.0, // Scale font size with pixelRatio
           fontWeight: FontWeight.w600,
         ),
@@ -381,7 +381,7 @@ class _UsagePageState extends State<UsagePage> with TickerProviderStateMixin {
       decoration: BoxDecoration(
         color: const Color(0xFF1F1F25),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -726,8 +726,8 @@ class _UsagePageState extends State<UsagePage> with TickerProviderStateMixin {
             show: true,
             gradient: LinearGradient(
               colors: [
-                metricColors[i].withValues(alpha: 0.3),
-                metricColors[i].withValues(alpha: 0.0),
+                metricColors[i].withOpacity(0.3),
+                metricColors[i].withOpacity(0.0),
               ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -746,7 +746,7 @@ class _UsagePageState extends State<UsagePage> with TickerProviderStateMixin {
       borderData: FlBorderData(
         show: true,
         border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 1),
+          bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 1),
         ),
       ),
       lineTouchData: LineTouchData(
@@ -872,7 +872,7 @@ class _UsagePageState extends State<UsagePage> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             color: const Color(0xFF1F1F25),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
           child: LineChart(
             lineChartData,
@@ -948,10 +948,10 @@ class _UsagePageState extends State<UsagePage> with TickerProviderStateMixin {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.1),
+            color: color.withOpacity(0.1),
             blurRadius: 10,
             spreadRadius: 1,
             offset: const Offset(0, 2),

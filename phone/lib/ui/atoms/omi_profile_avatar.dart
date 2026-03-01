@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:omi/ui/adaptive_widget.dart';
 import 'package:omi/utils/responsive/responsive_helper.dart';
@@ -43,16 +43,16 @@ class OmiProfileAvatar extends AdaptiveWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: backgroundColor ?? ResponsiveHelper.purplePrimary.withValues(alpha: 0.15),
+        color: backgroundColor ?? ResponsiveHelper.purplePrimary.withOpacity(0.15),
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
-          color: borderColor ?? ResponsiveHelper.purplePrimary.withValues(alpha: 0.3),
+          color: borderColor ?? ResponsiveHelper.purplePrimary.withOpacity(0.3),
           width: borderWidth,
         ),
         boxShadow: showShadow
             ? [
                 BoxShadow(
-                  color: (borderColor ?? ResponsiveHelper.purplePrimary).withValues(alpha: 0.2),
+                  color: (borderColor ?? ResponsiveHelper.purplePrimary).withOpacity(0.2),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),

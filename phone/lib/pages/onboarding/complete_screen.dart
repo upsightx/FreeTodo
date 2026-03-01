@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class OnboardingCompleteScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -99,7 +99,7 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen> wit
                         textAlign: TextAlign.center,
                         text: TextSpan(
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: Colors.white.withOpacity(0.5),
                             fontSize: 17,
                             height: 1.5,
                             fontFamily: 'Manrope',

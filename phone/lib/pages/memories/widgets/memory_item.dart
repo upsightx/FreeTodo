@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -50,7 +50,7 @@ class MemoryItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -102,7 +102,7 @@ class MemoryItem extends StatelessWidget {
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.01),
+                          color: Colors.black.withOpacity(0.01),
                           borderRadius: const BorderRadius.all(
                             Radius.circular(8),
                           ),
@@ -255,7 +255,7 @@ class MemoryItem extends StatelessWidget {
   //       height: 36,
   //       width: 56,
   //       decoration: BoxDecoration(
-  //         color: Colors.white.withValues(alpha: 0.1),
+  //         color: Colors.white.withOpacity(0.1),
   //         borderRadius: BorderRadius.circular(AppStyles.radiusMedium),
   //       ),
   //       child: Row(

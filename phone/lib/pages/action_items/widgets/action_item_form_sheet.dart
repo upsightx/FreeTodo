@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -471,7 +471,7 @@ class _DateTimePickerSheetState extends State<DateTimePickerSheet> {
         color: isSelected == true
             ? ResponsiveHelper.purplePrimary
             : isCurrentYear == true
-                ? ResponsiveHelper.purplePrimary.withValues(alpha: 0.3)
+                ? ResponsiveHelper.purplePrimary.withOpacity(0.3)
                 : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),

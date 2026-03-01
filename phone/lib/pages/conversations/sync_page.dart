@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -181,7 +181,7 @@ class WalListItem extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: Colors.deepPurple.withValues(alpha: 0.2),
+                                          color: Colors.deepPurple.withOpacity(0.2),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Row(
@@ -205,7 +205,7 @@ class WalListItem extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: Colors.deepPurple.withValues(alpha: 0.15),
+                                          color: Colors.deepPurple.withOpacity(0.15),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Row(
@@ -229,7 +229,7 @@ class WalListItem extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: Colors.teal.withValues(alpha: 0.15),
+                                          color: Colors.teal.withOpacity(0.15),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Row(
@@ -1013,9 +1013,9 @@ class _SyncPageState extends State<SyncPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white.withValues(alpha: 0.12) : const Color(0xFF1C1C1E),
+          color: isSelected ? Colors.white.withOpacity(0.12) : const Color(0xFF1C1C1E),
           borderRadius: BorderRadius.circular(100),
-          border: isSelected ? Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1) : null,
+          border: isSelected ? Border.all(color: Colors.white.withOpacity(0.3), width: 1) : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1033,7 +1033,7 @@ class _SyncPageState extends State<SyncPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withValues(alpha: 0.2) : const Color(0xFF2A2A2E),
+                  color: isSelected ? Colors.white.withOpacity(0.2) : const Color(0xFF2A2A2E),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1234,7 +1234,7 @@ class _SyncPageState extends State<SyncPage> {
                     height: 36,
                     margin: const EdgeInsets.only(right: 8),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.3),
+                      color: Colors.grey.withOpacity(0.3),
                       shape: BoxShape.circle,
                     ),
                     child: Center(

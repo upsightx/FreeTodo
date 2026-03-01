@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:omi/ui/adaptive_widget.dart';
 import 'package:omi/utils/responsive/responsive_helper.dart';
@@ -31,16 +31,16 @@ class OmiInfoCard extends AdaptiveWidget {
     return Container(
       padding: padding ?? const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: backgroundColor ?? ResponsiveHelper.backgroundSecondary.withValues(alpha: 0.8),
+        color: backgroundColor ?? ResponsiveHelper.backgroundSecondary.withOpacity(0.8),
         borderRadius: BorderRadius.circular(borderRadius ?? 20),
         border: Border.all(
-          color: borderColor ?? ResponsiveHelper.backgroundTertiary.withValues(alpha: 0.5),
+          color: borderColor ?? ResponsiveHelper.backgroundTertiary.withOpacity(0.5),
           width: 1,
         ),
         boxShadow: shadows ??
             [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),

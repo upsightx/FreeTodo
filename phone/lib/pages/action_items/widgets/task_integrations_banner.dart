@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:omi/gen/assets.gen.dart';
@@ -105,7 +105,7 @@ class TaskIntegrationsBanner extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.5),
+                color: Colors.green.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -86,21 +86,21 @@ class _TranscriptWidgetState extends State<TranscriptWidget> {
 
   Color _getSpeakerBubbleColor(bool isUser, int speakerId, Person? person) {
     if (isUser) {
-      return const Color(0xFF8B5CF6).withValues(alpha: 0.8);
+      return const Color(0xFF8B5CF6).withOpacity(0.8);
     }
     final colorIndex = (person?.colorIdx ?? speakerId) % _speakerColors.length;
-    return _speakerColors[colorIndex].withValues(alpha: 0.8);
+    return _speakerColors[colorIndex].withOpacity(0.8);
   }
 
   Color _getSpeakerAvatarColor(bool isUser, int speakerId, Person? person) {
     if (isUser) {
-      return const Color(0xFF8B5CF6).withValues(alpha: 0.3);
+      return const Color(0xFF8B5CF6).withOpacity(0.3);
     }
     if (speakerId == omiSpeakerId) {
-      return Colors.purple.withValues(alpha: 0.3);
+      return Colors.purple.withOpacity(0.3);
     }
     final colorIndex = (person?.colorIdx ?? speakerId) % _speakerColors.length;
-    return _speakerColors[colorIndex].withValues(alpha: 0.3);
+    return _speakerColors[colorIndex].withOpacity(0.3);
   }
 
   Widget _getSpeakerAvatar(int speakerId, bool isUser, Person? person) {
@@ -395,7 +395,7 @@ class _TranscriptWidgetState extends State<TranscriptWidget> {
         child: Container(
           key: matchKey,
           decoration: BoxDecoration(
-            color: isCurrentResult ? Colors.orange.withValues(alpha: 0.9) : Colors.deepPurple.withValues(alpha: 0.6),
+            color: isCurrentResult ? Colors.orange.withOpacity(0.9) : Colors.deepPurple.withOpacity(0.6),
             borderRadius: BorderRadius.circular(2),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 1),
@@ -578,7 +578,7 @@ class _TranscriptWidgetState extends State<TranscriptWidget> {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
+                                  color: Colors.black.withOpacity(0.15),
                                   blurRadius: 4,
                                   offset: const Offset(0, 1),
                                 ),
@@ -607,8 +607,8 @@ class _TranscriptWidgetState extends State<TranscriptWidget> {
                                               style: TextStyle(
                                                 letterSpacing: 0.0,
                                                 color: isUser
-                                                    ? Colors.white.withValues(alpha: 0.8)
-                                                    : Colors.grey.shade300.withValues(alpha: 0.8),
+                                                    ? Colors.white.withOpacity(0.8)
+                                                    : Colors.grey.shade300.withOpacity(0.8),
                                                 fontSize: 14,
                                                 fontStyle: FontStyle.italic,
                                                 height: 1.3,
@@ -632,7 +632,7 @@ class _TranscriptWidgetState extends State<TranscriptWidget> {
                                               SttProviderConfig.getDisplayName(data.sttProvider),
                                               style: TextStyle(
                                                 color:
-                                                    isUser ? Colors.white.withValues(alpha: 0.5) : Colors.grey.shade500,
+                                                    isUser ? Colors.white.withOpacity(0.5) : Colors.grey.shade500,
                                                 fontSize: 10,
                                                 fontStyle: FontStyle.italic,
                                               ),
@@ -642,7 +642,7 @@ class _TranscriptWidgetState extends State<TranscriptWidget> {
                                                 ' · ',
                                                 style: TextStyle(
                                                   color: isUser
-                                                      ? Colors.white.withValues(alpha: 0.5)
+                                                      ? Colors.white.withOpacity(0.5)
                                                       : Colors.grey.shade500,
                                                   fontSize: 10,
                                                 ),
@@ -660,7 +660,7 @@ class _TranscriptWidgetState extends State<TranscriptWidget> {
                                                 Icons.play_circle_outline,
                                                 size: 16,
                                                 color:
-                                                    isUser ? Colors.white.withValues(alpha: 0.7) : Colors.grey.shade400,
+                                                    isUser ? Colors.white.withOpacity(0.7) : Colors.grey.shade400,
                                               ),
                                             ),
                                             const SizedBox(width: 6),
@@ -670,7 +670,7 @@ class _TranscriptWidgetState extends State<TranscriptWidget> {
                                               data.getTimestampString(),
                                               style: TextStyle(
                                                 color:
-                                                    isUser ? Colors.white.withValues(alpha: 0.7) : Colors.grey.shade400,
+                                                    isUser ? Colors.white.withOpacity(0.7) : Colors.grey.shade400,
                                                 fontSize: 11,
                                               ),
                                             ),
@@ -817,7 +817,7 @@ class LiteTranscriptWidget extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-              color: Colors.grey.shade300.withValues(alpha: 0.6),
+              color: Colors.grey.shade300.withOpacity(0.6),
               height: 1.3,
             ),
         textAlign: TextAlign.right,

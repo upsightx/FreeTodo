@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -578,7 +578,7 @@ class _AppListItemState extends State<_AppListItem> {
           begin: isLeft ? Alignment.centerLeft : Alignment.centerRight,
           end: isLeft ? Alignment.centerRight : Alignment.centerLeft,
           colors: [
-            Colors.deepPurple.withValues(alpha: 0.7),
+            Colors.deepPurple.withOpacity(0.7),
             Colors.transparent,
           ],
         ),
@@ -630,7 +630,7 @@ class _AppListItemState extends State<_AppListItem> {
         Divider(
           height: 1,
           thickness: 0.5,
-          color: Colors.grey.withValues(alpha: 0.2),
+          color: Colors.grey.withOpacity(0.2),
           indent: 56,
           endIndent: 16,
         ),
@@ -647,7 +647,7 @@ class _AppListItemState extends State<_AppListItem> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.amber.shade300.withValues(alpha: 0.15),
+            color: Colors.amber.shade300.withOpacity(0.15),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
@@ -684,7 +684,7 @@ class _AppListItemState extends State<_AppListItem> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.grey.shade600.withValues(alpha: 0.3),
+            color: Colors.grey.shade600.withOpacity(0.3),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
@@ -831,7 +831,7 @@ class _CreateTemplateListItem extends StatelessWidget {
         Divider(
           height: 1,
           thickness: 0.5,
-          color: Colors.grey.withValues(alpha: 0.2),
+          color: Colors.grey.withOpacity(0.2),
           indent: 56,
           endIndent: 16,
         ),
@@ -893,7 +893,7 @@ class _EnableAppsListItem extends StatelessWidget {
         Divider(
           height: 1,
           thickness: 0.5,
-          color: Colors.grey.withValues(alpha: 0.2),
+          color: Colors.grey.withOpacity(0.2),
           indent: 56,
           endIndent: 16,
         ),

@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -61,7 +61,7 @@ List<TextSpan> highlightSearchMatches(String text, String searchQuery, {int curr
       text: text.substring(index, index + searchQuery.length),
       style: TextStyle(
         backgroundColor:
-            isCurrentResult ? Colors.orange.withValues(alpha: 0.9) : Colors.deepPurple.withValues(alpha: 0.6),
+            isCurrentResult ? Colors.orange.withOpacity(0.9) : Colors.deepPurple.withOpacity(0.6),
         color: Colors.white,
         fontWeight: FontWeight.bold,
       ),
@@ -238,7 +238,7 @@ class GetSummaryWidgets extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.2),
+        color: Colors.grey.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -879,8 +879,8 @@ class GetGeolocationWidgets extends StatelessWidget {
                                   begin: Alignment.bottomCenter,
                                   end: Alignment.topCenter,
                                   colors: [
-                                    Colors.black.withValues(alpha: 0.6),
-                                    Colors.black.withValues(alpha: 0.0),
+                                    Colors.black.withOpacity(0.6),
+                                    Colors.black.withOpacity(0.0),
                                   ],
                                 ),
                               ),

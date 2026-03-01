@@ -37,6 +37,7 @@ import 'package:omi/pages/payments/payment_method_provider.dart';
 import 'package:omi/pages/persona/persona_provider.dart';
 import 'package:omi/pages/settings/ai_app_generator_provider.dart';
 import 'package:omi/providers/action_items_provider.dart';
+import 'package:omi/providers/app_mode_provider.dart';
 import 'package:omi/providers/announcement_provider.dart';
 import 'package:omi/providers/app_provider.dart';
 import 'package:omi/providers/auth_provider.dart';
@@ -54,6 +55,8 @@ import 'package:omi/providers/locale_provider.dart';
 import 'package:omi/providers/mcp_provider.dart';
 import 'package:omi/providers/memories_provider.dart';
 import 'package:omi/providers/message_provider.dart';
+import 'package:omi/providers/mobile_mock_provider.dart';
+import 'package:omi/providers/notification_center_provider.dart';
 import 'package:omi/providers/onboarding_provider.dart';
 import 'package:omi/providers/people_provider.dart';
 import 'package:omi/providers/speech_profile_provider.dart';
@@ -62,6 +65,7 @@ import 'package:omi/providers/task_integration_provider.dart';
 import 'package:omi/providers/usage_provider.dart';
 import 'package:omi/providers/user_provider.dart';
 import 'package:omi/providers/voice_recorder_provider.dart';
+import 'package:omi/providers/perception_provider.dart';
 import 'package:omi/services/auth_service.dart';
 import 'package:omi/services/notifications.dart';
 import 'package:omi/services/notifications/action_item_notification_handler.dart';
@@ -376,6 +380,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (context) => LocaleProvider()),
         ChangeNotifierProvider(create: (context) => VoiceRecorderProvider()),
         ChangeNotifierProvider(create: (context) => AnnouncementProvider()),
+        ChangeNotifierProvider(create: (context) => PerceptionProvider()),
+        ChangeNotifierProvider(create: (context) => AppModeProvider()),
+        ChangeNotifierProxyProvider<AppModeProvider, NotificationCenterProvider>(
+          create: (context) => NotificationCenterProvider(),
+          update: (context, mode, notificationCenter) {
+            final provider = notificationCenter ?? NotificationCenterProvider();
+            provider.setUseMockData(mode.useMockData);
+            return provider;
+          },
+        ),
+        ChangeNotifierProvider(create: (context) => MobileMockProvider()),
       ],
       builder: (context, child) {
         return WithForegroundTask(

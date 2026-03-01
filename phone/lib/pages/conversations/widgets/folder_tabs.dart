@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:collection/collection.dart';
@@ -253,7 +253,7 @@ class _FolderTab extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? effectiveColor.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.12),
+          color: isSelected ? effectiveColor.withOpacity(0.15) : Colors.grey.withOpacity(0.12),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -301,7 +301,7 @@ class _AddFolderButton extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.12),
+            color: Colors.grey.withOpacity(0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -391,7 +391,7 @@ class _FolderContextMenu extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: folder.colorValue.withValues(alpha: 0.2),
+                color: folder.colorValue.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -486,14 +486,14 @@ class _DeleteFolderSheet extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.15),
+                        color: Colors.red.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
                         child: FaIcon(
                           folderIconToFa(folder.icon),
                           size: 20,
-                          color: Colors.red.withValues(alpha: 0.8),
+                          color: Colors.red.withOpacity(0.8),
                         ),
                       ),
                     ),
@@ -606,7 +606,7 @@ class _MoveOption extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
+                    color: color.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
@@ -672,7 +672,7 @@ class FolderChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: folder.colorValue.withValues(alpha: 0.15),
+          color: folder.colorValue.withOpacity(0.15),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:omi/ui/atoms/omi_multiline_input.dart';
 import 'package:omi/utils/responsive/responsive_helper.dart';
@@ -21,7 +21,7 @@ class OmiEditDialog {
 
     return showDialog<String>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.7),
+      barrierColor: Colors.black.withOpacity(0.7),
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
