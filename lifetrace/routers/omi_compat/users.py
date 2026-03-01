@@ -115,14 +115,18 @@ async def get_recording_perm(uid: str = Depends(verify_token)):
     return {"value": True}
 
 
+_cloud_sync_enabled: dict[str, bool] = {}
+
+
 @router.post("/v1/users/private-cloud-sync")
-async def set_cloud_sync(uid: str = Depends(verify_token)):
+async def set_cloud_sync(value: bool = True, uid: str = Depends(verify_token)):
+    _cloud_sync_enabled[uid] = value
     return {"status": "ok"}
 
 
 @router.get("/v1/users/private-cloud-sync")
 async def get_cloud_sync(uid: str = Depends(verify_token)):
-    return {"value": False}
+    return {"private_cloud_sync_enabled": _cloud_sync_enabled.get(uid, False)}
 
 
 @router.get("/v1/users/training-data-opt-in")

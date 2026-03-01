@@ -26,7 +26,6 @@ import 'package:omi/core/app_shell.dart';
 import 'package:omi/env/dev_env.dart';
 import 'package:omi/env/env.dart';
 import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/utils/cpolar_resolver.dart';
 import 'package:omi/env/prod_env.dart';
 import 'package:omi/firebase_options_dev.dart' as dev;
 import 'package:omi/firebase_options_prod.dart' as prod;
@@ -172,14 +171,6 @@ Future _init() async {
         DateTime.now().add(const Duration(days: 365)).millisecondsSinceEpoch;
     SharedPreferencesUtil().onboardingCompleted = true;
 
-    // Probe cpolar domain suffixes and override with the reachable one
-    try {
-      final resolved = await CpolarResolver.instance.resolve();
-      Env.overrideApiBaseUrl(resolved);
-      debugPrint('LifeTrace mode: cpolar resolved → $resolved');
-    } catch (e) {
-      debugPrint('LifeTrace mode: cpolar resolve failed ($e), using default');
-    }
     debugPrint('LifeTrace mode: credentials pre-populated, API → ${Env.apiBaseUrl}');
   }
 
