@@ -107,8 +107,9 @@ class MemoryReader:
             from lifetrace.repositories.sql_todo_repository import (  # noqa: PLC0415
                 SqlTodoRepository,
             )
+            from lifetrace.storage.database import db_base  # noqa: PLC0415
 
-            repo = SqlTodoRepository()
+            repo = SqlTodoRepository(db_base)
             todos = repo.list_todos(limit=50, offset=0, status="active")
             if not todos:
                 return ""
