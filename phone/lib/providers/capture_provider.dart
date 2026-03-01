@@ -75,6 +75,9 @@ class CaptureProvider extends ChangeNotifier
   TranscriptSegmentSocketService? _socket;
   Timer? _keepAliveTimer;
   DateTime? _keepAliveLastExecutedAt;
+  int _keepAliveIntervalSeconds = 15;
+  static const int _keepAliveMinInterval = 15;
+  static const int _keepAliveMaxInterval = 120;
 
   // Method channel for system audio permissions
   static late MethodChannel _screenCaptureChannel;
@@ -1382,37 +1385,44 @@ class CaptureProvider extends ChangeNotifier
 
   void _startKeepAliveServices() {
     _keepAliveTimer?.cancel();
-    _keepAliveTimer = Timer.periodic(const Duration(seconds: 15), (t) async {
-      Logger.debug("[Provider] keep alive");
-      // rate 1/15s
-      if (_keepAliveLastExecutedAt != null &&
-          DateTime.now().subtract(const Duration(seconds: 15)).isBefore(_keepAliveLastExecutedAt!)) {
-        Logger.debug("[Provider] keep alive - hitting rate limits 1/15s");
-        return;
-      }
+    _keepAliveIntervalSeconds = _keepAliveMinInterval;
+    _scheduleKeepAliveAttempt();
+  }
 
+  void _scheduleKeepAliveAttempt() {
+    _keepAliveTimer?.cancel();
+    Logger.debug("[KeepAlive] next attempt in ${_keepAliveIntervalSeconds}s");
+    _keepAliveTimer = Timer(Duration(seconds: _keepAliveIntervalSeconds), () async {
       _keepAliveLastExecutedAt = DateTime.now();
+
       if (!recordingDeviceServiceReady || _socket?.state == SocketServiceState.connected) {
-        t.cancel();
+        _keepAliveIntervalSeconds = _keepAliveMinInterval;
         return;
       }
 
+      bool attempted = false;
       if (_recordingDevice != null) {
         BleAudioCodec codec = await _getAudioCodec(_recordingDevice!.id);
         await _initiateWebsocket(audioCodec: codec, source: _getConversationSourceFromDevice());
-        return;
-      }
-      if (recordingState == RecordingState.record) {
+        attempted = true;
+      } else if (recordingState == RecordingState.record) {
         await _initiateWebsocket(
             audioCodec: BleAudioCodec.pcm16, sampleRate: 16000, source: ConversationSource.phone.name);
-        return;
-      }
-      if (recordingState == RecordingState.systemAudioRecord && PlatformService.isDesktop) {
+        attempted = true;
+      } else if (recordingState == RecordingState.systemAudioRecord && PlatformService.isDesktop) {
         Logger.debug("System audio socket disconnected, reconnecting...");
         await _initiateWebsocket(
             audioCodec: BleAudioCodec.pcm16, sampleRate: 16000, source: ConversationSource.desktop.name);
+        attempted = true;
+      }
+
+      if (attempted && _socket?.state == SocketServiceState.connected) {
+        _keepAliveIntervalSeconds = _keepAliveMinInterval;
         return;
       }
+
+      _keepAliveIntervalSeconds = (_keepAliveIntervalSeconds * 2).clamp(_keepAliveMinInterval, _keepAliveMaxInterval);
+      _scheduleKeepAliveAttempt();
     });
   }
 
@@ -1782,8 +1792,14 @@ class CaptureProvider extends ChangeNotifier
   }
 
   void onConnectionStateChanged(bool isConnected) {
+    final wasConnected = _isConnected;
     _isConnected = isConnected;
     notifyListeners();
+
+    if (!wasConnected && isConnected && recordingDeviceServiceReady && _socket?.state != SocketServiceState.connected) {
+      Logger.debug('[Connectivity] Network restored while recording — triggering reconnect');
+      _startKeepAliveServices();
+    }
   }
 
   // ============== Freemium: Threshold Notification ==============

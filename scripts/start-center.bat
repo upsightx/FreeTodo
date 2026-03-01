@@ -86,11 +86,12 @@ echo Waiting for backend (5s)...
 timeout /t 5 /nobreak >nul
 
 REM ================================================================
-REM  4. Build and start frontend (rewrite via localhost, not cpolar)
+REM  4. Build and start frontend
+REM     NEXT_PUBLIC_API_URL = cpolar public URL (baked into client JS for streaming)
+REM     API_REWRITE_URL     = localhost (server-side Next.js rewrite, same machine)
 REM ================================================================
-set "FRONTEND_API_PROXY=http://127.0.0.1:%BACKEND_PORT%"
-echo [4/6] Building frontend (API proxy = %FRONTEND_API_PROXY%)...
-start "LifeTrace Center Frontend" cmd /k "pushd %REPO_ROOT%\free-todo-frontend && set NEXT_PUBLIC_API_URL=%FRONTEND_API_PROXY%&& pnpm build:frontend:web && pnpm start --port %FRONTEND_PORT% --hostname 0.0.0.0"
+echo [4/6] Building frontend (client API = %BACKEND_PUBLIC_URL%, rewrite = localhost:%BACKEND_PORT%)...
+start "LifeTrace Center Frontend" cmd /k "pushd %REPO_ROOT%\free-todo-frontend && set NEXT_PUBLIC_API_URL=%BACKEND_PUBLIC_URL%&& set API_REWRITE_URL=http://127.0.0.1:%BACKEND_PORT%&& pnpm build:frontend:web && pnpm start --port %FRONTEND_PORT% --hostname 0.0.0.0"
 echo Waiting for frontend build (~30s)...
 timeout /t 30 /nobreak >nul
 
