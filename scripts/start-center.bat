@@ -21,7 +21,10 @@ if exist "%~dp0local-env.bat" (
 REM Fallback defaults (override in scripts/local-env.bat)
 if "%CPOLAR_BACKEND_DOMAIN%"=="" set "CPOLAR_BACKEND_DOMAIN=YOUR_BACKEND_SUBDOMAIN"
 if "%CPOLAR_FRONTEND_DOMAIN%"=="" set "CPOLAR_FRONTEND_DOMAIN=YOUR_FRONTEND_SUBDOMAIN"
-REM Support per-tunnel suffix (cpolar may assign .cpolar.cn and .cpolar.top to different tunnels)
+REM cpolar region (must match the region used when reserving subdomains in dashboard)
+REM China=cn (.cpolar.cn) | China Top=cn_top (.cpolar.top) | China VIP=cn_vip
+if "%CPOLAR_REGION%"=="" set "CPOLAR_REGION=cn"
+REM Per-tunnel suffix fallback
 if "%CPOLAR_BACKEND_SUFFIX%"=="" if "%CPOLAR_DOMAIN_SUFFIX%"=="" set "CPOLAR_BACKEND_SUFFIX=cpolar.cn"
 if "%CPOLAR_FRONTEND_SUFFIX%"=="" if "%CPOLAR_DOMAIN_SUFFIX%"=="" set "CPOLAR_FRONTEND_SUFFIX=cpolar.cn"
 if "%CPOLAR_BACKEND_SUFFIX%"=="" set "CPOLAR_BACKEND_SUFFIX=%CPOLAR_DOMAIN_SUFFIX%"
@@ -95,14 +98,14 @@ REM ================================================================
 REM  5. Start cpolar backend tunnel
 REM ================================================================
 echo [5/6] Starting cpolar backend tunnel = %BACKEND_PUBLIC_URL%
-start "LifeTrace cpolar Backend" cmd /k "cpolar http %BACKEND_PORT% -subdomain=%CPOLAR_BACKEND_DOMAIN%"
+start "LifeTrace cpolar Backend" cmd /k "cpolar http -region=%CPOLAR_REGION% %BACKEND_PORT% -subdomain=%CPOLAR_BACKEND_DOMAIN%"
 timeout /t 2 /nobreak >nul
 
 REM ================================================================
 REM  6. Start cpolar frontend tunnel
 REM ================================================================
 echo [6/6] Starting cpolar frontend tunnel = %FRONTEND_PUBLIC_URL%
-start "LifeTrace cpolar Frontend" cmd /k "cpolar http %FRONTEND_PORT% -subdomain=%CPOLAR_FRONTEND_DOMAIN%"
+start "LifeTrace cpolar Frontend" cmd /k "cpolar http -region=%CPOLAR_REGION% %FRONTEND_PORT% -subdomain=%CPOLAR_FRONTEND_DOMAIN%"
 
 REM ================================================================
 REM  Done
