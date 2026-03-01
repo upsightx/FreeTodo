@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -46,10 +46,10 @@ class OmiSettingsTile extends AdaptiveWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: ResponsiveHelper.backgroundTertiary.withValues(alpha: 0.4),
+              color: ResponsiveHelper.backgroundTertiary.withOpacity(0.4),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: ResponsiveHelper.backgroundQuaternary.withValues(alpha: 0.3),
+                color: ResponsiveHelper.backgroundQuaternary.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -58,7 +58,7 @@ class OmiSettingsTile extends AdaptiveWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: (iconColor ?? ResponsiveHelper.purplePrimary).withValues(alpha: 0.15),
+                    color: (iconColor ?? ResponsiveHelper.purplePrimary).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(

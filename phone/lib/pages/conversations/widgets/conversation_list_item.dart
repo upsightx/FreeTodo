@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -157,7 +157,7 @@ class _ConversationListItemState extends State<ConversationListItem> {
                   width: double.maxFinite,
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? Colors.deepPurple.withValues(alpha: 0.3)
+                        ? Colors.deepPurple.withOpacity(0.3)
                         : (isSelectionMode && !isEligible)
                             ? Colors.grey.shade800
                             : const Color(0xFF1F1F25),
@@ -362,7 +362,7 @@ class _ConversationListItemState extends State<ConversationListItem> {
       height: double.infinity,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
+        color: Colors.black.withOpacity(0.6),
         borderRadius: const BorderRadius.all(Radius.circular(24)),
       ),
       child: const MergingIndicator(),
@@ -421,7 +421,7 @@ class _ConversationListItemState extends State<ConversationListItem> {
           child: Container(
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.01),
+              color: Colors.black.withOpacity(0.01),
               borderRadius: const BorderRadius.all(Radius.circular(8)),
             ),
             child: Text(

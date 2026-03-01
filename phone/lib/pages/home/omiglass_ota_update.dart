@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -700,7 +700,7 @@ class _OmiGlassOtaUpdateState extends State<OmiGlassOtaUpdate> {
             decoration: BoxDecoration(
               color: const Color(0xFF1C1C1E),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+              border: Border.all(color: Colors.red.withOpacity(0.5)),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,

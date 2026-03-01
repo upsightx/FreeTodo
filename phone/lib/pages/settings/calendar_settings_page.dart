@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -204,10 +204,10 @@ class _CalendarSettingsPageState extends State<CalendarSettingsPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: ResponsiveHelper.backgroundSecondary.withValues(alpha: 0.4),
+        color: ResponsiveHelper.backgroundSecondary.withOpacity(0.4),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: ResponsiveHelper.backgroundTertiary.withValues(alpha: 0.3),
+          color: ResponsiveHelper.backgroundTertiary.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -217,7 +217,7 @@ class _CalendarSettingsPageState extends State<CalendarSettingsPage> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
+              color: iconColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -267,10 +267,10 @@ class _CalendarSettingsPageState extends State<CalendarSettingsPage> {
   Widget _buildSettingsCard(BuildContext context, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: ResponsiveHelper.backgroundSecondary.withValues(alpha: 0.4),
+        color: ResponsiveHelper.backgroundSecondary.withOpacity(0.4),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: ResponsiveHelper.backgroundTertiary.withValues(alpha: 0.3),
+          color: ResponsiveHelper.backgroundTertiary.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -296,7 +296,7 @@ class _CalendarSettingsPageState extends State<CalendarSettingsPage> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
+              color: iconColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -346,10 +346,10 @@ class _CalendarSettingsPageState extends State<CalendarSettingsPage> {
   Widget _buildCalendarsCard(CalendarProvider provider) {
     return Container(
       decoration: BoxDecoration(
-        color: ResponsiveHelper.backgroundSecondary.withValues(alpha: 0.4),
+        color: ResponsiveHelper.backgroundSecondary.withOpacity(0.4),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: ResponsiveHelper.backgroundTertiary.withValues(alpha: 0.3),
+          color: ResponsiveHelper.backgroundTertiary.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -424,10 +424,10 @@ class _CalendarSettingsPageState extends State<CalendarSettingsPage> {
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: ResponsiveHelper.backgroundSecondary.withValues(alpha: 0.4),
+          color: ResponsiveHelper.backgroundSecondary.withOpacity(0.4),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: ResponsiveHelper.backgroundTertiary.withValues(alpha: 0.3),
+            color: ResponsiveHelper.backgroundTertiary.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -496,10 +496,10 @@ class _CalendarSettingsPageState extends State<CalendarSettingsPage> {
             // Meetings for this date
             Container(
               decoration: BoxDecoration(
-                color: ResponsiveHelper.backgroundSecondary.withValues(alpha: 0.4),
+                color: ResponsiveHelper.backgroundSecondary.withOpacity(0.4),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: ResponsiveHelper.backgroundTertiary.withValues(alpha: 0.3),
+                  color: ResponsiveHelper.backgroundTertiary.withOpacity(0.3),
                   width: 1,
                 ),
               ),
@@ -586,7 +586,7 @@ class _CalendarSettingsPageState extends State<CalendarSettingsPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: _getPlatformColor(meeting.platform).withValues(alpha: 0.2),
+                        color: _getPlatformColor(meeting.platform).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: Text(

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -306,7 +306,7 @@ class _SpeechProfileWidgetState extends State<SpeechProfileWidget> with TickerPr
                             'Omi needs to learn your goals and your voice. Answer questions with your voice. You\'ll be able to modify it later.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
+                              color: Colors.white.withOpacity(0.6),
                               fontSize: 16,
                               height: 1.5,
                               fontFamily: 'Manrope',
@@ -462,7 +462,7 @@ class _SpeechProfileWidgetState extends State<SpeechProfileWidget> with TickerPr
                                     provider.text,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.6),
+                                      color: Colors.white.withOpacity(0.6),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w400,
                                       height: 1.5,

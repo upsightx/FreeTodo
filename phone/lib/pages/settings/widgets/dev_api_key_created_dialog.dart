@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:omi/backend/schema/dev_api_key.dart';
@@ -55,8 +55,8 @@ class _DevApiKeyCreatedSheetState extends State<DevApiKeyCreatedSheet> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF10B981).withValues(alpha: 0.2),
-                        const Color(0xFF10B981).withValues(alpha: 0.05),
+                        const Color(0xFF10B981).withOpacity(0.2),
+                        const Color(0xFF10B981).withOpacity(0.05),
                       ],
                     ),
                     shape: BoxShape.circle,
@@ -90,9 +90,9 @@ class _DevApiKeyCreatedSheetState extends State<DevApiKeyCreatedSheet> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                color: const Color(0xFFF59E0B).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.2)),
+                border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.2)),
               ),
               child: Row(
                 children: [
@@ -147,7 +147,7 @@ class _DevApiKeyCreatedSheetState extends State<DevApiKeyCreatedSheet> {
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _copied ? const Color(0xFF10B981).withValues(alpha: 0.15) : const Color(0xFF252525),
+                            color: _copied ? const Color(0xFF10B981).withOpacity(0.15) : const Color(0xFF252525),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(

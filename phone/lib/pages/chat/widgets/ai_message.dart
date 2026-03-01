@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -488,7 +488,7 @@ class _NormalMessageWidgetState extends State<NormalMessageWidget> {
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A20),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            border: Border.all(color: Colors.white.withOpacity(0.06)),
           ),
         ),
       ),
@@ -709,7 +709,7 @@ class _MemoriesMessageWidgetState extends State<MemoriesMessageWidget> {
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A20),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            border: Border.all(color: Colors.white.withOpacity(0.06)),
           ),
         ),
       ),

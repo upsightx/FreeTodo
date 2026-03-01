@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -138,7 +138,7 @@ class _FolderListItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: isCurrentFolder ? ResponsiveHelper.purplePrimary.withValues(alpha: 0.1) : Colors.transparent,
+        color: isCurrentFolder ? ResponsiveHelper.purplePrimary.withOpacity(0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: isCurrentFolder
             ? Border.all(color: ResponsiveHelper.purplePrimary, width: 1.5)
@@ -158,7 +158,7 @@ class _FolderListItem extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: folder.colorValue.withValues(alpha: 0.15),
+                    color: folder.colorValue.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(

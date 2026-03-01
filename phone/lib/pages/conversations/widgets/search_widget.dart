@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -251,7 +251,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                 height: 48,
                 decoration: BoxDecoration(
                   color: convoProvider.selectedDate != null
-                      ? Colors.deepPurple.withValues(alpha: 0.5)
+                      ? Colors.deepPurple.withOpacity(0.5)
                       : const Color(0xFF1F1F25),
                   borderRadius: BorderRadius.circular(24),
                 ),

@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -729,7 +729,7 @@ class _AddAppPageState extends State<AddAppPage> {
                   borderRadius: BorderRadius.circular(12.0),
                   color: const Color(0xFF1F1F25),
                   gradient: LinearGradient(
-                    colors: [Colors.black, Colors.black.withValues(alpha: 0)],
+                    colors: [Colors.black, Colors.black.withOpacity(0)],
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                   ),

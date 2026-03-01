@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
@@ -269,7 +269,7 @@ class _UpdateAppPageState extends State<UpdateAppPage> {
                                             child: Container(
                                               padding: const EdgeInsets.all(4),
                                               decoration: BoxDecoration(
-                                                color: Colors.black.withValues(alpha: 0.6),
+                                                color: Colors.black.withOpacity(0.6),
                                                 shape: BoxShape.circle,
                                               ),
                                               child: const Icon(Icons.close, size: 16),
@@ -483,7 +483,7 @@ class _UpdateAppPageState extends State<UpdateAppPage> {
                     borderRadius: BorderRadius.circular(12.0),
                     color: const Color(0xFF1F1F25),
                     gradient: LinearGradient(
-                      colors: [Colors.black, Colors.black.withValues(alpha: 0)],
+                      colors: [Colors.black, Colors.black.withOpacity(0)],
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                     ),

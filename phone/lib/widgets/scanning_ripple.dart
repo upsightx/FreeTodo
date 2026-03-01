@@ -79,7 +79,7 @@ class _RipplePainter extends CustomPainter {
       final radius = maxRadius * rippleProgress;
       final opacity = (1.0 - rippleProgress) * 0.6;
       final paint = Paint()
-        ..color = color.withValues(alpha: opacity.clamp(0.0, 1.0))
+        ..color = color.withOpacity(opacity.clamp(0.0, 1.0))
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5 + (1.0 - rippleProgress) * 1.5;
       canvas.drawCircle(center, radius, paint);
