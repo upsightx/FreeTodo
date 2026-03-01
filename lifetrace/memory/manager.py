@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -43,6 +44,7 @@ class MemoryManager:
 
         self._config = config
         self._subscribed = False
+        self._compress_task: asyncio.Task | None = None
         self._profile_task: asyncio.Task | None = None
 
         if config.get("auto_compress", True):
@@ -109,6 +111,14 @@ class MemoryManager:
             self._subscribed = True
             logger.info("MemoryWriter subscribed to PerceptionStream")
 
+        if self.compressor and self._compress_task is None:
+            compress_interval = self._config.get("compress_interval_seconds", 300)
+            self._compress_task = asyncio.create_task(
+                self._compress_loop(compress_interval),
+                name="memory-compress-loop",
+            )
+            logger.info("L2+L3 periodic compress task started (interval=%ds)", compress_interval)
+
         if self.profile_builder and self._profile_task is None:
             profile_cfg = self._config.get("profile", {}) or {}
             interval = profile_cfg.get("interval_seconds", 3600)
@@ -120,6 +130,15 @@ class MemoryManager:
 
     async def stop(self, perception_stream: PerceptionStream | None = None) -> None:
         """Stop the memory module, unsubscribing from perception stream."""
+        if self._compress_task and not self._compress_task.done():
+            self._compress_task.cancel()
+            try:
+                await self._compress_task
+            except asyncio.CancelledError:
+                pass
+            self._compress_task = None
+            logger.info("L2+L3 periodic compress task stopped")
+
         if self._profile_task and not self._profile_task.done():
             self._profile_task.cancel()
             try:
@@ -136,6 +155,22 @@ class MemoryManager:
                 logger.info("MemoryDeduper unsubscribed from PerceptionStream")
             self._subscribed = False
             logger.info("MemoryWriter unsubscribed from PerceptionStream")
+
+    # ------------------------------------------------------------------
+    # Periodic L2+L3 compress & link loop
+    # ------------------------------------------------------------------
+
+    async def _compress_loop(self, interval: int) -> None:
+        """Background loop: run L2 compression + L3 task linking every *interval* seconds."""
+        await asyncio.sleep(60)
+        while True:
+            today = datetime.now(tz=UTC).strftime("%Y-%m-%d")
+            try:
+                result = await self.compress_and_link(today)
+                logger.info("Periodic compress_and_link: %s", result)
+            except Exception:
+                logger.exception("Periodic compress_and_link failed for %s", today)
+            await asyncio.sleep(interval)
 
     # ------------------------------------------------------------------
     # Periodic profile update loop

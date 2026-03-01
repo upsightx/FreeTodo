@@ -236,6 +236,7 @@ settings = Dynaconf(
         Validator("memory.dedup.max_tokens", default=100, is_type_of=int),
         Validator("memory.dedup.window_seconds", default=10.0),
         Validator("memory.dedup.window_max_items", default=10, is_type_of=int),
+        Validator("memory.compress_interval_seconds", default=300, is_type_of=int),
         Validator("memory.task_linker.model", default="qwen-flash"),
         Validator("memory.profile.model", default=""),
         Validator("memory.profile.interval_seconds", default=3600, is_type_of=int),
