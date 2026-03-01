@@ -97,8 +97,10 @@ def get_available_external_tools() -> list[str]:
 
 
 def _get_current_date_instruction(lang: str) -> str:
-    """获取当前日期的指令字符串"""
-    now = datetime.now(tz=UTC)
+    """获取当前日期的指令字符串（使用东八区时间）"""
+    from lifetrace.util.time_utils import get_local_now  # noqa: PLC0415
+
+    now = get_local_now()
     date_str = now.strftime("%Y-%m-%d")
     weekday_zh = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"][now.weekday()]
     weekday_en = now.strftime("%A")

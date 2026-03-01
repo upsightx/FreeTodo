@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
+
+from lifetrace.util.time_utils import get_local_now
 from typing import TYPE_CHECKING
 
 from lifetrace.memory.models import MemoryLevel, MemorySearchResult
@@ -48,7 +50,7 @@ class MemoryReader:
     ) -> list[MemorySearchResult]:
         """Search recent files for *keyword* (case-insensitive)."""
         results: list[MemorySearchResult] = []
-        today = datetime.now(tz=UTC)
+        today = get_local_now()
 
         for i in range(days):
             date = today - timedelta(days=i)

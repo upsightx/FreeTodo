@@ -7,8 +7,10 @@ from loguru import logger
 
 
 def _get_local_date_string() -> str:
-    """获取当前本地日期字符串（YYYY-MM-DD）"""
-    return datetime.now(UTC).astimezone().strftime("%Y-%m-%d")
+    """获取当前本地日期字符串（YYYY-MM-DD），固定东八区"""
+    from lifetrace.util.time_utils import local_today_str  # noqa: PLC0415
+
+    return local_today_str()
 
 
 def _generate_log_file_path(log_dir: str, suffix: str = "") -> str:

@@ -12,6 +12,8 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
+from lifetrace.util.time_utils import get_local_now, local_today_str, local_yesterday_str
+
 from lifetrace.util.logging_config import get_logger
 
 if TYPE_CHECKING:
@@ -101,7 +103,7 @@ class ProfileBuilder:
 
         current_profile = self.read_profile()
         if not current_profile:
-            today = datetime.now(tz=UTC).strftime("%Y-%m-%d")
+            today = local_today_str()
             current_profile = DEFAULT_PROFILE.format(date=today)
             self._profile_file.write_text(current_profile, encoding="utf-8")
 
@@ -140,13 +142,13 @@ class ProfileBuilder:
 
         if not resp or "NO_UPDATE" in resp.strip().upper():
             self._stats["skipped"] += 1
-            self._last_update = datetime.now(tz=UTC)
+            self._last_update = get_local_now()
             logger.debug("ProfileBuilder: LLM said no update needed")
             return False
 
         updated = self._ensure_header(resp.strip())
         self._profile_file.write_text(updated, encoding="utf-8")
-        self._last_update = datetime.now(tz=UTC)
+        self._last_update = get_local_now()
         self._stats["updates"] += 1
         logger.info("ProfileBuilder: profile updated (%d chars)", len(updated))
         return True
@@ -158,14 +160,14 @@ class ProfileBuilder:
         appear after that time.  Falls back to returning the full day's events
         if parsing is uncertain.
         """
-        today = datetime.now(tz=UTC).strftime("%Y-%m-%d")
+        today = local_today_str()
         events_file = self._events_dir / f"{today}.md"
 
         parts: list[str] = []
         if events_file.exists():
             parts.append(events_file.read_text(encoding="utf-8"))
 
-        yesterday = (datetime.now(tz=UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = local_yesterday_str()
         yesterday_file = self._events_dir / f"{yesterday}.md"
         if yesterday_file.exists() and self._last_update is None:
             parts.append(yesterday_file.read_text(encoding="utf-8"))
@@ -180,7 +182,7 @@ class ProfileBuilder:
     @staticmethod
     def _ensure_header(content: str) -> str:
         """Make sure the profile starts with an H1 and has an update timestamp."""
-        now_str = datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M")
+        now_str = get_local_now().strftime("%Y-%m-%d %H:%M")
         if not content.startswith("# "):
             content = f"# 用户画像\n\n{content}"
         marker = "> 最后更新："

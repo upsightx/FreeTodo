@@ -1,12 +1,16 @@
 """时间工具函数模块
 
 提供 UTC 时间处理相关的工具函数，确保项目中所有时间都使用 UTC 存储和处理。
+面向用户的日期/时间使用东八区（Asia/Shanghai）。
 """
 
 from __future__ import annotations
 
 import time
 from datetime import UTC, datetime, timedelta, timezone
+
+USER_TIMEZONE = timezone(timedelta(hours=8))
+"""用户时区：固定为 UTC+8（Asia/Shanghai），所有面向用户的日期都基于此。"""
 
 
 def get_utc_now() -> datetime:
@@ -16,6 +20,24 @@ def get_utc_now() -> datetime:
         datetime: 当前 UTC 时间，带时区信息
     """
     return datetime.now(UTC)
+
+
+def get_local_now() -> datetime:
+    """获取当前用户本地时间（UTC+8）。
+
+    用于所有面向用户的日期计算：Memory 文件命名、AI 聊天日期感知等。
+    """
+    return datetime.now(USER_TIMEZONE)
+
+
+def local_today_str() -> str:
+    """返回用户本地日期字符串，格式 ``YYYY-MM-DD``。"""
+    return get_local_now().strftime("%Y-%m-%d")
+
+
+def local_yesterday_str() -> str:
+    """返回用户本地昨天的日期字符串。"""
+    return (get_local_now() - timedelta(days=1)).strftime("%Y-%m-%d")
 
 
 def to_utc(dt: datetime) -> datetime:

@@ -6,7 +6,7 @@ falling back to the L0 raw file (``raw_L0/{date}.md``).
 
 from __future__ import annotations
 
-from datetime import UTC
+from datetime import UTC  # kept for type compat
 from typing import TYPE_CHECKING
 
 from lifetrace.util.logging_config import get_logger
@@ -126,10 +126,9 @@ class MemoryCompressor:
 
     async def compress_yesterday(self) -> Path | None:
         """Convenience: compress yesterday's raw file."""
-        from datetime import datetime, timedelta  # noqa: PLC0415
+        from lifetrace.util.time_utils import local_yesterday_str  # noqa: PLC0415
 
-        yesterday = (datetime.now(tz=UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
-        return await self.compress_day(yesterday)
+        return await self.compress_day(local_yesterday_str())
 
     def is_compressed(self, date_str: str) -> bool:
         """Check whether an events file already exists for *date_str*."""

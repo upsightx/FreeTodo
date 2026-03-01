@@ -61,7 +61,9 @@ class MemoryTools:
         if mgr is None:
             return "Memory 模块未初始化。"
 
-        today = datetime.now(tz=UTC).strftime("%Y-%m-%d")
+        from lifetrace.util.time_utils import local_today_str  # noqa: PLC0415
+
+        today = local_today_str()
         content = mgr.reader.read_by_date(today)
         if content:
             return content

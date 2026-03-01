@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -164,7 +163,9 @@ class MemoryManager:
         """Background loop: run L2 compression + L3 task linking every *interval* seconds."""
         await asyncio.sleep(60)
         while True:
-            today = datetime.now(tz=UTC).strftime("%Y-%m-%d")
+            from lifetrace.util.time_utils import local_today_str  # noqa: PLC0415
+
+            today = local_today_str()
             try:
                 result = await self.compress_and_link(today)
                 logger.info("Periodic compress_and_link: %s", result)

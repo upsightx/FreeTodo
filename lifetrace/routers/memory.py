@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from lifetrace.util.time_utils import local_today_str
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -21,7 +21,7 @@ def _require_manager():
 @router.get("/today")
 async def get_today_memory():
     mgr = _require_manager()
-    today = datetime.now(tz=UTC).strftime("%Y-%m-%d")
+    today = local_today_str()
     content = mgr.reader.read_by_date(today)
     return {"date": today, "content": content}
 
