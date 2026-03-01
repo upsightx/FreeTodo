@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Loader2, CheckCircle2, XCircle, Package, Globe, Video, Sparkles } from "lucide-react";
+import { CheckCircle2, Download, Globe, Loader2, Package, Sparkles, Video, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCrawlerStore } from "../store";
 

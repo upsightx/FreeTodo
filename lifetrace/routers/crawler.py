@@ -410,6 +410,7 @@ async def update_keywords(data: dict[str, str]):
 
 # ============== 快代理 (KDL) 配置 ==============
 
+
 def _read_proxy_config_file() -> str | None:
     """读取 proxy_config.py 内容，不可用时返回 None。"""
     path = _try_get_proxy_config_path()
@@ -441,6 +442,7 @@ def _update_proxy_config_line(content: str, key: str, value: str) -> str:
 
 class KdlProxyConfigResponse(BaseModel):
     """快代理配置响应"""
+
     kdl_secert_id: str = ""
     kdl_signature: str = ""
     kdl_user_name: str = ""
@@ -449,6 +451,7 @@ class KdlProxyConfigResponse(BaseModel):
 
 class KdlProxyConfigUpdate(BaseModel):
     """快代理配置更新请求"""
+
     kdl_secert_id: str | None = None
     kdl_signature: str | None = None
     kdl_user_name: str | None = None

@@ -1,29 +1,28 @@
 "use client";
 
-import { 
-	Bookmark, 
+import {
+	Bookmark,
 	ChevronUp,
-	ExternalLink, 
-	Heart, 
+	ExternalLink,
+	Heart,
 	Image as ImageIcon,
 	Loader2,
-	MessageCircle, 
+	MessageCircle,
 	Newspaper,
 	Play,
-	RefreshCw,
-	Share2, 
+	RefreshCw,Search, 
+	Share2,
 	Sparkles,
 	ThumbsUp,
-	X,
+	X
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PanelHeader } from "@/components/common/layout/PanelHeader";
-import { Search } from "lucide-react";
-import { useCrawlerStore } from "./store";
 import { cn } from "@/lib/utils";
+import { useCrawlerStore } from "./store";
 import type { CrawlResultItem } from "./types";
 
 /**
@@ -43,17 +42,17 @@ function HighlightedText({ children, onHighlightClick }: HighlightedTextProps) {
 	if (typeof children !== "string") {
 		return <>{children}</>;
 	}
-	
+
 	// 使用正则匹配 ==text== 格式
 	const parts = children.split(/(==.*?==)/g);
-	
+
 	return (
 		<>
 			{parts.map((part, index) => {
 				if (part.startsWith("==") && part.endsWith("==")) {
 					// 提取高亮内容
 					const highlightedText = part.slice(2, -2);
-					
+
 					// 只高亮短文本（关键词），长文本直接显示为普通加粗文本
 					if (highlightedText.length <= MAX_HIGHLIGHT_LENGTH) {
 						return (
@@ -125,15 +124,15 @@ function PlatformLogo({ platform, size = "normal" }: { platform: string; size?: 
 	// 如果有图片logo，使用图片
 	if (platformImages[platform]) {
 		return (
-			<div 
+			<div
 				className={cn(
 					"absolute top-2 right-2",
 					sizeClasses[size]
 				)}
 				title={platformNames[platform] || platform}
 			>
-				<img 
-					src={platformImages[platform]} 
+				<img
+					src={platformImages[platform]}
 					alt={platform}
 					className="w-full h-full object-contain"
 				/>
@@ -146,7 +145,7 @@ function PlatformLogo({ platform, size = "normal" }: { platform: string; size?: 
 	if (!config) return null;
 
 	return (
-		<div 
+		<div
 			className={cn(
 				"absolute top-2 right-2 rounded-lg flex items-center justify-center font-bold shadow-md text-[10px]",
 				sizeClasses[size],
@@ -197,7 +196,7 @@ export function ArticleCard({ item, size, onClick }: ArticleCardProps) {
 	// Hero 样式 - 最大的头条文章
 	if (size === "hero") {
 		return (
-			<article 
+			<article
 				className="group cursor-pointer border-b-2 border-foreground pb-6"
 				onClick={onClick}
 			>
@@ -235,7 +234,7 @@ export function ArticleCard({ item, size, onClick }: ArticleCardProps) {
 	// Large 样式 - 带大图的文章
 	if (size === "large") {
 		return (
-			<article 
+			<article
 				className="group cursor-pointer border-b border-border pb-4"
 				onClick={onClick}
 			>
@@ -276,7 +275,7 @@ export function ArticleCard({ item, size, onClick }: ArticleCardProps) {
 	// Medium 样式 - 中等大小
 	if (size === "medium") {
 		return (
-			<article 
+			<article
 				className="group cursor-pointer border-b border-border pb-3"
 				onClick={onClick}
 			>
@@ -313,7 +312,7 @@ export function ArticleCard({ item, size, onClick }: ArticleCardProps) {
 	// Small 样式 - 小型文章
 	if (size === "small") {
 		return (
-			<article 
+			<article
 				className="group cursor-pointer border-b border-border/50 pb-2"
 				onClick={onClick}
 			>
@@ -347,7 +346,7 @@ export function ArticleCard({ item, size, onClick }: ArticleCardProps) {
 
 	// Mini 样式 - 最小的列表项
 	return (
-		<article 
+		<article
 			className="group cursor-pointer py-1 border-b border-border/30"
 			onClick={onClick}
 		>
@@ -425,9 +424,9 @@ function getBilibiliEmbedUrl(bvid: string): string {
 
 export function CrawlerDetailPanel() {
 	const t = useTranslations("page");
-	const { 
-		selectedResult, 
-		setSelectedResult, 
+	const {
+		selectedResult,
+		setSelectedResult,
 		platforms,
 		showDailySummary,
 		setShowDailySummary,
@@ -441,7 +440,7 @@ export function CrawlerDetailPanel() {
 	const [showComments, setShowComments] = useState(true);
 	const [videoError, setVideoError] = useState(false);
 	const [showAiSummary, setShowAiSummary] = useState(false);  // AI摘要折叠状态
-	
+
 	/**
 	 * 处理高亮内容点击事件
 	 * 根据点击的文本查找匹配的爬取结果并跳转到详情
@@ -451,10 +450,10 @@ export function CrawlerDetailPanel() {
 			console.log("[Crawler] 没有可搜索的结果");
 			return;
 		}
-		
+
 		// 清理搜索文本
 		const searchText = text.trim().toLowerCase();
-		
+
 		// 在结果中查找匹配的内容
 		// 优先匹配标题，其次匹配描述、作者昵称、标签
 		const matchedResult = results.find((item) => {
@@ -462,7 +461,7 @@ export function CrawlerDetailPanel() {
 			const desc = (item.desc || "").toLowerCase();
 			const nickname = (item.nickname || "").toLowerCase();
 			const tags = (item.tags || []).map(t => t.toLowerCase());
-			
+
 			// 检查是否匹配
 			return (
 				title.includes(searchText) ||
@@ -473,7 +472,7 @@ export function CrawlerDetailPanel() {
 				tags.some(tag => tag.includes(searchText) || searchText.includes(tag))
 			);
 		});
-		
+
 		if (matchedResult) {
 			console.log("[Crawler] 找到匹配的结果:", matchedResult.title);
 			// 关闭今日总结面板，显示详情
@@ -483,18 +482,18 @@ export function CrawlerDetailPanel() {
 			console.log("[Crawler] 未找到匹配的结果:", text);
 		}
 	};
-	
+
 	// 切换选中内容时重置视频错误状态
 	useEffect(() => {
 		setVideoError(false);
 	}, [selectedResult?.id]);
-	
+
 	// 使用真实评论数据，如果没有则为空数组
 	const comments = selectedResult?.comments || [];
-	
+
 	// 获取当前内容的平台（优先从 URL 判断，其次使用 store 中的 platforms[0]）
-	const contentPlatform = selectedResult?.noteUrl 
-		? getPlatformFromUrl(selectedResult.noteUrl) 
+	const contentPlatform = selectedResult?.noteUrl
+		? getPlatformFromUrl(selectedResult.noteUrl)
 		: platforms[0];
 	const platformName = PLATFORM_NAMES[contentPlatform] || "平台";
 
@@ -510,17 +509,17 @@ export function CrawlerDetailPanel() {
 		if (!timestamp) return "";
 		const ts = typeof timestamp === "string" ? Number.parseInt(timestamp, 10) : timestamp;
 		if (Number.isNaN(ts)) return String(timestamp);
-		
+
 		// 如果时间戳是毫秒级的（大于10位数），转换为秒
 		const date = new Date(ts > 9999999999 ? ts : ts * 1000);
-		
+
 		// 格式化为 YYYY-MM-DD HH:mm
 		const year = date.getFullYear();
 		const month = String(date.getMonth() + 1).padStart(2, "0");
 		const day = String(date.getDate()).padStart(2, "0");
 		const hours = String(date.getHours()).padStart(2, "0");
 		const minutes = String(date.getMinutes()).padStart(2, "0");
-		
+
 		return `${year}-${month}-${day} ${hours}:${minutes}`;
 	};
 
@@ -555,7 +554,7 @@ export function CrawlerDetailPanel() {
 	if (showDailySummary) {
 		// 过滤掉没有标题和描述的文章
 		const validResults = sortedResults.filter(item => item.title || item.desc);
-		
+
 		const heroArticle = validResults[0];
 		const briefArticles = validResults.slice(1, 7);  // IN BRIEF 简讯列表
 		const featuredArticles = validResults.slice(7, 10);  // 底部三栏特色文章
@@ -607,7 +606,7 @@ export function CrawlerDetailPanel() {
 									<span>{todayDate.full}</span>
 								</div>
 							</div>
-							
+
 							{/* 主标题区 - 带装饰线条 */}
 							<div className="text-center relative py-4">
 								<h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">
@@ -616,7 +615,7 @@ export function CrawlerDetailPanel() {
 								<p className="font-serif italic text-zinc-400 text-base md:text-lg">
 									Daily Social Insights & Media Digest
 								</p>
-								
+
 								{/* 装饰性线条 - 仿报纸排版 */}
 								<div className="absolute top-1/2 left-0 w-4 md:w-16 lg:w-24 h-[1px] bg-zinc-700 hidden md:block" />
 								<div className="absolute top-1/2 right-0 w-4 md:w-16 lg:w-24 h-[1px] bg-zinc-700 hidden md:block" />
@@ -700,13 +699,13 @@ export function CrawlerDetailPanel() {
 												)}
 											/>
 										</button>
-										
+
 										{showAiSummary && (
 											<div className="p-6 sm:p-8 pt-8">
 												{/* Subtle Ambient Glow Background */}
 												<div className="absolute top-20 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[100px] -z-10 pointer-events-none" />
 												<div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-600/5 rounded-full blur-[80px] -z-10 pointer-events-none" />
-												
+
 												<div className="relative pl-2">
 													{/* AI 摘要内容 - 参照 elegant-ai-summary-redesign 样式 */}
 													<div className="text-sm sm:text-base text-slate-300 leading-7 font-light tracking-wide">
@@ -813,7 +812,7 @@ export function CrawlerDetailPanel() {
 									{/* 主文章区 */}
 									<main className="w-full">
 										{heroArticle && (
-											<article 
+											<article
 												className="group cursor-pointer"
 												onClick={() => handleArticleClick(heroArticle)}
 											>
@@ -841,7 +840,7 @@ export function CrawlerDetailPanel() {
 														<PlatformLogo platform={getPlatformFromNoteUrl(heroArticle.noteUrl)} size="large" />
 													</div>
 												)}
-												
+
 												<div className="space-y-3">
 													{/* 分类和作者 */}
 													<div className="flex items-center gap-3">
@@ -852,12 +851,12 @@ export function CrawlerDetailPanel() {
 															By {heroArticle.nickname}
 														</span>
 													</div>
-													
+
 													{/* 标题 */}
 													<h2 className="font-serif text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-white group-hover:text-zinc-200 transition-colors">
 														{heroArticle.title || heroArticle.desc?.slice(0, 60)}
 													</h2>
-													
+
 													{/* 描述 */}
 													<p className="font-sans text-zinc-400 text-base leading-relaxed line-clamp-3 md:line-clamp-none">
 														{heroArticle.desc}
@@ -891,12 +890,12 @@ export function CrawlerDetailPanel() {
 												In Brief
 											</h3>
 										</div>
-										
+
 										<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 											{briefArticles.map((item, index) => {
 												const platform = getPlatformFromNoteUrl(item.noteUrl);
 												return (
-													<div 
+													<div
 														key={item.id}
 														className="group cursor-pointer border-b border-zinc-800/50 pb-4 relative"
 														onClick={() => handleArticleClick(item)}
@@ -911,7 +910,7 @@ export function CrawlerDetailPanel() {
 																</p>
 																<div className="flex flex-wrap gap-2">
 																	{item.tags.slice(0, 2).map((tag, i) => (
-																		<span 
+																		<span
 																			key={i}
 																			className="inline-flex items-center text-[10px] text-zinc-500 font-mono border border-zinc-800 px-1.5 py-0.5 rounded hover:border-zinc-600 hover:text-zinc-400 transition-colors"
 																		>
@@ -933,7 +932,7 @@ export function CrawlerDetailPanel() {
 								{featuredArticles.length > 0 && (
 									<div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 pt-8 border-t-4 border-double border-zinc-800">
 										{featuredArticles.map((item) => (
-											<article 
+											<article
 												key={item.id}
 												className="group flex flex-col h-full cursor-pointer relative"
 												onClick={() => handleArticleClick(item)}
@@ -956,18 +955,18 @@ export function CrawlerDetailPanel() {
 													/* 无图片时，在卡片右上角显示平台logo */
 													<PlatformLogo platform={getPlatformFromNoteUrl(item.noteUrl)} size="small" />
 												)}
-												
+
 												<div className="flex-1 flex flex-col">
 													{/* 标题 */}
 													<h3 className="font-serif text-lg lg:text-xl font-bold text-zinc-100 mb-3 group-hover:text-indigo-300 transition-colors leading-tight pr-8">
 														{item.title || item.desc?.slice(0, 40)}
 													</h3>
-													
+
 													{/* 描述 */}
 													<p className="font-sans text-sm text-zinc-400 line-clamp-3 leading-relaxed mb-4 flex-1">
 														{item.desc}
 													</p>
-													
+
 													{/* 底部信息 */}
 													<div className="flex items-center justify-between pt-3 border-t border-zinc-800/50 text-xs text-zinc-500 font-mono">
 														<span>{item.nickname}</span>
@@ -991,7 +990,7 @@ export function CrawlerDetailPanel() {
 										</div>
 										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 											{moreArticles.map((item) => (
-												<article 
+												<article
 													key={item.id}
 													className="group cursor-pointer flex gap-4 p-3 rounded-sm hover:bg-zinc-900/50 transition-colors border border-transparent hover:border-zinc-800 relative"
 													onClick={() => handleArticleClick(item)}
@@ -1042,9 +1041,9 @@ export function CrawlerDetailPanel() {
 	if (!selectedResult) {
 		return (
 			<div className="relative flex h-full flex-col overflow-hidden bg-background">
-				<PanelHeader 
-					icon={Search} 
-					title={t("crawlerDetailLabel")} 
+				<PanelHeader
+					icon={Search}
+					title={t("crawlerDetailLabel")}
 					actions={
 						<button
 							type="button"
@@ -1080,9 +1079,9 @@ export function CrawlerDetailPanel() {
 
 	return (
 		<div className="relative flex h-full flex-col overflow-hidden bg-background">
-			<PanelHeader 
-				icon={Search} 
-				title={t("crawlerDetailLabel")} 
+			<PanelHeader
+				icon={Search}
+				title={t("crawlerDetailLabel")}
 				actions={
 					<button
 						type="button"
@@ -1229,8 +1228,8 @@ export function CrawlerDetailPanel() {
 												controls
 												className={cn(
 													"w-full bg-black object-contain",
-													PLATFORMS_NEED_PROXY.includes(contentPlatform) 
-														? "aspect-[9/16] max-h-[500px]" 
+													PLATFORMS_NEED_PROXY.includes(contentPlatform)
+														? "aspect-[9/16] max-h-[500px]"
 														: "aspect-[4/3]"
 												)}
 												poster={selectedResult.imageUrl}

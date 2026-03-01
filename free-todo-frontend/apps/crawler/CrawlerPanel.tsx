@@ -4,7 +4,7 @@ import { Bug, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { PanelHeader } from "@/components/common/layout/PanelHeader";
-import { StatusBar, SearchInput, StartButton, ResultList, PluginInstallGuide } from "./components";
+import { PluginInstallGuide, ResultList, SearchInput, StartButton, StatusBar } from "./components";
 import { useCrawlerStore } from "./store";
 
 /**

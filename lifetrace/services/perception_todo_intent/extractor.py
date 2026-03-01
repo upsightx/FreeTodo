@@ -213,9 +213,8 @@ class TodoIntentExtractor:
         if has_memory:
             system_prompt = get_prompt(prompt_category, "system_assistant")
         else:
-            system_prompt = (
-                get_prompt(prompt_category, "system_assistant_no_memory")
-                or get_prompt(prompt_category, "system_assistant")
+            system_prompt = get_prompt(prompt_category, "system_assistant_no_memory") or get_prompt(
+                prompt_category, "system_assistant"
             )
 
         user_prompt = get_prompt(

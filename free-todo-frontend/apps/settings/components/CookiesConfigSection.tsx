@@ -40,7 +40,7 @@ interface CookiesConfigSectionProps {
  */
 export function CookiesConfigSection({ loading = false }: CookiesConfigSectionProps) {
 	const t = useTranslations("page.settings.cookies");
-	
+
 	// 状态管理
 	const [platformCookies, setPlatformCookies] = useState<Record<string, CookieAccount[]>>({});
 	const [selectedPlatform, setSelectedPlatform] = useState<string>("xhs");

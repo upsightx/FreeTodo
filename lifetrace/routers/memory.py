@@ -149,7 +149,9 @@ async def trigger_profile_update():
     """Manually trigger an L4 profile update cycle."""
     mgr = _require_manager()
     if mgr.profile_builder is None:
-        raise HTTPException(status_code=503, detail="ProfileBuilder not available (LLM not configured)")
+        raise HTTPException(
+            status_code=503, detail="ProfileBuilder not available (LLM not configured)"
+        )
     updated = await mgr.profile_builder.update()
     return {"updated": updated, "stats": mgr.profile_builder.get_stats()}
 

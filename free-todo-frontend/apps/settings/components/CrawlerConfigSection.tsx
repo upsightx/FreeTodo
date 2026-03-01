@@ -1,9 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCrawlerStore } from "@/apps/crawler/store";
-import { type CrawlerType } from "@/apps/crawler/types";
+import type { CrawlerType } from "@/apps/crawler/types";
 import { SettingsSection } from "./SettingsSection";
 import { ToggleSwitch } from "./ToggleSwitch";
 

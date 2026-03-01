@@ -21,7 +21,7 @@ echo ""
 kill_by_port() {
     local port=$1
     local name=$2
-    
+
     if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
         # Windows (Git Bash / MSYS2)
         pid=$(netstat -ano 2>/dev/null | grep ":$port " | grep "LISTENING" | awk '{print $5}' | head -1)

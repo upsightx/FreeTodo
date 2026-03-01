@@ -22,7 +22,7 @@ export function ResultList() {
 				setIsInitialLoading(false);
 				return;
 			}
-			
+
 			setIsInitialLoading(true);
 			// 先加载后端配置（确保 platform 是正确的）
 			await loadConfigFromBackend();

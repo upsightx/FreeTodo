@@ -41,9 +41,7 @@ class WinRtOcrEngine:
             resize_max_side: 预缩放最大边长，0 表示不缩放
         """
         if not WINOCR_AVAILABLE:
-            raise ImportError(
-                "winocr not available. Install with: uv add winocr"
-            )
+            raise ImportError("winocr not available. Install with: uv add winocr")
 
         self.lang = lang
         self.resize_max_side = resize_max_side
@@ -170,9 +168,7 @@ class WinRtOcrEngine:
                     else 0.95  # WinRT 准确率高，默认给 0.95
                 )
 
-                lines.append(
-                    OcrLine(text=text, score=avg_confidence, bbox_px=bbox)
-                )
+                lines.append(OcrLine(text=text, score=avg_confidence, bbox_px=bbox))
 
         return OcrRawResult(
             lines=lines,
@@ -191,20 +187,14 @@ class WinRtOcrEngine:
         # 这在普通线程中是安全的
         loop = asyncio.new_event_loop()
         try:
-            result = loop.run_until_complete(
-                self._recognize_async(image_bytes, width, height)
-            )
+            result = loop.run_until_complete(self._recognize_async(image_bytes, width, height))
             return result
         finally:
             loop.close()
 
-    async def _recognize_async(
-        self, image_bytes: bytes, width: int, height: int
-    ) -> dict:
+    async def _recognize_async(self, image_bytes: bytes, width: int, height: int) -> dict:
         """异步调用 WinRT OCR"""
-        awaitable = winocr.recognize_bytes(
-            image_bytes, width, height, lang=self.lang
-        )
+        awaitable = winocr.recognize_bytes(image_bytes, width, height, lang=self.lang)
         result = await awaitable
         return winocr.picklify(result)
 

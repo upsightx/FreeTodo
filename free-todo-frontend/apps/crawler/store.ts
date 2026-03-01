@@ -2,7 +2,7 @@
  * 爬虫状态管理
  */
 import { create } from "zustand";
-import type { CrawlerPlatform, CrawlerStatus, CrawlerType, CrawlResultItem, CrawlerTask } from "./types";
+import type { CrawlerPlatform, CrawlerStatus, CrawlerTask, CrawlerType, CrawlResultItem } from "./types";
 
 // API 基础 URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
@@ -87,26 +87,26 @@ interface CrawlerStore {
 	platforms: CrawlerPlatform[];  // 多平台支持
 	crawlerType: CrawlerType;
 	keywords: string;
-	
+
 	// 爬取结果
 	results: CrawlResultItem[];
 	totalCount: number;
-	
+
 	// 当前任务
 	currentTask: CrawlerTask | null;
-	
+
 	// 选中的结果项（用于详情面板）
 	selectedResult: CrawlResultItem | null;
-	
+
 	// 配置是否已同步到后端
 	configSynced: boolean;
-	
+
 	// 今日总结相关
 	dailySummary: string;
 	dailySummaryLoading: boolean;
 	showDailySummary: boolean;
 	dailySummaryCacheDate: string | null;  // 缓存的日期（格式：YYYY-MM-DD）
-	
+
 	// 视频下载相关
 	videoDownloadProgress: {
 		isDownloading: boolean;
@@ -117,15 +117,15 @@ interface CrawlerStore {
 		failedCount: number;
 		message: string;
 	};
-	
+
 	// 关键词提取相关
 	extractedKeywords: string[];
 	excludedKeywords: string[];  // 用户不感兴趣的关键词
 	extractingKeywords: boolean;
-	
+
 	// 已查看的内容
 	viewedItems: Set<string>;
-	
+
 	// 插件操作
 	checkPluginStatus: () => Promise<void>;
 	installPlugin: (downloadUrl?: string) => Promise<void>;
@@ -142,36 +142,36 @@ interface CrawlerStore {
 	setSelectedResult: (result: CrawlResultItem | null) => void;
 	setCurrentTask: (task: CrawlerTask | null) => void;
 	clearResults: () => void;
-	
+
 	// 后端 API 操作
 	syncKeywordsToBackend: (keywords: string) => Promise<void>;
 	syncConfigToBackend: () => Promise<void>;
 	loadConfigFromBackend: () => Promise<void>;
-	
+
 	// 爬虫操作
 	startCrawler: () => Promise<void>;
 	stopCrawler: () => Promise<void>;
 	refreshResults: () => Promise<void>;
-	
+
 	// 获取爬虫状态
 	fetchCrawlerStatus: () => Promise<void>;
-	
+
 	// 今日总结操作
 	fetchDailySummary: () => Promise<void>;
 	refreshDailySummary: () => Promise<void>;  // 强制刷新今日总结
 	setShowDailySummary: (show: boolean) => void;
 	closeDailySummary: () => void;
 	loadAllPlatformResults: () => Promise<void>;  // 加载所有平台的今日数据
-	
+
 	// 视频下载操作
 	downloadTodayVideos: () => Promise<void>;
-	
+
 	// 关键词提取操作
 	extractKeywords: (text: string) => Promise<void>;
 	setExtractedKeywords: (keywords: string[]) => void;
 	setExcludedKeywords: (keywords: string[]) => void;
 	clearExtractedKeywords: () => void;
-	
+
 	// 已查看内容操作
 	markAsViewed: (id: string) => void;
 	isViewed: (id: string) => boolean;
@@ -361,7 +361,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			console.error("[Crawler] 卸载插件失败:", error);
 		}
 	},
-	
+
 	// ======================== 原有 Actions ========================
 	setStatus: (status) => set({ status }),
 	setPlatforms: (platforms) => {
@@ -372,7 +372,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 	togglePlatform: (platform) => {
 		const { platforms } = get();
 		let newPlatforms: CrawlerPlatform[];
-		
+
 		if (platforms.includes(platform)) {
 			// 如果已选中，则取消选中（但至少保留一个）
 			if (platforms.length > 1) {
@@ -385,7 +385,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			// 如果未选中，则添加
 			newPlatforms = [...platforms, platform];
 		}
-		
+
 		set({ platforms: newPlatforms });
 		// 同步到后端
 		get().syncConfigToBackend();
@@ -404,7 +404,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 	setSelectedResult: (result) => set({ selectedResult: result }),
 	setCurrentTask: (task) => set({ currentTask: task }),
 	clearResults: () => set({ results: [], totalCount: 0 }),
-	
+
 	// 同步关键词到后端
 	syncKeywordsToBackend: async (keywords: string) => {
 		try {
@@ -420,7 +420,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			console.error("[Crawler] 同步关键词失败:", error);
 		}
 	},
-	
+
 	// 同步所有配置到后端
 	syncConfigToBackend: async () => {
 		const { platforms, crawlerType } = get();
@@ -442,7 +442,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			console.error("[Crawler] 同步配置失败:", error);
 		}
 	},
-	
+
 	// 从后端加载配置
 	loadConfigFromBackend: async () => {
 		try {
@@ -463,7 +463,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			console.error("[Crawler] 加载配置失败:", error);
 		}
 	},
-	
+
 	// 获取爬虫状态
 	fetchCrawlerStatus: async () => {
 		try {
@@ -507,32 +507,32 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			console.error("[Crawler] 获取状态失败:", error);
 		}
 	},
-	
+
 	// 启动爬虫（调用后端 API，支持多平台循环爬取）
 	startCrawler: async () => {
 		const { keywords, platforms, crawlerType, syncKeywordsToBackend, extractedKeywords, excludedKeywords } = get();
-		
+
 		// 优先使用提取的关键词，如果没有则使用输入框中的关键词
-		const finalKeywords = extractedKeywords.length > 0 
-			? extractedKeywords.join(",") 
+		const finalKeywords = extractedKeywords.length > 0
+			? extractedKeywords.join(",")
 			: keywords.trim();
-		
+
 		if (!finalKeywords) {
 			console.warn("[Crawler] 关键词为空，无法启动爬虫");
 			return;
 		}
-		
+
 		if (platforms.length === 0) {
 			console.warn("[Crawler] 未选择平台，无法启动爬虫");
 			return;
 		}
-		
+
 		// 先同步关键词到配置文件
 		await syncKeywordsToBackend(finalKeywords);
-		
+
 		// 注意：不清除提取的关键词，以便用户可以看到当前爬取使用的关键词
 		// clearExtractedKeywords();
-		
+
 		// 创建任务（使用第一个平台）
 		const task: CrawlerTask = {
 			id: `task-${Date.now()}`,
@@ -545,11 +545,11 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			crawledCount: 0,
 			startTime: new Date().toISOString(),
 		};
-		
+
 		// 记录启动时间，防止轮询在宽限期内将状态降级
 		_lastCrawlerStartTime = Date.now();
 		set({ status: "running", currentTask: task, results: [], totalCount: 0 });
-		
+
 		try {
 			// 调用后端 API 启动循环爬虫（传递多平台和排除关键词）
 			const response = await fetch(`${API_BASE_URL}/api/crawler/start`, {
@@ -561,28 +561,28 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 					excluded_keywords: excludedKeywords,  // 传递排除关键词
 				}),
 			});
-			
+
 			const data = await response.json();
-			
+
 			if (data.success) {
 				console.log("[Crawler] 循环爬虫启动成功:", data);
 				// 启动状态轮询（循环爬取模式下持续轮询，定期刷新结果）
 				let lastRefreshTime = Date.now();
 				const REFRESH_INTERVAL = 30000;  // 每30秒自动刷新一次结果
-				
+
 				const pollStatus = async () => {
 					const currentStatus = get().status;
 					if (currentStatus !== "running") return;
-					
+
 					try {
 						const statusResponse = await fetch(`${API_BASE_URL}/api/crawler/status`);
 						if (statusResponse.ok) {
 							const statusData = await statusResponse.json();
-							
+
 							// 循环爬取模式：只有当 loop_mode 为 false 且爬虫不在运行时才认为完成
 							const isLoopMode = statusData.loop_mode;
 							const isCrawlerRunning = statusData.crawler_running;
-							
+
 							if (!isLoopMode && !isCrawlerRunning && get().status === "running") {
 								// 循环爬取已停止（用户手动停止或发生错误）
 								set((state) => ({
@@ -599,7 +599,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 								get().refreshResults();
 								return;
 							}
-							
+
 							// 循环爬取模式下，定期刷新结果
 							if (isLoopMode && Date.now() - lastRefreshTime > REFRESH_INTERVAL) {
 								console.log("[Crawler] 循环爬取中，定期刷新结果...");
@@ -610,11 +610,11 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 					} catch (error) {
 						console.error("[Crawler] 轮询状态失败:", error);
 					}
-					
+
 					// 继续轮询
 					setTimeout(pollStatus, 3000);
 				};
-				
+
 				// 开始轮询
 				setTimeout(pollStatus, 5000);
 			} else {
@@ -640,7 +640,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			}));
 		}
 	},
-	
+
 	// 停止爬虫
 	stopCrawler: async () => {
 		// 清除启动宽限期，允许状态立即降级为 idle
@@ -649,16 +649,16 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			const response = await fetch(`${API_BASE_URL}/api/crawler/stop`, {
 				method: "POST",
 			});
-			
+
 			const data = await response.json();
-			
+
 			if (data.success) {
 				console.log("[Crawler] 爬虫已停止");
 			}
 		} catch (error) {
 			console.error("[Crawler] 停止爬虫失败:", error);
 		}
-		
+
 		set((state) => ({
 			status: "idle",
 			currentTask: state.currentTask ? {
@@ -667,28 +667,28 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			} : null,
 		}));
 	},
-	
+
 	refreshResults: async () => {
 		const { platforms, showDailySummary } = get();
-		
+
 		// 如果热点速递面板正在显示，不刷新结果（避免覆盖所有平台的数据）
 		if (showDailySummary) {
 			console.log("[Crawler] 热点速递模式，跳过刷新结果");
 			return;
 		}
-		
+
 		// 注意：不修改 status 状态，status 只反映实际的爬虫运行状态
 		// 由 fetchCrawlerStatus 从后端获取真实状态
-		
+
 		try {
 			// 获取所有选中平台的结果
 			const allResults: CrawlResultItem[] = [];
-			
+
 			for (const platform of platforms) {
 				const response = await fetch(
 					`${API_BASE_URL}/api/crawler/results?platform=${platform}&limit=100&include_comments=true`
 				);
-				
+
 				if (response.ok) {
 					const data = await response.json();
 					if (data.success && data.results) {
@@ -697,14 +697,14 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 					}
 				}
 			}
-			
+
 			// 按时间排序（最新的在前）
 			allResults.sort((a, b) => {
 				const timeA = new Date(a.time || 0).getTime();
 				const timeB = new Date(b.time || 0).getTime();
 				return timeB - timeA;
 			});
-			
+
 			set({
 				results: allResults,
 				totalCount: allResults.length,
@@ -714,18 +714,18 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			console.error("[Crawler] 刷新结果失败:", error);
 		}
 	},
-	
+
 	// 今日总结操作（带缓存：当天重复点击直接显示缓存）
 	fetchDailySummary: async () => {
 		const { dailySummary, dailySummaryCacheDate, refreshDailySummary, loadAllPlatformResults } = get();
-		
+
 		// 获取今天的日期（格式：YYYY-MM-DD）
 		const today = new Date().toISOString().split("T")[0];
-		
+
 		// 如果已有当天的缓存，直接显示，但仍需加载所有平台数据
 		if (dailySummaryCacheDate === today && dailySummary && !dailySummary.startsWith("## 获取总结失败")) {
 			console.log("[Crawler] 使用缓存的今日总结");
-			set({ 
+			set({
 				showDailySummary: true,
 				selectedResult: null,
 			});
@@ -734,65 +734,65 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			console.log("[Crawler] 已加载所有平台数据（使用缓存摘要）");
 			return;
 		}
-		
+
 		// 没有缓存或不是当天的，调用刷新函数生成新的总结
 		await refreshDailySummary();
 	},
-	
+
 	// 强制刷新今日总结（忽略缓存）
 	refreshDailySummary: async () => {
 		const { downloadTodayVideos, loadAllPlatformResults } = get();
 		const today = new Date().toISOString().split("T")[0];
-		
-		set({ 
-			dailySummaryLoading: true, 
+
+		set({
+			dailySummaryLoading: true,
 			dailySummary: "## 正在加载所有平台数据...\n\n请稍候，正在获取今日所有平台的爬取内容...",
 			showDailySummary: true,
 			selectedResult: null,  // 清除选中的结果，显示总结面板
 		});
-		
+
 		try {
 			// 首先加载所有平台的数据（用于热点速递显示）
 			await loadAllPlatformResults();
 			console.log("[Crawler] 已加载所有平台数据");
-			
+
 			// 下载今日视频（不阻塞，在后台进行）
 			downloadTodayVideos().then(() => {
 				console.log("[Crawler] 视频下载任务完成");
 			}).catch((err) => {
 				console.error("[Crawler] 视频下载失败:", err);
 			});
-			
+
 			// 稍等一下再开始生成总结
 			await new Promise(resolve => setTimeout(resolve, 300));
-			
+
 			set({ dailySummary: "" });  // 清空提示，准备显示总结
-			
+
 			const response = await fetch(`${API_BASE_URL}/api/crawler/daily-summary`);
-			
+
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
-			
+
 			const reader = response.body?.getReader();
 			if (!reader) {
 				throw new Error("无法读取响应流");
 			}
-			
+
 			const decoder = new TextDecoder();
 			let summary = "";
-			
+
 			while (true) {
 				const { done, value } = await reader.read();
 				if (done) break;
-				
+
 				const chunk = decoder.decode(value, { stream: true });
 				summary += chunk;
-				
+
 				// 实时更新总结内容
 				set({ dailySummary: summary });
 			}
-			
+
 			// 保存缓存日期（内存 + localStorage）
 			set({ dailySummaryCacheDate: today });
 			saveDailySummaryCache(summary, today);
@@ -804,34 +804,34 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			set({ dailySummaryLoading: false });
 		}
 	},
-	
+
 	setShowDailySummary: (show: boolean) => {
 		set({ showDailySummary: show });
 		if (show) {
 			set({ selectedResult: null });
 		}
 	},
-	
+
 	closeDailySummary: () => {
 		// 关闭时不清空内容，保留缓存以便下次快速显示
 		set({ showDailySummary: false });
 	},
-	
+
 	// 加载所有平台的今日数据（用于热点速递）
 	loadAllPlatformResults: async () => {
 		// 所有支持的平台
 		const allPlatforms: CrawlerPlatform[] = ["xhs", "douyin", "bilibili", "weibo", "kuaishou", "zhihu", "tieba"];
-		
+
 		try {
 			const allResults: CrawlResultItem[] = [];
-			
+
 			// 并行请求所有平台的数据
 			const promises = allPlatforms.map(async (platform) => {
 				try {
 					const response = await fetch(
 						`${API_BASE_URL}/api/crawler/results?platform=${platform}&limit=100&include_comments=true`
 					);
-					
+
 					if (response.ok) {
 						const data = await response.json();
 						if (data.success && data.results) {
@@ -843,32 +843,32 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 				}
 				return [];
 			});
-			
+
 			const resultsArrays = await Promise.all(promises);
-			
+
 			// 合并所有结果
 			for (const results of resultsArrays) {
 				allResults.push(...results);
 			}
-			
+
 			// 按互动量排序（点赞 + 评论*2 + 收藏*1.5）
 			allResults.sort((a, b) => {
 				const scoreA = (a.likedCount || 0) + (a.commentCount || 0) * 2 + (a.collectedCount || 0) * 1.5;
 				const scoreB = (b.likedCount || 0) + (b.commentCount || 0) * 2 + (b.collectedCount || 0) * 1.5;
 				return scoreB - scoreA;
 			});
-			
+
 			set({
 				results: allResults,
 				totalCount: allResults.length,
 			});
-			
+
 			console.log(`[Crawler] 已加载所有平台数据，共 ${allResults.length} 条`);
 		} catch (error) {
 			console.error("[Crawler] 加载所有平台数据失败:", error);
 		}
 	},
-	
+
 	// 下载今日视频
 	downloadTodayVideos: async () => {
 		set({
@@ -882,40 +882,40 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 				message: "正在获取今日视频列表...",
 			},
 		});
-		
+
 		try {
 			const response = await fetch(`${API_BASE_URL}/api/crawler/download-today-videos`, {
 				method: "POST",
 			});
-			
+
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
-			
+
 			const reader = response.body?.getReader();
 			if (!reader) {
 				throw new Error("无法读取响应流");
 			}
-			
+
 			const decoder = new TextDecoder();
 			let buffer = "";
-			
+
 			while (true) {
 				const { done, value } = await reader.read();
 				if (done) break;
-				
+
 				buffer += decoder.decode(value, { stream: true });
-				
+
 				// 按行处理 NDJSON
 				const lines = buffer.split("\n");
 				buffer = lines.pop() || ""; // 保留最后一个不完整的行
-				
+
 				for (const line of lines) {
 					if (!line.trim()) continue;
-					
+
 					try {
 						const data = JSON.parse(line);
-						
+
 						if (data.type === "start") {
 							set((state) => ({
 								videoDownloadProgress: {
@@ -949,7 +949,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 					}
 				}
 			}
-			
+
 			console.log("[Crawler] 今日视频下载完成");
 		} catch (error) {
 			console.error("[Crawler] 下载今日视频失败:", error);
@@ -962,29 +962,29 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			}));
 		}
 	},
-	
+
 	// 关键词提取方法
 	extractKeywords: async (text: string) => {
 		if (!text.trim()) {
 			set({ extractedKeywords: [], excludedKeywords: [], extractingKeywords: false });
 			return;
 		}
-		
+
 		set({ extractingKeywords: true });
-		
+
 		try {
 			const response = await fetch(`${API_BASE_URL}/api/crawler/extract-keywords`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ text }),
 			});
-			
+
 			if (response.ok) {
 				const data = await response.json();
-				set({ 
-					extractedKeywords: data.keywords || [], 
+				set({
+					extractedKeywords: data.keywords || [],
 					excludedKeywords: data.excluded_keywords || [],
-					extractingKeywords: false 
+					extractingKeywords: false
 				});
 				console.log("[Crawler] 提取关键词成功:", data.keywords, "排除:", data.excluded_keywords);
 			} else {
@@ -998,13 +998,13 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 			set({ extractingKeywords: false });
 		}
 	},
-	
+
 	setExtractedKeywords: (keywords: string[]) => set({ extractedKeywords: keywords }),
-	
+
 	setExcludedKeywords: (keywords: string[]) => set({ excludedKeywords: keywords }),
-	
+
 	clearExtractedKeywords: () => set({ extractedKeywords: [], excludedKeywords: [], extractingKeywords: false }),
-	
+
 	// 已查看内容操作
 	markAsViewed: (id: string) => {
 		const { viewedItems } = get();
@@ -1013,7 +1013,7 @@ export const useCrawlerStore = create<CrawlerStore>((set, get) => ({
 		saveViewedItems(newViewedItems);
 		set({ viewedItems: newViewedItems });
 	},
-	
+
 	isViewed: (id: string) => {
 		const { viewedItems } = get();
 		return viewedItems.has(id);

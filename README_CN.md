@@ -64,7 +64,7 @@ FreeTodo 采用**前后端分离**架构：
 
 - Node.js 20+
 - pnpm 包管理器
-- 
+-
 ### 安装依赖
 
 本项目使用 [uv](https://github.com/astral-sh/uv) 进行快速可靠的依赖管理。
@@ -153,7 +153,7 @@ python -m lifetrace.agent_os
 # 在根目录下运行：
 pnpm -C free-todo-frontend dev
 ```
-<!-- 
+<!--
 前端开发服务器会：
 - 自动从 `3001` 端口（开发版默认端口）开始查找可用端口
 - 通过检查 `/health` 端点自动检测运行中的 FreeTodo 后端端口

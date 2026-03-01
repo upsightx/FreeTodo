@@ -30,7 +30,7 @@ class LifeTraceEnv implements EnvFields {
   String? get mixpanelProjectToken => null;
 
   @override
-  String? get apiBaseUrl => 'https://tybbackend.cpolar.cn/';
+  String? get apiBaseUrl => 'http://5.tcp.cpolar.cn:13365/';
 
   @override
   String? get growthbookApiKey => null;

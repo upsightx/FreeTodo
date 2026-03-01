@@ -76,9 +76,7 @@ def _split_long_line_by_punct(*, line: str, max_chars: int) -> list[str]:  # noq
             continue
 
         separator = (
-            ""
-            if buffer.endswith(("。", "！", "？", "!", "?", "；", ";", "，", ","))
-            else " "
+            "" if buffer.endswith(("。", "！", "？", "!", "?", "；", ";", "，", ",")) else " "
         )
         candidate = f"{buffer}{separator}{part}"
         if len(candidate) <= max_chars:
@@ -164,7 +162,11 @@ def chunk_transcription(  # noqa: C901
             lines = [*lines[:index], *split_lines, *lines[index + 1 :]]
             if timestamps is not None:
                 t = timestamps[index]
-                timestamps = [*timestamps[:index], *([t] * len(split_lines)), *timestamps[index + 1 :]]
+                timestamps = [
+                    *timestamps[:index],
+                    *([t] * len(split_lines)),
+                    *timestamps[index + 1 :],
+                ]
             continue
 
         if max_chars > 0:

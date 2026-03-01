@@ -1,18 +1,18 @@
 "use client";
 
-import { Search, Loader2, Sparkles, Ban } from "lucide-react";
-import { useEffect, useRef, useCallback } from "react";
+import { Ban, Loader2, Search, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useRef } from "react";
 import { useCrawlerStore } from "../store";
 
 /**
  * 搜索关键词输入组件
  */
 export function SearchInput() {
-	const { 
-		keywords, 
-		setKeywords, 
-		status, 
-		syncKeywordsToBackend, 
+	const {
+		keywords,
+		setKeywords,
+		status,
+		syncKeywordsToBackend,
 		loadConfigFromBackend,
 		extractedKeywords,
 		excludedKeywords,
@@ -37,13 +37,13 @@ export function SearchInput() {
 		if (debounceTimerRef.current) {
 			clearTimeout(debounceTimerRef.current);
 		}
-		
+
 		// 如果文本为空，清除关键词
 		if (!text.trim()) {
 			clearExtractedKeywords();
 			return;
 		}
-		
+
 		// 设置新的定时器，800ms后调用API
 		debounceTimerRef.current = setTimeout(() => {
 			extractKeywords(text);
@@ -97,7 +97,7 @@ export function SearchInput() {
 					className="w-full rounded-lg border border-border bg-card py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
 				/>
 			</div>
-			
+
 			{/* 关键词提取结果展示 */}
 			{(extractingKeywords || extractedKeywords.length > 0 || excludedKeywords.length > 0) && (
 				<div className="space-y-2 pt-1">

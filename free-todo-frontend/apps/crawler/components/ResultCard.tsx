@@ -1,8 +1,8 @@
 "use client";
 
 import { Bookmark, Check, ExternalLink, Heart, MessageCircle, Video } from "lucide-react";
-import type { CrawlResultItem } from "../types";
 import { useCrawlerStore } from "../store";
+import type { CrawlResultItem } from "../types";
 
 interface ResultCardProps {
 	item: CrawlResultItem;
@@ -14,7 +14,7 @@ interface ResultCardProps {
 export function ResultCard({ item }: ResultCardProps) {
 	const { setSelectedResult, markAsViewed, isViewed } = useCrawlerStore();
 	const viewed = isViewed(item.id);
-	
+
 	const handleViewDetail = () => {
 		setSelectedResult(item);
 		markAsViewed(item.id);

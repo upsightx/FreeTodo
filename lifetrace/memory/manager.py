@@ -228,9 +228,7 @@ async def shutdown_memory_manager() -> None:
 
 def get_memory_manager() -> MemoryManager:
     if _manager is None:
-        raise RuntimeError(
-            "MemoryManager not initialized. Call init_memory_manager() at startup."
-        )
+        raise RuntimeError("MemoryManager not initialized. Call init_memory_manager() at startup.")
     return _manager
 
 

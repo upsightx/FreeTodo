@@ -142,7 +142,10 @@ def _build_instructions(
                 "你是 FreeTodo 智能助手，可以帮助用户管理待办事项和执行各种任务。"
                 "请根据用户的问题选择合适的工具来完成任务。",
             ]
-        return [date_instruction, "你是 FreeTodo 智能助手。当前没有启用任何工具，请直接回答用户的问题。"]
+        return [
+            date_instruction,
+            "你是 FreeTodo 智能助手。当前没有启用任何工具，请直接回答用户的问题。",
+        ]
 
     # English
     if has_tools:

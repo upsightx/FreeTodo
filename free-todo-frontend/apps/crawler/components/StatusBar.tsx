@@ -2,8 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import { useCrawlerStore } from "../store";
-import { PLATFORMS } from "../types";
 import type { CrawlerPlatform } from "../types";
+import { PLATFORMS } from "../types";
 
 /**
  * 状态栏组件 - 显示当前爬虫状态和平台选择（多选）
@@ -54,7 +54,7 @@ export function StatusBar() {
 					{statusText[status]}
 				</span>
 			</div>
-			
+
 			{/* 平台多选 */}
 			<div className="mt-3">
 				<div className="flex items-center justify-between">
