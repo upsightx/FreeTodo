@@ -98,14 +98,14 @@ REM ================================================================
 REM  5. Start cpolar backend tunnel
 REM ================================================================
 echo [5/6] Starting cpolar backend tunnel = %BACKEND_PUBLIC_URL%
-start "LifeTrace cpolar Backend" cmd /k "cpolar http -region=%CPOLAR_REGION% %BACKEND_PORT% -subdomain=%CPOLAR_BACKEND_DOMAIN%"
+start "LifeTrace cpolar Backend" cmd /k "cpolar http -region=%CPOLAR_REGION% -subdomain=%CPOLAR_BACKEND_DOMAIN% %BACKEND_PORT%"
 timeout /t 2 /nobreak >nul
 
 REM ================================================================
 REM  6. Start cpolar frontend tunnel
 REM ================================================================
 echo [6/6] Starting cpolar frontend tunnel = %FRONTEND_PUBLIC_URL%
-start "LifeTrace cpolar Frontend" cmd /k "cpolar http -region=%CPOLAR_REGION% %FRONTEND_PORT% -subdomain=%CPOLAR_FRONTEND_DOMAIN%"
+start "LifeTrace cpolar Frontend" cmd /k "cpolar http -region=%CPOLAR_REGION% -subdomain=%CPOLAR_FRONTEND_DOMAIN% %FRONTEND_PORT%"
 
 REM ================================================================
 REM  Done
