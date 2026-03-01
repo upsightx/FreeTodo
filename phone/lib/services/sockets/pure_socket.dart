@@ -127,10 +127,11 @@ class PureSocket implements IPureSocket {
         that.onMessage(message);
       },
       onError: (err, trace) {
+        Logger.debug("[BGDBG][Socket] stream.onError: $err");
         that.onError(err, trace);
       },
       onDone: () {
-        Logger.debug("onDone with close code: ${_channel?.closeCode}");
+        Logger.debug("[BGDBG][Socket] stream.onDone closeCode=${_channel?.closeCode} closeReason=${_channel?.closeReason}");
         that.onClosed(_channel?.closeCode);
       },
       cancelOnError: false,

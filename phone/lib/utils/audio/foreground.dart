@@ -175,48 +175,22 @@ class ForegroundUtil {
     Logger.debug('startForegroundTask');
 
     try {
-      // Android 14+ requires permissions before starting foreground service
-      if (Platform.isAndroid) {
-        // Check and request microphone permission for FOREGROUND_SERVICE_MICROPHONE
-        final microphoneStatus = await Permission.microphone.status;
-        if (!microphoneStatus.isGranted) {
-          Logger.debug('Microphone permission not granted, requesting...');
-          final micResult = await Permission.microphone.request();
-          if (!micResult.isGranted) {
-            Logger.debug('Microphone permission denied, cannot start foreground service');
-            _isStarting = false;
-            return ServiceRequestFailure(
-              error: 'Microphone permission is required to start foreground service',
-            );
-          }
-        }
-
-        // Check and request location permission for FOREGROUND_SERVICE_LOCATION
-        final locationStatus = await Permission.location.status;
-        if (!locationStatus.isGranted) {
-          Logger.debug('Location permission not granted, requesting...');
-          final locResult = await Permission.location.request();
-          if (!locResult.isGranted) {
-            Logger.debug('Location permission denied, cannot start foreground service');
-            _isStarting = false;
-            return ServiceRequestFailure(
-              error: 'Location permission is required to start foreground service',
-            );
-          }
-        }
-      }
-
+      final alreadyRunning = await FlutterForegroundTask.isRunningService;
+      Logger.debug('[BGDBG] ForegroundTask alreadyRunning=$alreadyRunning');
       ServiceRequestResult result;
-      if (await FlutterForegroundTask.isRunningService) {
+      if (alreadyRunning) {
         result = await FlutterForegroundTask.restartService();
+        Logger.debug('[BGDBG] ForegroundTask restarted, result=$result');
       } else {
         result = await FlutterForegroundTask.startService(
           notificationTitle: 'Your Omi Device is connected.',
           notificationText: 'Transcription service is running in the background.',
           callback: _startForegroundCallback,
         );
+        Logger.debug('[BGDBG] ForegroundTask freshStart, result=$result');
       }
-      Logger.debug('ForegroundTask started successfully');
+      final runningAfter = await FlutterForegroundTask.isRunningService;
+      Logger.debug('[BGDBG] ForegroundTask isRunning after start=$runningAfter');
       return result;
     } catch (e) {
       Logger.debug('ForegroundTask start failed: $e');

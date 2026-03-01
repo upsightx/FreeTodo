@@ -53,6 +53,12 @@ def get_server_mode() -> str:
     return _server_state["mode"]
 
 
+@router.api_route("/", methods=["GET", "HEAD"])
+async def root():
+    """根路径，避免 HEAD / 404"""
+    return {"app": "lifetrace", "status": "ok"}
+
+
 @router.get("/health")
 async def health_check():
     """健康检查"""

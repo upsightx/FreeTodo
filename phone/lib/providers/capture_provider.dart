@@ -208,6 +208,12 @@ class CaptureProvider extends ChangeNotifier
       'socket_connected': _socket?.state == SocketServiceState.connected,
     });
 
+    Logger.debug('[BGDBG][Lifecycle] state=${state.name} '
+        'recording=${recordingState.name} '
+        'device=${_recordingDevice?.id ?? "none"} '
+        'socket=${_socket?.state == SocketServiceState.connected ? "UP" : "DOWN"} '
+        'bleStream=${_bleBytesStream != null ? "active" : "null"}');
+
     if (state == AppLifecycleState.resumed) {
       _handleAppResumed();
     } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
@@ -709,13 +715,22 @@ class CaptureProvider extends ChangeNotifier
     });
   }
 
+  int _bleDebugLogCounter = 0;
+
   Future streamAudioToWs(String deviceId, BleAudioCodec codec) async {
     Logger.debug('streamAudioToWs in capture_provider');
     _bleBytesStream?.cancel();
+    _bleDebugLogCounter = 0;
     _startMetricsTracking();
     _bleBytesStream = await _getBleAudioBytesListener(deviceId, onAudioBytesReceived: (List<int> value) {
       final snapshot = List<int>.from(value);
       if (snapshot.isEmpty || snapshot.length < 3) return;
+
+      _bleDebugLogCounter++;
+      if (_bleDebugLogCounter % 200 == 1) {
+        Logger.debug('[BGDBG][BLE-WS] chunk#$_bleDebugLogCounter len=${snapshot.length} '
+            'wsState=${_socket?.state == SocketServiceState.connected ? "UP" : "DOWN"}');
+      }
 
       // Track bytes received from BLE
       _blesBytesReceived += snapshot.length;
@@ -1396,6 +1411,8 @@ class CaptureProvider extends ChangeNotifier
 
   @override
   void onClosed([int? closeCode]) {
+    Logger.debug('[BGDBG][CaptureProvider.onClosed] closeCode=$closeCode '
+        'recording=${recordingState.name} device=${_recordingDevice?.id ?? "none"}');
     _transcriptionServiceStatuses = [];
     _transcriptServiceReady = false;
 
@@ -1452,6 +1469,8 @@ class CaptureProvider extends ChangeNotifier
 
   @override
   void onError(Object err) {
+    Logger.debug('[BGDBG][CaptureProvider.onError] err=$err '
+        'recording=${recordingState.name} device=${_recordingDevice?.id ?? "none"}');
     _transcriptionServiceStatuses = [];
     _transcriptServiceReady = false;
 

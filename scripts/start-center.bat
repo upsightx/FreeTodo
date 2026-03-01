@@ -96,16 +96,25 @@ echo Waiting for frontend build (~30s)...
 timeout /t 30 /nobreak >nul
 
 REM ================================================================
-REM  5. Start cpolar backend tunnel
+REM  5. Start cpolar backend tunnel (HTTP - for frontend/browser)
 REM ================================================================
-echo [5/6] Starting cpolar backend tunnel = %BACKEND_PUBLIC_URL%
-start "LifeTrace cpolar Backend" cmd /k "cpolar http -region=%CPOLAR_REGION% -subdomain=%CPOLAR_BACKEND_DOMAIN% %BACKEND_PORT%"
+echo [5/7] Starting cpolar backend tunnel (HTTP) = %BACKEND_PUBLIC_URL%
+start "LifeTrace cpolar Backend HTTP" cmd /k "cpolar http -region=%CPOLAR_REGION% -subdomain=%CPOLAR_BACKEND_DOMAIN% %BACKEND_PORT%"
 timeout /t 2 /nobreak >nul
 
 REM ================================================================
-REM  6. Start cpolar frontend tunnel
+REM  6. Start cpolar backend tunnel (TCP - for mobile WebSocket)
+REM     TCP tunnel does raw passthrough, no HTTP/WS protocol interference.
+REM     Check the cpolar window or http://localhost:9200 for the assigned address.
 REM ================================================================
-echo [6/6] Starting cpolar frontend tunnel = %FRONTEND_PUBLIC_URL%
+echo [6/7] Starting cpolar backend tunnel (TCP) for mobile WebSocket...
+start "LifeTrace cpolar Backend TCP" cmd /k "cpolar tcp -region=%CPOLAR_REGION% %BACKEND_PORT%"
+timeout /t 2 /nobreak >nul
+
+REM ================================================================
+REM  7. Start cpolar frontend tunnel
+REM ================================================================
+echo [7/7] Starting cpolar frontend tunnel = %FRONTEND_PUBLIC_URL%
 start "LifeTrace cpolar Frontend" cmd /k "cpolar http -region=%CPOLAR_REGION% -subdomain=%CPOLAR_FRONTEND_DOMAIN% %FRONTEND_PORT%"
 
 REM ================================================================
@@ -113,7 +122,7 @@ REM  Done
 REM ================================================================
 echo.
 echo ================================================
-echo    Center Node Started (6 windows)
+echo    Center Node Started (7 windows)
 echo ================================================
 echo.
 echo Services:
@@ -124,7 +133,12 @@ echo   Frontend:     http://0.0.0.0:%FRONTEND_PORT%
 echo.
 echo Public access:
 echo   Frontend UI:  %FRONTEND_PUBLIC_URL%
-echo   Backend API:  %BACKEND_PUBLIC_URL%
+echo   Backend API:  %BACKEND_PUBLIC_URL% (HTTP)
+echo   Backend TCP:  Check "LifeTrace cpolar Backend TCP" window for tcp:// address
+echo.
+echo IMPORTANT: Copy the TCP tunnel address (e.g. tcp://1.tcp.cpolar.cn:20xxx)
+echo            and update phone/lib/env/lifetrace_env.dart with:
+echo            http://HOST:PORT/
 echo.
 echo Sensor startup command:
 echo   python -m lifetrace.sensor --center-url %BACKEND_PUBLIC_URL%
