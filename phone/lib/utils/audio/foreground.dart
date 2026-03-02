@@ -84,29 +84,7 @@ class ForegroundUtil {
     }
 
     if (Platform.isAndroid) {
-      // Android 14+ requires RECORD_AUDIO permission before starting FOREGROUND_SERVICE_MICROPHONE
-      final microphoneStatus = await Permission.microphone.status;
-      if (!microphoneStatus.isGranted) {
-        Logger.debug('Requesting microphone permission for foreground service');
-        final result = await Permission.microphone.request();
-        if (!result.isGranted) {
-          Logger.debug('Microphone permission denied, foreground service may fail');
-        }
-      }
-
-      // Android 14+ requires location permission before starting FOREGROUND_SERVICE_LOCATION
-      final locationStatus = await Permission.location.status;
-      if (!locationStatus.isGranted) {
-        Logger.debug('Requesting location permission for foreground service');
-        final result = await Permission.location.request();
-        if (!result.isGranted) {
-          Logger.debug('Location permission denied, foreground service may fail');
-        }
-      }
-
-      // if (!await FlutterForegroundTask.canDrawOverlays) {
-      //   await FlutterForegroundTask.openSystemAlertWindowSettings();
-      // }
+      // FGS type is connectedDevice only — no microphone/location permissions needed.
       if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
         await FlutterForegroundTask.requestIgnoreBatteryOptimization();
       }

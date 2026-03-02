@@ -1079,7 +1079,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
     _freemiumHandler.dispose();
     // Remove foreground task callback to prevent memory leak
     FlutterForegroundTask.removeTaskDataCallback(_onReceiveTaskData);
-    ForegroundUtil.stopForegroundTask();
+    // Do NOT stop the foreground service here — Android may dispose the
+    // Activity while the app is backgrounded.  Stopping the service removes
+    // the process-keep-alive protection and lets the OS kill the app.
+    // The foreground service will be stopped when the user explicitly
+    // disconnects the device via CaptureProvider.
     super.dispose();
   }
 }
