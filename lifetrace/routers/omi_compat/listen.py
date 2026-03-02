@@ -183,10 +183,17 @@ async def omi_listen(  # noqa: C901, PLR0913, PLR0915
     # Audio queue fed by the receive loop, consumed by ASR
     audio_q: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=500)
 
+    asr_cancel_event = asyncio.Event()
+
     async def _audio_generator():
         """Yield PCM chunks from the queue for ASRClient.transcribe_stream."""
         while True:
-            chunk = await audio_q.get()
+            try:
+                chunk = await asyncio.wait_for(audio_q.get(), timeout=3.0)
+            except TimeoutError:
+                if asr_cancel_event.is_set() or not is_connected:
+                    return
+                continue
             if chunk is None:
                 return
             yield chunk
@@ -232,6 +239,7 @@ async def omi_listen(  # noqa: C901, PLR0913, PLR0915
 
     def on_asr_error(err: Exception):
         logger.error(f"[omi-compat] ASR error: {err}")
+        asr_cancel_event.set()
 
     async def _result_forwarder():
         """Forward ASR results to the WebSocket."""
@@ -245,14 +253,28 @@ async def omi_listen(  # noqa: C901, PLR0913, PLR0915
                 break
 
     async def _asr_task():
-        try:
-            await asr.transcribe_stream(
-                _audio_generator(),
-                on_result=on_asr_result,
-                on_error=on_asr_error,
-            )
-        except Exception as e:
-            logger.error(f"[omi-compat] ASR task exception: {e}")
+        retry_count = 0
+        while is_connected:
+            try:
+                asr_cancel_event.clear()
+                if retry_count > 0:
+                    logger.info(f"[omi-compat] ASR reconnecting (attempt {retry_count + 1})...")
+                    await asyncio.sleep(1.0)
+                await asr.transcribe_stream(
+                    _audio_generator(),
+                    on_result=on_asr_result,
+                    on_error=on_asr_error,
+                )
+                if not is_connected:
+                    break
+                retry_count += 1
+                logger.info(f"[omi-compat] ASR stream ended while client connected, will retry")
+            except Exception as e:
+                logger.error(f"[omi-compat] ASR task exception: {e}")
+                if not is_connected:
+                    break
+                retry_count += 1
+                await asyncio.sleep(2.0)
 
     async def _receive_loop():
         nonlocal is_connected
