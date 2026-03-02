@@ -175,6 +175,12 @@ Future _init() async {
         DateTime.now().add(const Duration(days: 365)).millisecondsSinceEpoch;
     SharedPreferencesUtil().onboardingCompleted = true;
 
+    // Restore user-configured server URL from previous session
+    final savedUrl = SharedPreferencesUtil().lifetraceApiBaseUrl;
+    if (savedUrl.isNotEmpty) {
+      Env.overrideApiBaseUrl(savedUrl);
+    }
+
     debugPrint('LifeTrace mode: credentials pre-populated, API → ${Env.apiBaseUrl}');
   }
 

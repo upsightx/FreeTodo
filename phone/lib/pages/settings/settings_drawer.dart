@@ -29,6 +29,8 @@ import 'package:omi/pages/announcements/changelog_sheet.dart';
 import 'package:omi/utils/analytics/mixpanel.dart';
 import 'device_settings.dart';
 import 'package:omi/pages/conversations/sync_page.dart';
+import 'package:omi/env/lifetrace_env.dart';
+import 'package:omi/pages/settings/server_settings_page.dart';
 
 enum SettingsMode {
   no_device,
@@ -463,6 +465,18 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                         await launchUrl(url, mode: LaunchMode.externalApplication);
                       }
                     }
+                  },
+                ),
+                const Divider(height: 1, color: Color(0xFF3C3C43)),
+              ],
+              if (LifeTraceEnv.enabled) ...[
+                _buildSettingsItem(
+                  title: '服务器设置',
+                  icon: const FaIcon(FontAwesomeIcons.server, color: Color(0xFF8E8E93), size: 20),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ServerSettingsPage()),
+                    );
                   },
                 ),
                 const Divider(height: 1, color: Color(0xFF3C3C43)),
