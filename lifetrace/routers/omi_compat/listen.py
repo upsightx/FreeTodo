@@ -252,12 +252,28 @@ async def omi_listen(  # noqa: C901, PLR0913, PLR0915
             except Exception:
                 break
 
+    def _drain_audio_queue():
+        """Discard stale audio data so the next ASR session starts clean."""
+        dropped = 0
+        while not audio_q.empty():
+            try:
+                item = audio_q.get_nowait()
+                if item is None:
+                    audio_q.put_nowait(None)
+                    break
+                dropped += 1
+            except asyncio.QueueEmpty:
+                break
+        if dropped:
+            logger.debug(f"[omi-compat] Drained {dropped} stale audio chunks before ASR retry")
+
     async def _asr_task():
         retry_count = 0
         while is_connected:
             try:
                 asr_cancel_event.clear()
                 if retry_count > 0:
+                    _drain_audio_queue()
                     logger.info(f"[omi-compat] ASR reconnecting (attempt {retry_count + 1})...")
                     await asyncio.sleep(1.0)
                 await asr.transcribe_stream(
