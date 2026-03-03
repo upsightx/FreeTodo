@@ -607,6 +607,7 @@ class SharedPreferencesUtil {
 
   bool get testFlightUseStagingApi => testFlightApiEnvironment == 'staging';
 
+  //------------------------ LifeTrace Server URL ------------------------------//
   // Runtime override for self-hosted LifeTrace backend URL.
   String get lifetraceApiBaseUrl => getString('lifetraceApiBaseUrl');
 

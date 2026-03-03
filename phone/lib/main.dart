@@ -80,7 +80,6 @@ import 'package:omi/utils/l10n_extensions.dart';
 import 'package:omi/utils/environment_detector.dart';
 import 'package:omi/pages/settings/developer.dart';
 import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/logger.dart';
 import 'package:omi/utils/platform/platform_manager.dart';
 import 'package:omi/utils/platform/platform_service.dart';
 
@@ -184,8 +183,7 @@ Future _init() async {
         DateTime.now().add(const Duration(days: 365)).millisecondsSinceEpoch;
     SharedPreferencesUtil().onboardingCompleted = true;
     SharedPreferencesUtil().claudeAgentEnabled = false;
-
-    debugPrint('LifeTrace mode: credentials pre-populated, API 鈫?${Env.apiBaseUrl}');
+    debugPrint('LifeTrace mode: credentials pre-populated, API → ${Env.apiBaseUrl}');
   }
 
   // TestFlight environment detection 鈥?must be after SharedPreferencesUtil.init()
