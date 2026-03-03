@@ -32,21 +32,32 @@ class ActionItemWithMetadata {
   });
 
   factory ActionItemWithMetadata.fromJson(Map<String, dynamic> json) {
+    int _toInt(dynamic value, [int fallback = 0]) {
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? fallback;
+      return fallback;
+    }
+
+    DateTime? _parseDate(dynamic value) {
+      if (value is! String || value.isEmpty) return null;
+      return DateTime.tryParse(value)?.toLocal();
+    }
+
     return ActionItemWithMetadata(
-      id: json['id'],
-      description: json['description'],
+      id: (json['id'] ?? '').toString(),
+      description: (json['description'] ?? json['name'] ?? json['summary'] ?? '').toString(),
       completed: json['completed'] ?? false,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']).toLocal() : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']).toLocal() : null,
-      dueAt: json['due_at'] != null ? DateTime.parse(json['due_at']).toLocal() : null,
-      completedAt: json['completed_at'] != null ? DateTime.parse(json['completed_at']).toLocal() : null,
-      conversationId: json['conversation_id'],
+      createdAt: _parseDate(json['created_at']),
+      updatedAt: _parseDate(json['updated_at']),
+      dueAt: _parseDate(json['due_at']),
+      completedAt: _parseDate(json['completed_at']),
+      conversationId: json['conversation_id']?.toString(),
       isLocked: json['is_locked'] ?? false,
       exported: json['exported'] ?? false,
-      exportDate: json['export_date'] != null ? DateTime.parse(json['export_date']).toLocal() : null,
-      exportPlatform: json['export_platform'],
-      sortOrder: json['sort_order'] as int? ?? 0,
-      indentLevel: json['indent_level'] as int? ?? 0,
+      exportDate: _parseDate(json['export_date']),
+      exportPlatform: json['export_platform']?.toString(),
+      sortOrder: _toInt(json['sort_order']),
+      indentLevel: _toInt(json['indent_level']),
     );
   }
 

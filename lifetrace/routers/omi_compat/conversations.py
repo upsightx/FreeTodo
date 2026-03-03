@@ -8,13 +8,17 @@ from __future__ import annotations
 
 import functools
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from lifetrace.core.dependencies import get_chat_service
 from lifetrace.routers.omi_compat.auth import verify_token
 from lifetrace.util.logging_config import get_logger
+
+if TYPE_CHECKING:
+    from lifetrace.services.chat_service import ChatService
 
 logger = get_logger()
 
@@ -125,6 +129,45 @@ def _event_to_conversation(row: dict[str, Any]) -> OmiConversation:
     )
 
 
+def _chat_summary_to_conversation(
+    summary: dict[str, Any], chat_service: ChatService
+) -> OmiConversation:
+    session_id = str(summary.get("session_id", ""))
+    title = str(summary.get("title") or "会话")
+    overview = ""
+    try:
+        messages = chat_service.get_messages(session_id=session_id, limit=50, offset=0)
+        for msg in reversed(messages):
+            if str(msg.get("role", "")).lower() in {"assistant", "ai"}:
+                overview = str(msg.get("content", "") or "")
+                break
+        if not overview and messages:
+            overview = str(messages[-1].get("content", "") or "")
+    except Exception:
+        overview = ""
+
+    last_active = summary.get("last_active")
+    ts_str = _iso(last_active) if isinstance(last_active, datetime) else _iso(None)
+
+    return OmiConversation(
+        id=session_id,
+        created_at=ts_str,
+        started_at=ts_str,
+        finished_at=ts_str,
+        status="completed",
+        structured=Structured(
+            title=title,
+            overview=overview,
+            emoji="",
+            action_items=[],
+            events=[],
+        ),
+        transcript_segments=[],
+        source="omi",
+        starred=False,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -136,6 +179,7 @@ async def list_conversations(
     offset: int = 0,
     statuses: str | None = "processing,completed",
     uid: str = Depends(verify_token),
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     """Return conversations (mapped from LifeTrace Events)."""
     try:
@@ -147,7 +191,12 @@ async def list_conversations(
             end_date=None,
             app_name=None,
         )
-        return [_event_to_conversation(r) for r in rows]
+        if rows:
+            return [_event_to_conversation(r) for r in rows]
+
+        summaries = chat_service.get_chat_summaries(chat_type="event", limit=limit)
+        sliced = summaries[offset : offset + limit]
+        return [_chat_summary_to_conversation(s, chat_service) for s in sliced]
     except Exception as e:
         logger.error(f"[omi-compat] list_conversations error: {e}")
         return []
@@ -157,10 +206,25 @@ async def list_conversations(
 async def get_conversation(
     conversation_id: str,
     uid: str = Depends(verify_token),
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     try:
+        chat = chat_service.get_chat_by_session_id(conversation_id)
+        if chat:
+            summary = {
+                "session_id": conversation_id,
+                "title": chat.get("title") or "会话",
+                "last_active": chat.get("last_message_at") or chat.get("created_at"),
+            }
+            return _chat_summary_to_conversation(summary, chat_service)
+
+        try:
+            event_id = int(conversation_id)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Conversation not found") from None
+
         repo = _get_event_repo()
-        row = repo.get_summary(int(conversation_id))
+        row = repo.get_summary(event_id)
         if row is None:
             raise HTTPException(status_code=404, detail="Conversation not found")
         return _event_to_conversation(row)
@@ -175,9 +239,13 @@ async def get_conversation(
 async def delete_conversation(
     conversation_id: str,
     uid: str = Depends(verify_token),
+    chat_service: ChatService = Depends(get_chat_service),
 ):
-    # Event deletion not implemented yet; return ok to avoid 404
-    return {"status": "ok"}
+    # Prefer deleting chat session directly so app/web stay in sync.
+    deleted = chat_service.delete_chat(conversation_id)
+    if deleted:
+        return {"status": "ok"}
+    return {"status": "not_found"}
 
 
 # ---------------------------------------------------------------------------
@@ -231,5 +299,10 @@ async def search_conversations(uid: str = Depends(verify_token)):
 
 
 @router.post("/v1/conversations")
-async def create_conversation(uid: str = Depends(verify_token)):
-    return {"id": "", "status": "created"}
+async def create_conversation(
+    uid: str = Depends(verify_token),
+    chat_service: ChatService = Depends(get_chat_service),
+):
+    session_id = f"omi-mobile:{uid}:{int(datetime.now(UTC).timestamp() * 1000)}"
+    chat_service.ensure_chat_exists(session_id=session_id, chat_type="event", title="新会话")
+    return {"id": session_id, "status": "created"}

@@ -44,7 +44,8 @@ class MemoryWriter:
                 if date_str != self._current_date:
                     self._rotate_file(date_str)
 
-                assert self._current_file is not None
+                if self._current_file is None:
+                    raise RuntimeError("MemoryWriter output file is not initialized")
                 with open(self._current_file, "a", encoding="utf-8") as f:
                     f.write(line)
                 self._write_count += 1

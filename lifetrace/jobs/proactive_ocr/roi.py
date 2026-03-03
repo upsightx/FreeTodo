@@ -36,6 +36,9 @@ class ROIExtractor:
 
         # 使用先验提取 ROI（每次都会动态检测主题）
         result = prior.extract_chat_roi(image)
+        if result is None:
+            h, w = image.shape[:2]
+            return image, BBox(x=0, y=0, width=w, height=h)
 
         bbox = BBox(
             x=result.x,

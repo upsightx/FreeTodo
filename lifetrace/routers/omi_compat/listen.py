@@ -1,4 +1,4 @@
-"""WebSocket ``/v4/listen`` – omi-compatible real-time audio transcription.
+"""WebSocket ``/v4/listen`` 鈥?omi-compatible real-time audio transcription.
 
 The omi Flutter App opens a WebSocket to this endpoint, streams Opus
 (or PCM) encoded audio from the hardware, and receives transcript
@@ -33,6 +33,7 @@ router = APIRouter()
 # Audio decoder helpers
 # ---------------------------------------------------------------------------
 
+opuslib = None
 _opus_available = False
 try:
     import opuslib  # type: ignore[import-untyped]
@@ -54,20 +55,20 @@ except (ImportError, Exception):
 
         _opus_available = True
     except Exception:
-        logger.warning("opuslib unavailable – Opus audio decoding disabled")
+        logger.warning("opuslib unavailable 鈥?Opus audio decoding disabled")
 
 
 class _OpusDecoder:
     """Thin wrapper around ``opuslib`` for 16 kHz mono Opus frames."""
 
     def __init__(self, sample_rate: int = 16000, channels: int = 1):
-        if not _opus_available:
-            raise RuntimeError("opuslib is not installed – run: pip install opuslib")
+        if not _opus_available or opuslib is None:
+            raise RuntimeError("opuslib is not installed 鈥?run: pip install opuslib")
         self._dec = opuslib.Decoder(sample_rate, channels)
-        self._frame_size = sample_rate // 50  # 20 ms frames → 320 samples
+        self._frame_size = sample_rate // 50  # 20 ms frames 鈫?320 samples
 
     def decode(self, data: bytes) -> bytes:
-        """Decode one Opus packet → PCM-16 LE bytes."""
+        """Decode one Opus packet 鈫?PCM-16 LE bytes."""
         return self._dec.decode(data, self._frame_size)
 
 
@@ -93,7 +94,7 @@ def _build_decoder(codec: str, sample_rate: int):
     if codec == "pcm8":
         return _pcm8_to_pcm16, 16000
 
-    # pcm16 / pcm – pass-through
+    # pcm16 / pcm 鈥?pass-through
     return None, sample_rate
 
 
@@ -170,7 +171,7 @@ async def omi_listen(  # noqa: C901, PLR0913, PLR0915
     # Build audio decoder
     decode_fn, _effective_sr = _build_decoder(codec, sample_rate)
 
-    # ASR plumbing – lazy import to avoid hard dep at module level
+    # ASR plumbing 鈥?lazy import to avoid hard dep at module level
     from lifetrace.services.asr_client import ASRClient
 
     asr = ASRClient()
@@ -205,8 +206,8 @@ async def omi_listen(  # noqa: C901, PLR0913, PLR0915
                 and websocket.client_state == WebSocketState.CONNECTED
             ):
                 await websocket.send_json(_transcript_event(session_id, [seg]))
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Failed to send transcript event: %s", exc)
 
         if is_final and text.strip():
             mgr = try_get_perception_manager()
@@ -313,7 +314,7 @@ async def omi_listen(  # noqa: C901, PLR0913, PLR0915
                         "conversation_id": session_id,
                     }
                 )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Failed to send final conversation event: %s", exc)
 
         logger.info(f"[omi-compat] /v4/listen closed  session={session_id}")

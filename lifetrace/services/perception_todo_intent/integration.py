@@ -173,15 +173,17 @@ def _create_todo_from_candidate(
         tags = list(candidate.tags) if candidate.tags else []
         tags.append("auto-detected")
 
-        create_data = TodoCreate(
-            name=candidate.name,
-            description=candidate.description,
-            start_time=candidate.start_time,
-            due=candidate.due,
-            deadline=candidate.deadline,
-            time_zone=candidate.time_zone,
-            priority=priority,
-            tags=tags,
+        create_data = TodoCreate.model_validate(
+            {
+                "name": candidate.name,
+                "description": candidate.description,
+                "start_time": candidate.start_time,
+                "due": candidate.due,
+                "deadline": candidate.deadline,
+                "time_zone": candidate.time_zone,
+                "priority": priority,
+                "tags": tags,
+            }
         )
 
         service = _build_todo_service()

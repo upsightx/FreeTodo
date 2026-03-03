@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:ui';
 // trigger rebuild
 
@@ -144,7 +144,7 @@ Future _init() async {
   // Service manager
   await ServiceManager.init();
 
-  // Firebase — skip entirely in LifeTrace self-hosted mode
+  // Firebase 鈥?skip entirely in LifeTrace self-hosted mode
   if (!_kLifeTraceMode) {
     if (Firebase.apps.isEmpty) {
       final options = (PlatformService.isWindows || F.env == Environment.prod)
@@ -166,6 +166,15 @@ Future _init() async {
 
   await SharedPreferencesUtil.init();
 
+  // Load optional runtime API override for LifeTrace self-hosted mode.
+  if (_kLifeTraceMode) {
+    final customApi = SharedPreferencesUtil().lifetraceApiBaseUrl.trim();
+    if (customApi.isNotEmpty) {
+      Env.overrideApiBaseUrl(customApi);
+      debugPrint('LifeTrace mode: using custom API override -> $customApi');
+    }
+  }
+
   // LifeTrace mode: pre-populate credentials so the app skips
   // Firebase Auth and the onboarding wizard entirely.
   if (_kLifeTraceMode) {
@@ -174,11 +183,12 @@ Future _init() async {
     SharedPreferencesUtil().tokenExpirationTime =
         DateTime.now().add(const Duration(days: 365)).millisecondsSinceEpoch;
     SharedPreferencesUtil().onboardingCompleted = true;
+    SharedPreferencesUtil().claudeAgentEnabled = false;
 
-    debugPrint('LifeTrace mode: credentials pre-populated, API → ${Env.apiBaseUrl}');
+    debugPrint('LifeTrace mode: credentials pre-populated, API 鈫?${Env.apiBaseUrl}');
   }
 
-  // TestFlight environment detection — must be after SharedPreferencesUtil.init()
+  // TestFlight environment detection 鈥?must be after SharedPreferencesUtil.init()
   if (!_kLifeTraceMode && F.env == Environment.prod) {
     final isTestFlight = await EnvironmentDetector.isTestFlight();
     if (isTestFlight) {

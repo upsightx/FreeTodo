@@ -2,6 +2,8 @@
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
+import 'package:omi/backend/http/api/users.dart';
+import 'package:omi/pages/settings/center_node_test_page.dart';
 import 'package:omi/providers/connectivity_provider.dart';
 import 'package:omi/providers/device_provider.dart';
 import 'package:omi/providers/perception_provider.dart';
@@ -37,6 +39,19 @@ class TopStatusBar extends StatelessWidget {
                   icon: isNodeConnected ? FontAwesomeIcons.server : FontAwesomeIcons.triangleExclamation,
                   text: isNodeConnected ? '核心节点已连接' : '核心节点离线',
                   color: isNodeConnected ? MobileTokens.success : MobileTokens.warning,
+                  onTap: () async {
+                    final profile = await probeCenterNodeConnection();
+                    if (!context.mounted) return;
+                    if (profile == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('中心节点连接失败，请检查后端和隧道')),
+                      );
+                      return;
+                    }
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const CenterNodeTestPage()),
+                    );
+                  },
                 ),
                 if (connectedDevice != null) ...[
                   const SizedBox(width: 8),
@@ -68,8 +83,9 @@ class TopStatusBar extends StatelessWidget {
     required IconData icon,
     required String text,
     required Color color,
+    VoidCallback? onTap,
   }) {
-    return Container(
+    final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: MobileTokens.surfaceElevated,
@@ -94,6 +110,8 @@ class TopStatusBar extends StatelessWidget {
         ],
       ),
     );
-  }
 
+    if (onTap == null) return chip;
+    return GestureDetector(onTap: onTap, child: chip);
+  }
 }

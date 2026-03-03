@@ -164,16 +164,17 @@ class HomeProvider extends ChangeNotifier {
     try {
       final language = await getUserPrimaryLanguage();
       if (language == null) {
-        // User hasn't set a primary language yet
-        userPrimaryLanguage = '';
-        hasSetPrimaryLanguage = false;
-
-        // Show language dialog after a short delay to ensure UI is ready
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (MyApp.navigatorKey.currentContext != null) {
-            showLanguageDialogIfNeeded(MyApp.navigatorKey.currentContext!);
-          }
-        });
+        // Default to Simplified Chinese for first-time self-hosted users.
+        const fallbackLanguage = 'zh-CN';
+        userPrimaryLanguage = fallbackLanguage;
+        hasSetPrimaryLanguage = true;
+        SharedPreferencesUtil().userPrimaryLanguage = fallbackLanguage;
+        SharedPreferencesUtil().hasSetPrimaryLanguage = true;
+        AnalyticsManager().setUserAttribute('Primary Language', fallbackLanguage);
+        // Best-effort persist to backend; ignore network failure.
+        try {
+          await setUserPrimaryLanguage(fallbackLanguage);
+        } catch (_) {}
       } else {
         userPrimaryLanguage = language;
         hasSetPrimaryLanguage = true;

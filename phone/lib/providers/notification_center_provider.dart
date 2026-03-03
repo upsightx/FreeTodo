@@ -6,7 +6,7 @@ class NotificationCenterProvider extends ChangeNotifier {
   List<AppNotification> _notifications = <AppNotification>[];
   final Set<String> _laterIds = <String>{};
   bool _loading = false;
-  bool _useMockData = true;
+  bool _useMockData = false;
   DateTime? _lastLoadedAt;
 
   List<AppNotification> get notifications => _notifications;

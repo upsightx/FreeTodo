@@ -163,7 +163,8 @@ class MemoryDeduper:
     def _fast_judge(self, incoming: str) -> DedupeVerdict | None:
         """Character-level overlap check. Returns DUPLICATE if very similar,
         None if inconclusive (should defer to LLM)."""
-        assert self._last_kept_content is not None
+        if self._last_kept_content is None:
+            return None
         sim = self._char_similarity(self._last_kept_content, incoming)
         if sim >= self.FAST_SIMILARITY_THRESHOLD:
             return DedupeVerdict.DUPLICATE
@@ -275,7 +276,8 @@ class MemoryDeduper:
                     f.write(f"# {date_str} 去重记录\n")
                 logger.info("MemoryDeduper created new deduped file: %s", self._current_file.name)
 
-        assert self._current_file is not None
+        if self._current_file is None:
+            raise RuntimeError("Deduper output file is not initialized")
         with open(self._current_file, "a", encoding="utf-8") as f:
             f.write(line)
 

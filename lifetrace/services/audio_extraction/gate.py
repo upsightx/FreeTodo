@@ -26,7 +26,7 @@ def parse_gate_response(result_text: str) -> dict[str, Any] | None:
     try:
         return json.loads(clean)
     except Exception:
-        pass
+        logger.debug("Gate JSON parse failed, trying regex fallback")
 
     try:
         match = re.search(r"\{.*\}", clean, re.DOTALL)

@@ -28,7 +28,7 @@ def publish_ai_output_to_perception(
             return
         mgr.try_publish_ai_output_threadsafe(content, metadata=metadata)
     except Exception:
-        pass
+        logger.exception("Failed to publish AI output to perception")
 
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])

@@ -16,6 +16,15 @@ class MockTasksPage extends StatefulWidget {
 
 class _MockTasksPageState extends State<MockTasksPage> with AutomaticKeepAliveClientMixin {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<MobileMockProvider>().refreshTasks();
+    });
+  }
+
+  @override
   bool get wantKeepAlive => true;
 
   final ScrollController _scrollController = ScrollController();
@@ -222,6 +231,7 @@ class _MockTasksPageState extends State<MockTasksPage> with AutomaticKeepAliveCl
 
   Widget _emptyLine(String text) {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: MobileTokens.cardDecoration(),
@@ -265,6 +275,7 @@ class _MockTasksPageState extends State<MockTasksPage> with AutomaticKeepAliveCl
         onTap: () => _showEditTaskSheet(task),
         onLongPress: () => _showTaskActions(task),
         child: Container(
+          width: double.infinity,
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: MobileTokens.cardDecoration(highlight: !isDone && task.priority == MobileTaskPriority.high),

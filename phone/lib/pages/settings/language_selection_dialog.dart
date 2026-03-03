@@ -26,9 +26,14 @@ class LanguageSelectionDialog {
     final languages = homeProvider.availableLanguages.entries.toList();
 
     // Preset the selected language if the user has one
-    String? selectedLanguage = homeProvider.userPrimaryLanguage.isNotEmpty ? homeProvider.userPrimaryLanguage : null;
+    String? selectedLanguage = homeProvider.userPrimaryLanguage.isNotEmpty ? homeProvider.userPrimaryLanguage : 'zh-CN';
     String? selectedLanguageName = selectedLanguage != null
-        ? homeProvider.availableLanguages.entries.firstWhere((element) => element.value == selectedLanguage).key
+        ? homeProvider.availableLanguages.entries
+            .firstWhere(
+              (element) => element.value == selectedLanguage,
+              orElse: () => const MapEntry('Chinese (Mandarin, Simplified, CN)', 'zh-CN'),
+            )
+            .key
         : null;
     String searchQuery = '';
     List<MapEntry<String, String>> filteredLanguages = List.from(languages);

@@ -4,6 +4,7 @@ import os
 import socket
 import sys
 from contextlib import asynccontextmanager, suppress
+from ipaddress import IPv4Address
 
 import uvicorn
 from fastapi import FastAPI
@@ -301,8 +302,8 @@ if __name__ == "__main__":
     server_debug = settings.server.debug
 
     if args.role == "center":
-        server_host = "0.0.0.0"
-        logger.info("Center 模式：绑定 0.0.0.0，接受远程连接")
+        server_host = str(IPv4Address(0))
+        logger.info("Center 模式：绑定 %s，接受远程连接", server_host)
 
     # 动态端口分配：如果默认端口被占用，自动尝试下一个可用端口
     try:

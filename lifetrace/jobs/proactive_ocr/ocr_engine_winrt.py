@@ -6,6 +6,7 @@ WinRT OCR 引擎封装模块
 
 import asyncio
 import time
+from typing import Any
 
 import numpy as np
 
@@ -15,6 +16,10 @@ from .models import BBox, OcrLine, OcrRawResult
 
 logger = get_logger()
 
+IMAGE_NDIM_GRAY = 2
+IMAGE_CHANNEL_RGBA = 4
+IMAGE_CHANNEL_RGB = 3
+
 try:
     import winocr
 
@@ -23,6 +28,18 @@ except ImportError:
     winocr = None
     WINOCR_AVAILABLE = False
     logger.info("winocr not available, WinRT OCR backend disabled")
+
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+
+try:
+    from winrt.windows.globalization import Language
+    from winrt.windows.media.ocr import OcrEngine as WinOcrEngine
+except Exception:
+    Language = None
+    WinOcrEngine = None
 
 
 class WinRtOcrEngine:
@@ -48,10 +65,11 @@ class WinRtOcrEngine:
 
         # 验证语言是否支持
         try:
-            from winrt.windows.globalization import Language
-            from winrt.windows.media.ocr import OcrEngine as WinOcrEngine
-
-            if not WinOcrEngine.is_language_supported(Language(lang)):
+            if (
+                WinOcrEngine is not None
+                and Language is not None
+                and not WinOcrEngine.is_language_supported(Language(lang))
+            ):
                 logger.warning(
                     f"WinRT OCR: language '{lang}' not supported, "
                     f"falling back to 'zh-Hans-CN'. "
@@ -65,9 +83,7 @@ class WinRtOcrEngine:
 
     def _resize_image(self, image: np.ndarray, max_side: int) -> tuple:
         """等比例缩小图像"""
-        try:
-            import cv2
-        except ImportError:
+        if cv2 is None:
             return image, 1.0
 
         h, w = image.shape[:2]
@@ -85,7 +101,7 @@ class WinRtOcrEngine:
 
     def _rgb_to_rgba(self, image: np.ndarray) -> np.ndarray:
         """将 RGB 图像转换为 RGBA 格式"""
-        if image.ndim == 2:
+        if image.ndim == IMAGE_NDIM_GRAY:
             # 灰度图
             rgba = np.zeros((*image.shape, 4), dtype=np.uint8)
             rgba[:, :, 0] = image
@@ -93,9 +109,9 @@ class WinRtOcrEngine:
             rgba[:, :, 2] = image
             rgba[:, :, 3] = 255
             return rgba
-        elif image.shape[2] == 4:
+        elif image.shape[2] == IMAGE_CHANNEL_RGBA:
             return image
-        elif image.shape[2] == 3:
+        elif image.shape[2] == IMAGE_CHANNEL_RGB:
             rgba = np.zeros((image.shape[0], image.shape[1], 4), dtype=np.uint8)
             rgba[:, :, :3] = image
             rgba[:, :, 3] = 255
@@ -181,7 +197,7 @@ class WinRtOcrEngine:
             device="cpu",
         )
 
-    def _recognize_sync(self, image_bytes: bytes, width: int, height: int) -> dict:
+    def _recognize_sync(self, image_bytes: bytes, width: int, height: int) -> dict[str, Any]:
         """同步调用 WinRT OCR"""
         # 在新的事件循环中运行异步调用
         # 这在普通线程中是安全的
@@ -192,11 +208,16 @@ class WinRtOcrEngine:
         finally:
             loop.close()
 
-    async def _recognize_async(self, image_bytes: bytes, width: int, height: int) -> dict:
+    async def _recognize_async(self, image_bytes: bytes, width: int, height: int) -> dict[str, Any]:
         """异步调用 WinRT OCR"""
+        if winocr is None:
+            raise RuntimeError("winocr backend unavailable")
         awaitable = winocr.recognize_bytes(image_bytes, width, height, lang=self.lang)
         result = await awaitable
-        return winocr.picklify(result)
+        pickled = winocr.picklify(result)
+        if not isinstance(pickled, dict):
+            raise RuntimeError("winocr returned unexpected result type")
+        return pickled
 
     def ocr_simple(self, image: np.ndarray) -> list[tuple[str, float]]:
         """简化版 OCR，只返回文本和置信度"""
