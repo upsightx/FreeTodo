@@ -1,12 +1,12 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import 'package:growthbook_sdk_flutter/growthbook_sdk_flutter.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/utils/logger.dart';
 
 class GrowthbookUtil {
   static final GrowthbookUtil _instance = GrowthbookUtil._internal();

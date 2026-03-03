@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/services/auth_service.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/services/auth_service.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class NameWidget extends StatefulWidget {
   final Function goNext;

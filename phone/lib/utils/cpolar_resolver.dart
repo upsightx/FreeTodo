@@ -1,7 +1,7 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
-import 'package:omi/env/env.dart';
+import 'package:freeu/env/env.dart';
 
 /// Probes multiple cpolar domain suffixes to find a reachable backend.
 ///

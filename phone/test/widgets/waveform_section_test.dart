@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:omi/l10n/app_localizations.dart';
-import 'package:omi/models/playback_state.dart';
-import 'package:omi/providers/sync_provider.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/widgets/waveform_section.dart';
+import 'package:freeu/l10n/app_localizations.dart';
+import 'package:freeu/models/playback_state.dart';
+import 'package:freeu/providers/sync_provider.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/widgets/waveform_section.dart';
 
 // Mock SyncProvider for testing
 class MockSyncProvider extends SyncProvider {

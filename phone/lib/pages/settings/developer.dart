@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,28 +9,28 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/backend/http/api/knowledge_graph_api.dart';
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/models/stt_provider.dart';
-import 'package:omi/pages/persona/persona_profile.dart';
-import 'package:omi/pages/settings/center_node_test_page.dart';
-import 'package:omi/pages/settings/conversation_timeout_dialog.dart';
-import 'package:omi/pages/settings/import_history_page.dart';
-import 'package:omi/pages/settings/transcription_settings_page.dart';
-import 'package:omi/pages/settings/widgets/create_mcp_api_key_dialog.dart';
-import 'package:omi/pages/settings/widgets/developer_api_keys_section.dart';
-import 'package:omi/pages/settings/widgets/mcp_api_key_list_item.dart';
-import 'package:omi/providers/developer_mode_provider.dart';
-import 'package:omi/providers/mcp_provider.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/debug_log_manager.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/backend/http/api/knowledge_graph_api.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/models/stt_provider.dart';
+import 'package:freeu/pages/persona/persona_profile.dart';
+import 'package:freeu/pages/settings/center_node_test_page.dart';
+import 'package:freeu/pages/settings/conversation_timeout_dialog.dart';
+import 'package:freeu/pages/settings/import_history_page.dart';
+import 'package:freeu/pages/settings/transcription_settings_page.dart';
+import 'package:freeu/pages/settings/widgets/create_mcp_api_key_dialog.dart';
+import 'package:freeu/pages/settings/widgets/developer_api_keys_section.dart';
+import 'package:freeu/pages/settings/widgets/mcp_api_key_list_item.dart';
+import 'package:freeu/providers/developer_mode_provider.dart';
+import 'package:freeu/providers/mcp_provider.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/debug_log_manager.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 class DeveloperSettingsPage extends StatefulWidget {
   const DeveloperSettingsPage({super.key});
@@ -202,7 +202,7 @@ class _DeveloperSettingsPageState extends State<DeveloperSettingsPage> {
   Widget _buildSttChip() {
     final useCustom = SharedPreferencesUtil().useCustomStt;
     final config = SharedPreferencesUtil().customSttConfig;
-    final label = useCustom ? SttProviderConfig.get(config.provider).displayName : 'Omi';
+    final label = useCustom ? SttProviderConfig.get(config.provider).displayName : 'FreeU';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -954,7 +954,7 @@ class _DeveloperSettingsPageState extends State<DeveloperSettingsPage> {
                                     if (files.length == 1) {
                                       final result = await Share.shareXFiles([
                                         XFile(files.first.path),
-                                      ], text: 'Omi debug log');
+                                      ], text: 'FreeU debug log');
                                       if (result.status == ShareResultStatus.success) {
                                         Logger.debug('Log shared');
                                       }
@@ -1023,7 +1023,7 @@ class _DeveloperSettingsPageState extends State<DeveloperSettingsPage> {
                                     if (selected != null) {
                                       final result = await Share.shareXFiles([
                                         XFile(selected.path),
-                                      ], text: 'Omi debug log');
+                                      ], text: 'FreeU debug log');
                                       if (result.status == ShareResultStatus.success) {
                                         Logger.debug('Log shared');
                                       }
@@ -1115,7 +1115,7 @@ class _DeveloperSettingsPageState extends State<DeveloperSettingsPage> {
 
                             final result = await Share.shareXFiles([
                               XFile(exportedPath),
-                            ], text: 'Exported Data from Omi');
+                            ], text: 'Exported Data from FreeU');
                             if (result.status == ShareResultStatus.success) {
                               Logger.debug('Export shared');
                             }
@@ -1836,7 +1836,7 @@ class _DeveloperSettingsPageState extends State<DeveloperSettingsPage> {
                                   Row(
                                     children: [
                                       const Text(
-                                        'Omi Agent',
+                                        'FreeU Agent',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 16,

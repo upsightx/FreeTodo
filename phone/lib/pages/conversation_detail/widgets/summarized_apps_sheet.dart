@@ -5,19 +5,19 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:omi/widgets/shimmer_with_timeout.dart';
+import 'package:freeu/widgets/shimmer_with_timeout.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/pages/apps/widgets/capability_apps_page.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/pages/conversation_detail/conversation_detail_provider.dart';
-import 'package:omi/pages/conversation_detail/widgets/create_template_bottom_sheet.dart';
-import 'package:omi/providers/app_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/widgets/extensions/string.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/pages/apps/widgets/capability_apps_page.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/pages/conversation_detail/conversation_detail_provider.dart';
+import 'package:freeu/pages/conversation_detail/widgets/create_template_bottom_sheet.dart';
+import 'package:freeu/providers/app_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/widgets/extensions/string.dart';
 
 class SummarizedAppsBottomSheet extends StatelessWidget {
   const SummarizedAppsBottomSheet({super.key});

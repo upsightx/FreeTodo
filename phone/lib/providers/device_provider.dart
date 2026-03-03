@@ -3,23 +3,23 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import 'package:omi/backend/http/api/device.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/main.dart';
-import 'package:omi/pages/home/firmware_update.dart';
-import 'package:omi/pages/home/omiglass_ota_update.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/notifications.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/device.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/other/debouncer.dart';
-import 'package:omi/utils/platform/platform_manager.dart';
-import 'package:omi/widgets/confirmation_dialog.dart';
+import 'package:freeu/backend/http/api/device.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/pages/home/firmware_update.dart';
+import 'package:freeu/pages/home/omiglass_ota_update.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/notifications.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/device.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/other/debouncer.dart';
+import 'package:freeu/utils/platform/platform_manager.dart';
+import 'package:freeu/widgets/confirmation_dialog.dart';
 
 class DeviceProvider extends ChangeNotifier implements IDeviceServiceSubsciption {
   CaptureProvider? captureProvider;
@@ -350,13 +350,13 @@ class DeviceProvider extends ChangeNotifier implements IDeviceServiceSubsciption
     ServiceManager.instance().wal.getSyncs().sdcard.setDevice(null);
     ServiceManager.instance().wal.getSyncs().flashPage.setDevice(null);
 
-    PlatformManager.instance.crashReporter.logInfo('Omi Device Disconnected');
+    PlatformManager.instance.crashReporter.logInfo('FreeU Device Disconnected');
     _disconnectNotificationTimer?.cancel();
     _disconnectNotificationTimer = Timer(const Duration(seconds: 30), () {
       final ctx = MyApp.navigatorKey.currentContext;
       NotificationService.instance.createNotification(
-        title: ctx?.l10n.deviceDisconnectedNotificationTitle ?? 'Your Omi Device Disconnected',
-        body: ctx?.l10n.deviceDisconnectedNotificationBody ?? 'Please reconnect to continue using your Omi.',
+        title: ctx?.l10n.deviceDisconnectedNotificationTitle ?? 'Your FreeU Device Disconnected',
+        body: ctx?.l10n.deviceDisconnectedNotificationBody ?? 'Please reconnect to continue using your FreeU.',
       );
     });
     MixpanelManager().deviceDisconnected();

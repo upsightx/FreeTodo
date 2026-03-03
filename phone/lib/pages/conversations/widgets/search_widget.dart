@@ -6,13 +6,13 @@ import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/providers/conversation_provider.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/debouncer.dart';
-import 'package:omi/utils/responsive/responsive_helper.dart';
-import 'package:omi/widgets/calendar_date_picker_sheet.dart';
+import 'package:freeu/providers/conversation_provider.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/debouncer.dart';
+import 'package:freeu/utils/responsive/responsive_helper.dart';
+import 'package:freeu/widgets/calendar_date_picker_sheet.dart';
 
 class SearchWidget extends StatefulWidget {
   const SearchWidget({super.key});

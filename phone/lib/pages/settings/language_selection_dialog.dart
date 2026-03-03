@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class LanguageSelectionDialog {
   static Future<void> show(BuildContext context,

@@ -1,16 +1,16 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
 
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/backend/schema/daily_summary.dart';
-import 'package:omi/backend/schema/geolocation.dart';
-import 'package:omi/backend/schema/person.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/models/subscription.dart';
-import 'package:omi/models/user_usage.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/backend/schema/daily_summary.dart';
+import 'package:freeu/backend/schema/geolocation.dart';
+import 'package:freeu/backend/schema/person.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/models/subscription.dart';
+import 'package:freeu/models/user_usage.dart';
+import 'package:freeu/utils/logger.dart';
 
 Future<bool> updateUserGeolocation({required Geolocation geolocation}) async {
   var response = await makeApiCall(

@@ -3,19 +3,19 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/services/devices/apple_watch_connection.dart';
-import 'package:omi/services/devices/device_connection.dart';
-import 'package:omi/services/devices/discovery/device_locator.dart';
-import 'package:omi/services/devices/fieldy_connection.dart';
-import 'package:omi/services/devices/frame_connection.dart';
-import 'package:omi/services/devices/friend_pendant_connection.dart';
-import 'package:omi/services/devices/limitless_connection.dart';
-import 'package:omi/services/devices/models.dart';
-import 'package:omi/services/devices/omi_connection.dart';
-import 'package:omi/services/devices/omiglass_connection.dart';
-import 'package:omi/services/devices/plaud_connection.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/services/devices/apple_watch_connection.dart';
+import 'package:freeu/services/devices/device_connection.dart';
+import 'package:freeu/services/devices/discovery/device_locator.dart';
+import 'package:freeu/services/devices/fieldy_connection.dart';
+import 'package:freeu/services/devices/frame_connection.dart';
+import 'package:freeu/services/devices/friend_pendant_connection.dart';
+import 'package:freeu/services/devices/limitless_connection.dart';
+import 'package:freeu/services/devices/models.dart';
+import 'package:freeu/services/devices/omi_connection.dart';
+import 'package:freeu/services/devices/omiglass_connection.dart';
+import 'package:freeu/services/devices/plaud_connection.dart';
+import 'package:freeu/utils/logger.dart';
 
 enum ImageOrientation {
   orientation0, // 0 degrees
@@ -385,7 +385,7 @@ class BtDevice {
   }
 
   Future _getDeviceInfoFromOmi(DeviceConnection conn) async {
-    var modelNumber = 'Omi';
+    var modelNumber = 'FreeU';
     var firmwareRevision = '1.0.2';
     var hardwareRevision = 'Seeed Xiao BLE Sense';
     var manufacturerName = 'Based Hardware';
@@ -633,24 +633,24 @@ class BtDevice {
   String getFirmwareWarningMessage() {
     switch (type) {
       case DeviceType.plaud:
-        return 'Your $name\'s current firmware works great with Omi.\n\n'
+        return 'Your $name\'s current firmware works great with FreeU.\n\n'
             'We recommend keeping your current firmware and not updating through the PLAUD app, as newer versions may affect compatibility.';
 
       case DeviceType.bee:
-        return 'Your $name\'s current firmware works great with Omi.\n\n'
+        return 'Your $name\'s current firmware works great with FreeU.\n\n'
             'We recommend keeping your current firmware and not updating through the Bee app, as newer versions may affect compatibility.\n\n'
             'For the best experience, please keep your current firmware version.';
 
       case DeviceType.fieldy:
-        return 'Your $name\'s current firmware works great with Omi.\n\n'
+        return 'Your $name\'s current firmware works great with FreeU.\n\n'
             'We recommend keeping your current firmware and not updating through the Compass app, as newer versions may affect compatibility.';
 
       case DeviceType.friendPendant:
-        return 'Your $name\'s current firmware works great with Omi.\n\n'
+        return 'Your $name\'s current firmware works great with FreeU.\n\n'
             'We recommend keeping your current firmware and not updating through the Friend app, as newer versions may affect compatibility.';
 
       case DeviceType.limitless:
-        return 'Your $name\'s current firmware works great with Omi.\n\n'
+        return 'Your $name\'s current firmware works great with FreeU.\n\n'
             'We recommend keeping your current firmware and not updating through the Limitless app, as newer versions may affect compatibility.';
 
       case DeviceType.omi:

@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/pages/payments/payment_method_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/widgets/animated_loading_button.dart';
-import 'package:omi/utils/other/validators.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/pages/payments/payment_method_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/widgets/animated_loading_button.dart';
+import 'package:freeu/utils/other/validators.dart';
 
 class PaypalSetupPage extends StatefulWidget {
   const PaypalSetupPage({

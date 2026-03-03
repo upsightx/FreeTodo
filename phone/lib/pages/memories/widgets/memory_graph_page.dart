@@ -13,11 +13,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vector_math/vector_math_64.dart' as v;
 
-import 'package:omi/backend/http/api/knowledge_graph_api.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/knowledge_graph_api.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 class GraphNode3D {
   final String id;
@@ -541,9 +541,8 @@ class _MemoryGraphPageState extends State<MemoryGraphPage> with SingleTickerProv
       // Draw graph image
       canvas.drawImage(image, Offset.zero, paint);
 
-      // Draw minimal branding "omi.me" at top center
       final textSpan = TextSpan(
-        text: 'omi.me',
+        text: 'freeu',
         style: const TextStyle(color: Colors.white, fontSize: 72, fontWeight: FontWeight.bold, letterSpacing: -1.0),
       );
       final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
@@ -580,7 +579,7 @@ class _MemoryGraphPageState extends State<MemoryGraphPage> with SingleTickerProv
       extendBodyBehindAppBar: widget.showAppBar,
       appBar: widget.showAppBar
           ? AppBar(
-              title: const Text('omi.me', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              title: const Text('FreeU', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               centerTitle: true,
               backgroundColor: Colors.transparent,
               elevation: 0,

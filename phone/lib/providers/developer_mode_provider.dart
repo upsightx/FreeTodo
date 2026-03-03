@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-import 'package:omi/backend/http/api/agents.dart';
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/main.dart';
-import 'package:omi/providers/base_provider.dart';
-import 'package:omi/services/agent_chat_service.dart';
-import 'package:omi/services/notifications/daily_reflection_notification.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/other/validators.dart';
+import 'package:freeu/backend/http/api/agents.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/providers/base_provider.dart';
+import 'package:freeu/services/agent_chat_service.dart';
+import 'package:freeu/services/notifications/daily_reflection_notification.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/other/validators.dart';
 
 class DeveloperModeProvider extends BaseProvider {
   final TextEditingController webhookOnConversationCreated = TextEditingController();
@@ -285,7 +285,7 @@ class DeveloperModeProvider extends BaseProvider {
         agentLog('getAgentVmStatus() returned: hasVm=${vmInfo?.hasVm}, status=${vmInfo?.status}');
         if (vmInfo == null || !vmInfo.hasVm) {
           agentLog('No VM found, aborting enable');
-          AppSnackbar.showSnackbarError('Requires OMI Desktop with agent enabled');
+          AppSnackbar.showSnackbarError('Requires FreeU Desktop with agent enabled');
           claudeAgentLoading = false;
           notifyListeners();
           return;

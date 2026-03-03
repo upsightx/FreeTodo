@@ -1,22 +1,22 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/http/api/apps.dart' as apps_api;
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/main.dart';
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/providers/base_provider.dart';
-import 'package:omi/services/auth_service.dart';
-import 'package:omi/services/notifications.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_manager.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/http/api/apps.dart' as apps_api;
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/providers/base_provider.dart';
+import 'package:freeu/services/auth_service.dart';
+import 'package:freeu/services/notifications.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_manager.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 class AuthenticationProvider extends BaseProvider {
   FirebaseAuth get _auth => FirebaseAuth.instance;

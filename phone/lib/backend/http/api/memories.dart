@@ -1,9 +1,9 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/backend/schema/memory.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/backend/schema/memory.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/utils/logger.dart';
 
 Future<Memory?> createMemoryServer(String content, String visibility, String category) async {
   var response = await makeApiCall(

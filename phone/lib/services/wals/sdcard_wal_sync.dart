@@ -1,22 +1,22 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
-import 'package:omi/utils/debug_log_manager.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/utils/debug_log_manager.dart';
+import 'package:freeu/utils/logger.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/services/devices/device_connection.dart';
-import 'package:omi/services/devices/transports/tcp_transport.dart';
-import 'package:omi/services/devices/wifi_sync_error.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/services/wals/wal.dart';
-import 'package:omi/services/wals/wal_interfaces.dart';
-import 'package:omi/services/wifi/wifi_network_service.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/services/devices/device_connection.dart';
+import 'package:freeu/services/devices/transports/tcp_transport.dart';
+import 'package:freeu/services/devices/wifi_sync_error.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/services/wals/wal.dart';
+import 'package:freeu/services/wals/wal_interfaces.dart';
+import 'package:freeu/services/wifi/wifi_network_service.dart';
 
 class SDCardWalSyncImpl implements SDCardWalSync {
   List<Wal> _wals = const [];
@@ -193,7 +193,7 @@ class SDCardWalSyncImpl implements SDCardWalSync {
         return wals;
       }
       var pd = await _device!.getDeviceInfo(connection);
-      String deviceModel = pd.modelNumber.isNotEmpty ? pd.modelNumber : "Omi";
+      String deviceModel = pd.modelNumber.isNotEmpty ? pd.modelNumber : "FreeU";
 
       wals.add(Wal(
         codec: codec,

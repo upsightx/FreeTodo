@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:omi/widgets/shimmer_with_timeout.dart';
+import 'package:freeu/widgets/shimmer_with_timeout.dart';
 
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/schema/daily_summary.dart';
-import 'package:omi/pages/settings/daily_summary_detail_page.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/ui_guidelines.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/schema/daily_summary.dart';
+import 'package:freeu/pages/settings/daily_summary_detail_page.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/ui_guidelines.dart';
 
 class DailySummariesList extends StatefulWidget {
   const DailySummariesList({super.key});

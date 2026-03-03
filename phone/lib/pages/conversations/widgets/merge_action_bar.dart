@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 
 import 'package:provider/provider.dart';
 
-import 'package:omi/pages/conversations/widgets/merge_confirmation_dialog.dart';
-import 'package:omi/providers/conversation_provider.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/pages/conversations/widgets/merge_confirmation_dialog.dart';
+import 'package:freeu/providers/conversation_provider.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class MergeActionBar extends StatefulWidget {
   const MergeActionBar({super.key});

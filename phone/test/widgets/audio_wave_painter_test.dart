@@ -1,9 +1,9 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:omi/pages/chat/widgets/voice_recorder_widget.dart';
+import 'package:freeu/pages/chat/widgets/voice_recorder_widget.dart';
 
 void main() {
   group('AudioWavePainter', () {

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -10,12 +10,12 @@ import 'package:opus_dart/opus_dart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/main.dart';
-import 'package:omi/services/wals.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/services/wals.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 class AudioPlayerUtils extends ChangeNotifier {
   // Singleton pattern
@@ -182,7 +182,7 @@ class AudioPlayerUtils extends ChangeNotifier {
     final result = await Share.shareXFiles(
       [XFile(audioFilePath)],
       text:
-          'Omi Audio Recording - ${DateTime.fromMillisecondsSinceEpoch(wal.timerStart * 1000).toString().split('.')[0]}',
+          'FreeU Audio Recording - ${DateTime.fromMillisecondsSinceEpoch(wal.timerStart * 1000).toString().split('.')[0]}',
     );
 
     if (result.status == ShareResultStatus.success) {

@@ -1,14 +1,14 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/http/api/apps.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/pages/apps/app_detail/app_detail.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/backend/http/api/apps.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/pages/apps/app_detail/app_detail.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 class AddMcpServerPage extends StatefulWidget {
   const AddMcpServerPage({super.key});

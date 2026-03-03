@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import 'package:omi/backend/http/api/announcements.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/models/announcement.dart';
-import 'package:omi/pages/announcements/announcement_dialog.dart';
-import 'package:omi/pages/announcements/changelog_sheet.dart';
-import 'package:omi/pages/announcements/feature_screen.dart';
-import 'package:omi/providers/announcement_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
+import 'package:freeu/backend/http/api/announcements.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/models/announcement.dart';
+import 'package:freeu/pages/announcements/announcement_dialog.dart';
+import 'package:freeu/pages/announcements/changelog_sheet.dart';
+import 'package:freeu/pages/announcements/feature_screen.dart';
+import 'package:freeu/providers/announcement_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
 
 /// Service that handles announcement detection and display.
 /// Call this on app startup and after firmware updates.

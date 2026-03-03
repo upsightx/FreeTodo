@@ -1,11 +1,11 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/devices/device_connection.dart';
-import 'package:omi/services/devices/models.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/devices/device_connection.dart';
+import 'package:freeu/services/devices/models.dart';
 
 /// Friend Pendant device connection
 /// Uses LC3 codec at 16 kHz with 10ms frames (30 bytes per frame)

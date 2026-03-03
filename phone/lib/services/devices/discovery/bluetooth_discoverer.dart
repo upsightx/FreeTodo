@@ -1,12 +1,12 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/utils/bluetooth/bluetooth_adapter.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/utils/bluetooth/bluetooth_adapter.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 import 'device_discoverer.dart';
 
 class BluetoothDeviceDiscoverer extends DeviceDiscoverer {

@@ -1,7 +1,7 @@
-import 'package:just_audio/just_audio.dart';
+﻿import 'package:just_audio/just_audio.dart';
 
-import 'package:omi/backend/http/api/speech_profile.dart';
-import 'package:omi/providers/base_provider.dart';
+import 'package:freeu/backend/http/api/speech_profile.dart';
+import 'package:freeu/providers/base_provider.dart';
 
 class UserSpeechSamplesProvider extends BaseProvider {
   List<String> samplesUrl = [];

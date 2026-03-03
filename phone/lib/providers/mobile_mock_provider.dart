@@ -1,11 +1,11 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'package:omi/backend/http/api/action_items.dart';
-import 'package:omi/backend/http/api/messages.dart';
-import 'package:omi/backend/schema/message.dart';
-import 'package:omi/backend/schema/schema.dart';
+import 'package:freeu/backend/http/api/action_items.dart';
+import 'package:freeu/backend/http/api/messages.dart';
+import 'package:freeu/backend/schema/message.dart';
+import 'package:freeu/backend/schema/schema.dart';
 
 enum MobileTaskPriority { high, normal }
 

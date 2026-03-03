@@ -1,12 +1,12 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/providers/sync_provider.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/providers/sync_provider.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class LocalStoragePage extends StatefulWidget {
   const LocalStoragePage({super.key});

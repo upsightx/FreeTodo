@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -7,20 +7,20 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_provider_utilities/flutter_provider_utilities.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'package:omi/backend/http/api/speech_profile.dart';
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/backend/schema/message_event.dart';
-import 'package:omi/backend/schema/transcript_segment.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/services/sockets/transcription_service.dart';
-import 'package:omi/utils/audio/wav_bytes.dart';
-import 'package:omi/utils/constants.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/speech_profile.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/backend/schema/message_event.dart';
+import 'package:freeu/backend/schema/transcript_segment.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/services/sockets/transcription_service.dart';
+import 'package:freeu/utils/audio/wav_bytes.dart';
+import 'package:freeu/utils/constants.dart';
+import 'package:freeu/utils/logger.dart';
 
 /// Enum for loading text states in speech profile
 enum SpeechProfileLoadingState {

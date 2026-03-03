@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/backend/schema/device_guide.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/responsive/responsive_helper.dart';
-import 'package:omi/widgets/device_pairing_sheet.dart';
+import 'package:freeu/backend/schema/device_guide.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/responsive/responsive_helper.dart';
+import 'package:freeu/widgets/device_pairing_sheet.dart';
 
 class ConnectionGuideSheet extends StatelessWidget {
   const ConnectionGuideSheet({super.key});
@@ -15,21 +15,21 @@ class ConnectionGuideSheet extends StatelessWidget {
     return [
       DeviceGuideProduct(
         id: 'omi',
-        name: 'Omi',
+        name: 'FreeU',
         pairingTitle: l10n.pairingTitleOmi,
         pairingDescription: l10n.pairingDescOmi,
         localImagePath: Assets.images.omiWithoutRope.path,
       ),
       DeviceGuideProduct(
         id: 'omi_devkit',
-        name: 'Omi DevKit',
+        name: 'FreeU DevKit',
         pairingTitle: l10n.pairingTitleOmiDevkit,
         pairingDescription: l10n.pairingDescOmiDevkit,
         localImagePath: Assets.images.omiDevkitWithoutRope.path,
       ),
       DeviceGuideProduct(
         id: 'omi_glass',
-        name: 'Omi Glass',
+        name: 'FreeU Glass',
         pairingTitle: l10n.pairingTitleOmiGlass,
         pairingDescription: l10n.pairingDescOmiGlass,
         localImagePath: Assets.images.omiGlass.path,

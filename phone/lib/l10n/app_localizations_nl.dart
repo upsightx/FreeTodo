@@ -1,4 +1,4 @@
-// ignore: unused_import
+﻿// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -9,7 +9,7 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
-  String get appTitle => 'Omi';
+  String get appTitle => 'FreeU';
 
   @override
   String get conversationTab => 'Gesprek';
@@ -123,7 +123,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get editPerson => 'Persoon bewerken';
 
   @override
-  String get createPersonHint => 'Maak een nieuwe persoon aan en train Omi om hun stem te herkennen!';
+  String get createPersonHint => 'Maak een nieuwe persoon aan en train FreeU om hun stem te herkennen!';
 
   @override
   String get speechProfile => 'Spraakprofiel';
@@ -161,7 +161,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get couldNotAccessFile => 'Kan het geselecteerde bestand niet openen';
 
   @override
-  String get askOmi => 'Vraag Omi';
+  String get askOmi => 'Vraag FreeU';
 
   @override
   String get done => 'Klaar';
@@ -262,7 +262,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get noMessagesYet => 'Nog geen berichten!\nWaarom begin je geen gesprek?';
 
   @override
-  String get deletingMessages => 'Uw berichten verwijderen uit het geheugen van Omi...';
+  String get deletingMessages => 'Uw berichten verwijderen uit het geheugen van FreeU...';
 
   @override
   String get messageCopied => '✨ Bericht gekopieerd naar klembord';
@@ -293,7 +293,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get maxFilesLimit => 'Je kunt maximaal 4 bestanden tegelijk uploaden';
 
   @override
-  String get chatWithOmi => 'Chat met Omi';
+  String get chatWithOmi => 'Chat met FreeU';
 
   @override
   String get apps => 'Apps';
@@ -324,7 +324,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Kan apps niet ophalen :(\n\nControleer je internetverbinding en probeer het opnieuw.';
 
   @override
-  String get aboutOmi => 'Over Omi';
+  String get aboutOmi => 'Over FreeU';
 
   @override
   String get privacyPolicy => 'Privacybeleid';
@@ -439,7 +439,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get developerSettings => 'Ontwikkelaarsinstellingen';
 
   @override
-  String get getOmiForMac => 'Omi voor Mac downloaden';
+  String get getOmiForMac => 'FreeU voor Mac downloaden';
 
   @override
   String get referralProgram => 'Doorverwijsprogramma';
@@ -458,7 +458,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get privacyIntro =>
-      'Bij Omi zijn we toegewijd aan het beschermen van je privacy. Deze pagina stelt je in staat om te bepalen hoe je gegevens worden opgeslagen en gebruikt.';
+      'Bij FreeU zijn we toegewijd aan het beschermen van je privacy. Deze pagina stelt je in staat om te bepalen hoe je gegevens worden opgeslagen en gebruikt.';
 
   @override
   String get learnMore => 'Meer informatie...';
@@ -529,7 +529,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get unpairAndForget => 'Apparaat ontkoppelen en vergeten';
 
   @override
-  String get deviceDisconnectedMessage => 'Je Omi is losgekoppeld 😔';
+  String get deviceDisconnectedMessage => 'Je FreeU is losgekoppeld 😔';
 
   @override
   String get deviceUnpairedMessage =>
@@ -547,7 +547,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get connectDeviceMessage =>
-      'Verbind je Omi-apparaat om toegang te krijgen tot\napparaatinstellingen en aanpassingen';
+      'Verbind je FreeU-apparaat om toegang te krijgen tot\napparaatinstellingen en aanpassingen';
 
   @override
   String get deviceInfoSection => 'Apparaatinformatie';
@@ -680,7 +680,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get docs => 'Documentatie';
 
   @override
-  String get yourOmiInsights => 'Je Omi-inzichten';
+  String get yourOmiInsights => 'Je FreeU-inzichten';
 
   @override
   String get today => 'Vandaag';
@@ -698,13 +698,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get noActivityYet => 'Nog geen activiteit';
 
   @override
-  String get startConversationToSeeInsights => 'Start een gesprek met Omi\nom je gebruiksinzichten hier te zien.';
+  String get startConversationToSeeInsights => 'Start een gesprek met FreeU\nom je gebruiksinzichten hier te zien.';
 
   @override
   String get listening => 'Luisteren';
 
   @override
-  String get listeningSubtitle => 'Totale tijd dat Omi actief heeft geluisterd.';
+  String get listeningSubtitle => 'Totale tijd dat FreeU actief heeft geluisterd.';
 
   @override
   String get understanding => 'Begrijpen';
@@ -760,19 +760,19 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get shareStatsMessage => 'Ik deel mijn Omi-statistieken! (omi.me - je altijd-aan AI-assistent)';
+  String get shareStatsMessage => 'Ik deel mijn FreeU-statistieken! (FreeU.me - je altijd-aan AI-assistent)';
 
   @override
-  String get sharePeriodToday => 'Vandaag heeft Omi:';
+  String get sharePeriodToday => 'Vandaag heeft FreeU:';
 
   @override
-  String get sharePeriodMonth => 'Deze maand heeft Omi:';
+  String get sharePeriodMonth => 'Deze maand heeft FreeU:';
 
   @override
-  String get sharePeriodYear => 'Dit jaar heeft Omi:';
+  String get sharePeriodYear => 'Dit jaar heeft FreeU:';
 
   @override
-  String get sharePeriodAllTime => 'Tot nu toe heeft Omi:';
+  String get sharePeriodAllTime => 'Tot nu toe heeft FreeU:';
 
   @override
   String shareStatsListened(String minutes) {
@@ -807,7 +807,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get noLogFilesFound => 'Geen logbestanden gevonden.';
 
   @override
-  String get omiDebugLog => 'Omi debug-log';
+  String get omiDebugLog => 'FreeU debug-log';
 
   @override
   String get logShared => 'Log gedeeld';
@@ -831,7 +831,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get exportDataDesc => 'Gesprekken exporteren naar een JSON-bestand';
 
   @override
-  String get exportedConversations => 'Geëxporteerde gesprekken van Omi';
+  String get exportedConversations => 'Geëxporteerde gesprekken van FreeU';
 
   @override
   String get exportShared => 'Export gedeeld';
@@ -1013,7 +1013,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get addWordsDesc => 'Namen, termen of ongewone woorden';
 
   @override
-  String get vocabularyHint => 'Omi, Callie, OpenAI';
+  String get vocabularyHint => 'FreeU, Callie, OpenAI';
 
   @override
   String get connect => 'Connect';
@@ -1057,7 +1057,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String authAccessMessage(String appName) {
-    return 'Je moet Omi autoriseren om toegang te krijgen tot je $appName-gegevens. Dit opent je browser voor authenticatie.';
+    return 'Je moet FreeU autoriseren om toegang te krijgen tot je $appName-gegevens. Dit opent je browser voor authenticatie.';
   }
 
   @override
@@ -1153,7 +1153,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get editName => 'Naam bewerken';
 
   @override
-  String get howShouldOmiCallYou => 'Hoe moet Omi je noemen?';
+  String get howShouldOmiCallYou => 'Hoe moet FreeU je noemen?';
 
   @override
   String get enterYourName => 'Voer uw naam in';
@@ -1426,7 +1426,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String authorizeOmiForTasks(String appName) {
-    return 'Je moet Omi autoriseren om taken aan te maken in je $appName-account. Dit opent je browser voor authenticatie.';
+    return 'Je moet FreeU autoriseren om taken aan te maken in je $appName-account. Dit opent je browser voor authenticatie.';
   }
 
   @override
@@ -1461,13 +1461,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get bringYourOwn => 'Breng je eigen mee';
 
   @override
-  String get payYourSttProvider => 'Gebruik Omi vrij. Je betaalt alleen je STT-provider rechtstreeks.';
+  String get payYourSttProvider => 'Gebruik FreeU vrij. Je betaalt alleen je STT-provider rechtstreeks.';
 
   @override
   String get freeMinutesMonth => '1.200 gratis minuten/maand inbegrepen. Onbeperkt met ';
 
   @override
-  String get omiUnlimited => 'Omi Onbeperkt';
+  String get omiUnlimited => 'FreeU Onbeperkt';
 
   @override
   String get hostRequired => 'Host is vereist';
@@ -1585,11 +1585,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String deviceUsesCodec(String device, String reason) {
-    return '$device gebruikt $reason. Omi wordt gebruikt.';
+    return '$device gebruikt $reason. FreeU wordt gebruikt.';
   }
 
   @override
-  String get omiTranscription => 'Omi-transcriptie';
+  String get omiTranscription => 'FreeU-transcriptie';
 
   @override
   String get bestInClassTranscription => 'Beste transcriptie zonder configuratie';
@@ -1741,7 +1741,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get bluetoothNeeded =>
-      'Omi heeft Bluetooth nodig om verbinding te maken met je wearable. Schakel Bluetooth in en probeer het opnieuw.';
+      'FreeU heeft Bluetooth nodig om verbinding te maken met je wearable. Schakel Bluetooth in en probeer het opnieuw.';
 
   @override
   String get contactSupport => 'Contact opnemen met support?';
@@ -1756,7 +1756,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get backgroundActivity => 'Achtergrondactiviteit';
 
   @override
-  String get backgroundActivityDesc => 'Laat Omi op de achtergrond draaien voor betere stabiliteit';
+  String get backgroundActivityDesc => 'Laat FreeU op de achtergrond draaien voor betere stabiliteit';
 
   @override
   String get locationAccess => 'Locatietoegang';
@@ -1785,7 +1785,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Ga naar apparaatinstellingen en stel locatiemachtiging in op \"Altijd toestaan\"';
 
   @override
-  String get lovingOmi => 'Ben je blij met Omi?';
+  String get lovingOmi => 'Ben je blij met FreeU?';
 
   @override
   String get leaveReviewIos =>
@@ -1805,7 +1805,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get maybeLater => 'Misschien later';
 
   @override
-  String get speechProfileIntro => 'Omi moet je doelen en je stem leren. Je kunt het later aanpassen.';
+  String get speechProfileIntro => 'FreeU moet je doelen en je stem leren. Je kunt het later aanpassen.';
 
   @override
   String get getStarted => 'Aan de slag';
@@ -1860,7 +1860,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get tryAgain => 'Opnieuw proberen';
 
   @override
-  String get connectOmiOmiGlass => 'Omi / OmiGlass verbinden';
+  String get connectOmiOmiGlass => 'FreeU / OmiGlass verbinden';
 
   @override
   String get continueWithoutDevice => 'Doorgaan zonder apparaat';
@@ -1897,7 +1897,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get termsOfUse => 'Gebruiksvoorwaarden';
 
   @override
-  String get omiYourAiCompanion => 'Omi – Je AI-metgezel';
+  String get omiYourAiCompanion => 'FreeU – Je AI-metgezel';
 
   @override
   String get captureEveryMoment =>
@@ -1914,7 +1914,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get permissionGrantedNow =>
-      'Toestemming verleend! Nu:\n\nOpen de Omi-app op je horloge en tik hieronder op \"Doorgaan\"';
+      'Toestemming verleend! Nu:\n\nOpen de FreeU-app op je horloge en tik hieronder op \"Doorgaan\"';
 
   @override
   String get needMicrophonePermission =>
@@ -1928,7 +1928,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get troubleshootingSteps =>
-      'Probleemoplossing:\n\n1. Zorg dat Omi op je horloge is geïnstalleerd\n2. Open de Omi-app op je horloge\n3. Zoek naar de toestemmingspopup\n4. Tik op \"Toestaan\" wanneer gevraagd\n5. App op je horloge sluit - heropen deze\n6. Kom terug en tik op \"Doorgaan\" op je iPhone';
+      'Probleemoplossing:\n\n1. Zorg dat FreeU op je horloge is geïnstalleerd\n2. Open de FreeU-app op je horloge\n3. Zoek naar de toestemmingspopup\n4. Tik op \"Toestaan\" wanneer gevraagd\n5. App op je horloge sluit - heropen deze\n6. Kom terug en tik op \"Doorgaan\" op je iPhone';
 
   @override
   String get recordingStartedSuccessfully => 'Opname succesvol gestart!';
@@ -2080,17 +2080,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get addFirstMemory => 'Voeg je eerste herinnering toe';
 
   @override
-  String get clearMemoryTitle => 'Omi\'s geheugen wissen';
+  String get clearMemoryTitle => 'FreeU\'s geheugen wissen';
 
   @override
   String get clearMemoryMessage =>
-      'Weet je zeker dat je Omi\'s geheugen wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
+      'Weet je zeker dat je FreeU\'s geheugen wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
 
   @override
   String get clearMemoryButton => 'Geheugen wissen';
 
   @override
-  String get memoryClearedSuccess => 'Omi\'s geheugen over jou is gewist';
+  String get memoryClearedSuccess => 'FreeU\'s geheugen over jou is gewist';
 
   @override
   String get noMemoriesToDelete => 'Geen herinneringen om te verwijderen';
@@ -2238,7 +2238,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get translationNoticeMessage =>
-      'Omi vertaalt gesprekken naar uw primaire taal. Update deze op elk moment in Instellingen → Profielen.';
+      'FreeU vertaalt gesprekken naar uw primaire taal. Update deze op elk moment in Instellingen → Profielen.';
 
   @override
   String get pleaseCheckInternetConnection => 'Controleer uw internetverbinding en probeer het opnieuw';
@@ -2419,7 +2419,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get privacyPolicyTitle => 'Privacybeleid';
 
   @override
-  String get omiSttProvider => 'Omi';
+  String get omiSttProvider => 'FreeU';
 
   @override
   String labelCopied(String label) {
@@ -2576,7 +2576,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get checksForAudioFiles => 'Controleert op audiobestanden op de SD-kaart';
 
   @override
-  String get omiSyncsAudioFiles => 'Omi synchroniseert vervolgens de audiobestanden met de server';
+  String get omiSyncsAudioFiles => 'FreeU synchroniseert vervolgens de audiobestanden met de server';
 
   @override
   String get serverProcessesAudio => 'De server verwerkt de audiobestanden en creëert herinneringen';
@@ -2586,10 +2586,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get welcomeToOmiDescription =>
-      'Welkom bij Omi! Je AI-metgezel is klaar om je te helpen met gesprekken, taken en meer.';
+      'Welkom bij FreeU! Je AI-metgezel is klaar om je te helpen met gesprekken, taken en meer.';
 
   @override
-  String get startUsingOmi => 'Begin met Omi';
+  String get startUsingOmi => 'Begin met FreeU';
 
   @override
   String get back => 'Terug';
@@ -2665,7 +2665,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get reviewAndManageConversations => 'Bekijk en beheer je opgenomen gesprekken';
 
   @override
-  String get startCapturingConversations => 'Begin gesprekken vast te leggen met je Omi-apparaat om ze hier te zien.';
+  String get startCapturingConversations => 'Begin gesprekken vast te leggen met je FreeU-apparaat om ze hier te zien.';
 
   @override
   String get useMobileAppToCapture => 'Gebruik je mobiele app om audio vast te leggen';
@@ -2680,7 +2680,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get showAll => 'Alles tonen →';
 
   @override
-  String get noTasksForToday => 'Geen taken voor vandaag.\\nVraag Omi om meer taken of maak ze handmatig aan.';
+  String get noTasksForToday => 'Geen taken voor vandaag.\\nVraag FreeU om meer taken of maak ze handmatig aan.';
 
   @override
   String get dailyScore => 'DAGELIJKSE SCORE';
@@ -2829,7 +2829,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get createNewApp => 'Nieuwe app maken';
 
   @override
-  String get buildSubmitCustomOmiApp => 'Bouw en dien je aangepaste Omi-app in';
+  String get buildSubmitCustomOmiApp => 'Bouw en dien je aangepaste FreeU-app in';
 
   @override
   String get submittingYourApp => 'Je app wordt ingediend...';
@@ -2877,7 +2877,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get submitAppTermsAgreement =>
-      'Door deze app in te dienen, ga ik akkoord met de Servicevoorwaarden en het Privacybeleid van Omi AI';
+      'Door deze app in te dienen, ga ik akkoord met de Servicevoorwaarden en het Privacybeleid van FreeU AI';
 
   @override
   String get submitApp => 'App indienen';
@@ -2922,7 +2922,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get dataAccessWarning =>
-      'Deze app heeft toegang tot uw gegevens. Omi AI is niet verantwoordelijk voor hoe uw gegevens worden gebruikt, gewijzigd of verwijderd door deze app';
+      'Deze app heeft toegang tot uw gegevens. FreeU AI is niet verantwoordelijk voor hoe uw gegevens worden gebruikt, gewijzigd of verwijderd door deze app';
 
   @override
   String get installApp => 'App installeren';
@@ -3274,7 +3274,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get upgradeToPro => 'Upgraden naar Pro';
 
   @override
-  String get getOmiDevice => 'Omi apparaat aanschaffen';
+  String get getOmiDevice => 'FreeU apparaat aanschaffen';
 
   @override
   String get wearableAiCompanion => 'Draagbare AI-metgezel';
@@ -3341,7 +3341,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get setAllMemoriesToPublic => 'Alle herinneringen op openbaar zetten';
 
   @override
-  String get permanentlyRemoveAllMemories => 'Alle herinneringen permanent verwijderen uit Omi';
+  String get permanentlyRemoveAllMemories => 'Alle herinneringen permanent verwijderen uit FreeU';
 
   @override
   String get allMemoriesAreNowPrivate => 'Alle herinneringen zijn nu privé';
@@ -3350,18 +3350,18 @@ class AppLocalizationsNl extends AppLocalizations {
   String get allMemoriesAreNowPublic => 'Alle herinneringen zijn nu openbaar';
 
   @override
-  String get clearOmisMemory => 'Omi\'s geheugen wissen';
+  String get clearOmisMemory => 'FreeU\'s geheugen wissen';
 
   @override
   String clearMemoryConfirmation(int count) {
-    return 'Weet je zeker dat je Omi\'s geheugen wilt wissen? Deze actie kan niet ongedaan worden gemaakt en zal alle $count herinneringen permanent verwijderen.';
+    return 'Weet je zeker dat je FreeU\'s geheugen wilt wissen? Deze actie kan niet ongedaan worden gemaakt en zal alle $count herinneringen permanent verwijderen.';
   }
 
   @override
-  String get omisMemoryCleared => 'Omi\'s geheugen over jou is gewist';
+  String get omisMemoryCleared => 'FreeU\'s geheugen over jou is gewist';
 
   @override
-  String get welcomeToOmi => 'Welkom bij Omi';
+  String get welcomeToOmi => 'Welkom bij FreeU';
 
   @override
   String get continueWithApple => 'Doorgaan met Apple';
@@ -3407,7 +3407,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get chooseYourLanguage => 'Kies uw taal';
 
   @override
-  String get selectPreferredLanguageForBestExperience => 'Selecteer uw voorkeurstaal voor de beste Omi-ervaring';
+  String get selectPreferredLanguageForBestExperience => 'Selecteer uw voorkeurstaal voor de beste FreeU-ervaring';
 
   @override
   String get searchLanguages => 'Zoek talen...';
@@ -3426,7 +3426,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get tellUsHowYouWouldLikeToBeAddressed =>
-      'Vertel ons hoe u aangesproken wilt worden. Dit helpt uw Omi-ervaring te personaliseren.';
+      'Vertel ons hoe u aangesproken wilt worden. Dit helpt uw FreeU-ervaring te personaliseren.';
 
   @override
   String charactersCount(int count) {
@@ -3434,7 +3434,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get enableFeaturesForBestExperience => 'Schakel functies in voor de beste Omi-ervaring op uw apparaat.';
+  String get enableFeaturesForBestExperience => 'Schakel functies in voor de beste FreeU-ervaring op uw apparaat.';
 
   @override
   String get microphoneAccess => 'Microfoontoegang';
@@ -3444,7 +3444,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get microphoneAccessDescription =>
-      'Omi heeft microfoontoegang nodig om uw gesprekken op te nemen en transcripties te leveren.';
+      'FreeU heeft microfoontoegang nodig om uw gesprekken op te nemen en transcripties te leveren.';
 
   @override
   String get screenRecording => 'Schermopname';
@@ -3454,7 +3454,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get screenRecordingDescription =>
-      'Omi heeft toestemming voor schermopname nodig om systeemaudio van uw browsergebaseerde vergaderingen vast te leggen.';
+      'FreeU heeft toestemming voor schermopname nodig om systeemaudio van uw browsergebaseerde vergaderingen vast te leggen.';
 
   @override
   String get accessibility => 'Toegankelijkheid';
@@ -3464,7 +3464,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get accessibilityDescription =>
-      'Omi heeft toegankelijkheidstoestemming nodig om te detecteren wanneer u deelneemt aan Zoom-, Meet- of Teams-vergaderingen in uw browser.';
+      'FreeU heeft toegankelijkheidstoestemming nodig om te detecteren wanneer u deelneemt aan Zoom-, Meet- of Teams-vergaderingen in uw browser.';
 
   @override
   String get pleaseWait => 'Even geduld...';
@@ -3494,16 +3494,16 @@ class AppLocalizationsNl extends AppLocalizations {
   String get changeYourName => 'Wijzig uw naam';
 
   @override
-  String get manageYourOmiPersona => 'Beheer uw Omi-persona';
+  String get manageYourOmiPersona => 'Beheer uw FreeU-persona';
 
   @override
   String get voiceAndPeople => 'Stem & Mensen';
 
   @override
-  String get teachOmiYourVoice => 'Leer Omi uw stem';
+  String get teachOmiYourVoice => 'Leer FreeU uw stem';
 
   @override
-  String get tellOmiWhoSaidIt => 'Vertel Omi wie het zei 🗣️';
+  String get tellOmiWhoSaidIt => 'Vertel FreeU wie het zei 🗣️';
 
   @override
   String get payment => 'Betaling';
@@ -3515,7 +3515,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get preferences => 'Voorkeuren';
 
   @override
-  String get helpImproveOmiBySharing => 'Help Omi te verbeteren door geanonimiseerde analysegegevens te delen';
+  String get helpImproveOmiBySharing => 'Help FreeU te verbeteren door geanonimiseerde analysegegevens te delen';
 
   @override
   String get deleteAccount => 'Account Verwijderen';
@@ -3540,7 +3540,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get mcpDescription =>
-      'Om Omi te verbinden met andere applicaties om uw herinneringen en gesprekken te lezen, te zoeken en te beheren. Maak een sleutel om te beginnen.';
+      'Om FreeU te verbinden met andere applicaties om uw herinneringen en gesprekken te lezen, te zoeken en te beheren. Maak een sleutel om te beginnen.';
 
   @override
   String get apiKeys => 'API-sleutels';
@@ -3575,7 +3575,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get triggersWhenDaySummaryGenerated => 'Wordt geactiveerd wanneer de dagsamenvatting wordt gegenereerd.';
 
   @override
-  String get tryLatestExperimentalFeatures => 'Probeer de nieuwste experimentele functies van het Omi-team.';
+  String get tryLatestExperimentalFeatures => 'Probeer de nieuwste experimentele functies van het FreeU-team.';
 
   @override
   String get transcriptionServiceDiagnosticStatus => 'Diagnostische status van transcriptieservice';
@@ -3648,7 +3648,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get letOmiChooseAutomatically => 'Laat Omi automatisch de beste app kiezen';
+  String get letOmiChooseAutomatically => 'Laat FreeU automatisch de beste app kiezen';
 
   @override
   String get deleteConversationConfirmation =>
@@ -3786,7 +3786,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get translatedByOmi => 'vertaald door omi';
+  String get translatedByOmi => 'vertaald door FreeU';
 
   @override
   String get backToConversations => 'Terug naar gesprekken';
@@ -3847,7 +3847,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get customVocabularyHeader => 'AANGEPASTE WOORDENSCHAT';
 
   @override
-  String get addWordsDescription => 'Voeg woorden toe die Omi moet herkennen tijdens transcriptie.';
+  String get addWordsDescription => 'Voeg woorden toe die FreeU moet herkennen tijdens transcriptie.';
 
   @override
   String get enterWordsHint => 'Voer woorden in (kommagescheiden)';
@@ -3936,7 +3936,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Dit verwijdert alle afgeleide kennisgrafiekgegevens. Uw originele herinneringen blijven veilig.';
 
   @override
-  String get connectOmiWithAI => 'Verbind Omi met AI-assistenten';
+  String get connectOmiWithAI => 'Verbind FreeU met AI-assistenten';
 
   @override
   String get noAPIKeys => 'Geen API-sleutels. Maak er een aan om te beginnen.';
@@ -3973,7 +3973,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get holdOnPreparingForm => 'Even geduld, we bereiden het formulier voor u voor';
 
   @override
-  String get bySubmittingYouAgreeToOmi => 'Door in te dienen, gaat u akkoord met Omi ';
+  String get bySubmittingYouAgreeToOmi => 'Door in te dienen, gaat u akkoord met FreeU ';
 
   @override
   String get termsAndPrivacyPolicy => 'Voorwaarden en Privacybeleid';
@@ -4136,7 +4136,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get dataAccessNoticeDescription =>
-      'Deze app krijgt toegang tot je gegevens. Omi AI is niet verantwoordelijk voor hoe je gegevens worden gebruikt, gewijzigd of verwijderd door deze app';
+      'Deze app krijgt toegang tot je gegevens. FreeU AI is niet verantwoordelijk voor hoe je gegevens worden gebruikt, gewijzigd of verwijderd door deze app';
 
   @override
   String get copyUrl => 'URL kopiëren';
@@ -4221,14 +4221,14 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get omiApiKeys => 'Omi API-sleutels';
+  String get omiApiKeys => 'FreeU API-sleutels';
 
   @override
   String get apiKeysDescription =>
-      'API-sleutels worden gebruikt voor authenticatie wanneer uw app communiceert met de OMI-server. Ze stellen uw applicatie in staat om herinneringen te maken en veilig toegang te krijgen tot andere OMI-services.';
+      'API-sleutels worden gebruikt voor authenticatie wanneer uw app communiceert met de FreeU-server. Ze stellen uw applicatie in staat om herinneringen te maken en veilig toegang te krijgen tot andere FreeU-services.';
 
   @override
-  String get aboutOmiApiKeys => 'Over Omi API-sleutels';
+  String get aboutOmiApiKeys => 'Over FreeU API-sleutels';
 
   @override
   String get yourNewKey => 'Uw nieuwe sleutel:';
@@ -4371,7 +4371,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get e2eeDescription =>
-      'End-to-end-encryptie is de gouden standaard voor privacy. Wanneer ingeschakeld, worden uw gegevens op uw apparaat versleuteld voordat ze naar onze servers worden verzonden. Dit betekent dat niemand, zelfs Omi niet, toegang heeft tot uw inhoud.';
+      'End-to-end-encryptie is de gouden standaard voor privacy. Wanneer ingeschakeld, worden uw gegevens op uw apparaat versleuteld voordat ze naar onze servers worden verzonden. Dit betekent dat niemand, zelfs FreeU niet, toegang heeft tot uw inhoud.';
 
   @override
   String get importantTradeoffs => 'Belangrijke afwegingen:';
@@ -4407,7 +4407,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get secureEncryptionDescription =>
-      'Uw gegevens worden versleuteld met een voor u unieke sleutel op onze servers, gehost op Google Cloud. Dit betekent dat uw ruwe inhoud ontoegankelijk is voor iedereen, inclusief Omi-medewerkers of Google, rechtstreeks vanuit de database.';
+      'Uw gegevens worden versleuteld met een voor u unieke sleutel op onze servers, gehost op Google Cloud. Dit betekent dat uw ruwe inhoud ontoegankelijk is voor iedereen, inclusief FreeU-medewerkers of Google, rechtstreeks vanuit de database.';
 
   @override
   String get endToEndEncryption => 'End-to-end-encryptie';
@@ -4477,21 +4477,21 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get omiTraining => 'Omi Training';
+  String get omiTraining => 'FreeU Training';
 
   @override
   String get trainingDataProgram => 'Trainingsdataprogramma';
 
   @override
   String get getOmiUnlimitedFree =>
-      'Krijg Omi Unlimited gratis door uw gegevens bij te dragen voor het trainen van AI-modellen.';
+      'Krijg FreeU Unlimited gratis door uw gegevens bij te dragen voor het trainen van AI-modellen.';
 
   @override
   String get trainingDataBullets =>
       '• Uw gegevens helpen AI-modellen te verbeteren\n• Alleen niet-gevoelige gegevens worden gedeeld\n• Volledig transparant proces';
 
   @override
-  String get learnMoreAtOmiTraining => 'Meer informatie op omi.me/training';
+  String get learnMoreAtOmiTraining => 'Meer informatie op FreeU.me/training';
 
   @override
   String get agreeToContributeData => 'Ik begrijp en ga akkoord met het bijdragen van mijn gegevens voor AI-training';
@@ -4570,7 +4570,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get youAreOnUnlimitedPlan => 'U bent op het Unlimited-abonnement.';
 
   @override
-  String get yourOmiUnleashed => 'Uw Omi, ontketend. Ga unlimited voor eindeloze mogelijkheden.';
+  String get yourOmiUnleashed => 'Uw FreeU, ontketend. Ga unlimited voor eindeloze mogelijkheden.';
 
   @override
   String planEndedOn(String date) {
@@ -4594,10 +4594,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get unlimitedConversations => 'Onbeperkte gesprekken';
 
   @override
-  String get askOmiAnything => 'Vraag Omi alles over uw leven';
+  String get askOmiAnything => 'Vraag FreeU alles over uw leven';
 
   @override
-  String get unlockOmiInfiniteMemory => 'Ontgrendel Omi\'s oneindige geheugen';
+  String get unlockOmiInfiniteMemory => 'Ontgrendel FreeU\'s oneindige geheugen';
 
   @override
   String get youreOnAnnualPlan => 'U bent op het jaarabonnement';
@@ -4651,7 +4651,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get privacyIntroText =>
-      'Bij Omi nemen we uw privacy zeer serieus. We willen transparant zijn over de gegevens die we verzamelen en hoe we deze gebruiken. Dit moet u weten:';
+      'Bij FreeU nemen we uw privacy zeer serieus. We willen transparant zijn over de gegevens die we verzamelen en hoe we deze gebruiken. Dit moet u weten:';
 
   @override
   String get whatWeTrack => 'Wat we bijhouden';
@@ -4667,11 +4667,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get commitmentText =>
-      'We zijn toegewijd om de verzamelde gegevens alleen te gebruiken om Omi een beter product voor u te maken. Uw privacy en vertrouwen zijn van het grootste belang voor ons.';
+      'We zijn toegewijd om de verzamelde gegevens alleen te gebruiken om FreeU een beter product voor u te maken. Uw privacy en vertrouwen zijn van het grootste belang voor ons.';
 
   @override
   String get thankYouText =>
-      'Bedankt dat u een gewaardeerde gebruiker van Omi bent. Als u vragen of zorgen heeft, neem dan gerust contact met ons op via team@basedhardware.com.';
+      'Bedankt dat u een gewaardeerde gebruiker van FreeU bent. Als u vragen of zorgen heeft, neem dan gerust contact met ons op via team@basedhardware.com.';
 
   @override
   String get wifiSyncSettings => 'WiFi-synchronisatie-instellingen';
@@ -4783,7 +4783,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get minutes => 'minuten';
 
   @override
-  String get omiHas => 'Omi heeft:';
+  String get omiHas => 'FreeU heeft:';
 
   @override
   String get premiumMinutesUsed => 'Premium minuten gebruikt.';
@@ -4876,7 +4876,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get howPeopleWorks =>
-      'Zodra een persoon is aangemaakt, kun je naar een gesprekstranscriptie gaan en de bijbehorende segmenten toewijzen, zo kan Omi ook hun spraak herkennen!';
+      'Zodra een persoon is aangemaakt, kun je naar een gesprekstranscriptie gaan en de bijbehorende segmenten toewijzen, zo kan FreeU ook hun spraak herkennen!';
 
   @override
   String get tapToDelete => 'Tik om te verwijderen';
@@ -5157,7 +5157,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get enableApps => 'Apps inschakelen';
 
   @override
-  String get omiAppName => 'Omi';
+  String get omiAppName => 'FreeU';
 
   @override
   String get showMore => 'toon meer ↓';
@@ -5181,18 +5181,18 @@ class AppLocalizationsNl extends AppLocalizations {
   String get checkingAppleWatch => 'Apple Watch controleren...';
 
   @override
-  String get installOmiOnAppleWatch => 'Installeer Omi op je\nApple Watch';
+  String get installOmiOnAppleWatch => 'Installeer FreeU op je\nApple Watch';
 
   @override
   String get installOmiOnAppleWatchDescription =>
-      'Om je Apple Watch met Omi te gebruiken, moet je eerst de Omi-app op je horloge installeren.';
+      'Om je Apple Watch met FreeU te gebruiken, moet je eerst de FreeU-app op je horloge installeren.';
 
   @override
-  String get openOmiOnAppleWatch => 'Open Omi op je\nApple Watch';
+  String get openOmiOnAppleWatch => 'Open FreeU op je\nApple Watch';
 
   @override
   String get openOmiOnAppleWatchDescription =>
-      'De Omi-app is geïnstalleerd op je Apple Watch. Open deze en tik op Start om te beginnen.';
+      'De FreeU-app is geïnstalleerd op je Apple Watch. Open deze en tik op Start om te beginnen.';
 
   @override
   String get openWatchApp => 'Watch-app openen';
@@ -5202,14 +5202,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get unableToOpenWatchApp =>
-      'Kan Apple Watch-app niet openen. Open handmatig de Watch-app op je Apple Watch en installeer Omi vanuit het gedeelte \"Beschikbare apps\".';
+      'Kan Apple Watch-app niet openen. Open handmatig de Watch-app op je Apple Watch en installeer FreeU vanuit het gedeelte \"Beschikbare apps\".';
 
   @override
   String get appleWatchConnectedSuccessfully => 'Apple Watch succesvol verbonden!';
 
   @override
   String get appleWatchNotReachable =>
-      'Apple Watch nog steeds niet bereikbaar. Zorg ervoor dat de Omi-app geopend is op je horloge.';
+      'Apple Watch nog steeds niet bereikbaar. Zorg ervoor dat de FreeU-app geopend is op je horloge.';
 
   @override
   String errorCheckingConnection(String error) {
@@ -5288,7 +5288,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get noSummary => 'Geen samenvatting';
 
   @override
-  String get updateOmiFirmware => 'Omi-firmware bijwerken';
+  String get updateOmiFirmware => 'FreeU-firmware bijwerken';
 
   @override
   String get anErrorOccurredTryAgain => 'Er is een fout opgetreden. Probeer het opnieuw.';
@@ -5297,7 +5297,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get welcomeBackSimple => 'Welkom terug';
 
   @override
-  String get addVocabularyDescription => 'Voeg woorden toe die Omi moet herkennen tijdens transcriptie.';
+  String get addVocabularyDescription => 'Voeg woorden toe die FreeU moet herkennen tijdens transcriptie.';
 
   @override
   String get enterWordsCommaSeparated => 'Voer woorden in (gescheiden door komma)';
@@ -5458,13 +5458,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get wrappedNoDataAvailable => 'Geen gegevens beschikbaar';
 
   @override
-  String get wrappedOmiLifeRecap => 'Omi levenssamenvatting';
+  String get wrappedOmiLifeRecap => 'FreeU levenssamenvatting';
 
   @override
   String get wrappedSwipeUpToBegin => 'Veeg omhoog om te beginnen';
 
   @override
-  String get wrappedShareText => 'Mijn 2025, onthouden door Omi ✨ omi.me/wrapped';
+  String get wrappedShareText => 'Mijn 2025, onthouden door FreeU ✨ FreeU.me/wrapped';
 
   @override
   String get wrappedFailedToShare => 'Delen mislukt. Probeer het opnieuw.';
@@ -5485,7 +5485,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get wrappedMy2025 => 'Mijn 2025';
 
   @override
-  String get wrappedRememberedByOmi => 'onthouden door Omi';
+  String get wrappedRememberedByOmi => 'onthouden door FreeU';
 
   @override
   String get wrappedMostFunDay => 'Leukste';
@@ -5702,7 +5702,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get notificationFrequency => 'Meldingsfrequentie';
 
   @override
-  String get controlNotificationFrequency => 'Bepaal hoe vaak Omi u proactieve meldingen stuurt.';
+  String get controlNotificationFrequency => 'Bepaal hoe vaak FreeU u proactieve meldingen stuurt.';
 
   @override
   String get yourScore => 'Jouw score';
@@ -5727,7 +5727,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Je dagelijkse score is gebaseerd op taakvoltooiing. Voltooi je taken om je score te verbeteren!';
 
   @override
-  String get notificationFrequencyDescription => 'Bepaal hoe vaak Omi je proactieve meldingen en herinneringen stuurt.';
+  String get notificationFrequencyDescription => 'Bepaal hoe vaak FreeU je proactieve meldingen en herinneringen stuurt.';
 
   @override
   String get sliderOff => 'Uit';
@@ -5965,7 +5965,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get noRecordings => 'Geen opnames';
 
   @override
-  String get audioFromOmiWillAppearHere => 'Audio van je Omi-apparaat verschijnt hier';
+  String get audioFromOmiWillAppearHere => 'Audio van je FreeU-apparaat verschijnt hier';
 
   @override
   String get deleteProcessed => 'Verwerkte verwijderen';
@@ -6087,7 +6087,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get batteryUsageHigher => 'Batterijverbruik zal hoger zijn dan cloud transcriptie.';
 
   @override
-  String get considerOmiCloud => 'Overweeg Omi Cloud te gebruiken voor betere prestaties.';
+  String get considerOmiCloud => 'Overweeg FreeU Cloud te gebruiken voor betere prestaties.';
 
   @override
   String get highResourceUsage => 'Hoog bronnengebruik';
@@ -6246,7 +6246,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get omiTranscriptionOptimized =>
-      'Omis ingebouwde live transcriptie is geoptimaliseerd voor realtime gesprekken met automatische sprekersdetectie en diarisatie.';
+      'FreeUs ingebouwde live transcriptie is geoptimaliseerd voor realtime gesprekken met automatische sprekersdetectie en diarisatie.';
 
   @override
   String get reset => 'Resetten';
@@ -6334,13 +6334,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get writeReviewOptional => 'Schrijf een recensie (optioneel)';
 
   @override
-  String get setupQuestionsIntro => 'Help ons Omi te verbeteren door een paar vragen te beantwoorden. 🫶 💜';
+  String get setupQuestionsIntro => 'Help ons FreeU te verbeteren door een paar vragen te beantwoorden. 🫶 💜';
 
   @override
   String get setupQuestionProfession => '1. Wat doe je voor werk?';
 
   @override
-  String get setupQuestionUsage => '2. Waar ben je van plan je Omi te gebruiken?';
+  String get setupQuestionUsage => '2. Waar ben je van plan je FreeU te gebruiken?';
 
   @override
   String get setupQuestionAge => '3. Wat is je leeftijdscategorie?';
@@ -6569,10 +6569,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get getOmiDeviceDescription => 'Maak een nauwkeuriger kloon met je persoonlijke gesprekken';
 
   @override
-  String get getOmi => 'Omi aanschaffen';
+  String get getOmi => 'FreeU aanschaffen';
 
   @override
-  String get iHaveOmiDevice => 'Ik heb een Omi-apparaat';
+  String get iHaveOmiDevice => 'Ik heb een FreeU-apparaat';
 
   @override
   String get goal => 'DOEL';
@@ -6871,14 +6871,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get fastTransferDescription =>
-      'Snelle overdracht gebruikt WiFi voor ~5x snellere snelheden. Je telefoon maakt tijdens de overdracht tijdelijk verbinding met het WiFi-netwerk van je Omi-apparaat.';
+      'Snelle overdracht gebruikt WiFi voor ~5x snellere snelheden. Je telefoon maakt tijdens de overdracht tijdelijk verbinding met het WiFi-netwerk van je FreeU-apparaat.';
 
   @override
   String get internetAccessPausedDuringTransfer => 'Internettoegang is onderbroken tijdens overdracht';
 
   @override
   String get chooseTransferMethodDescription =>
-      'Kies hoe opnames worden overgedragen van je Omi-apparaat naar je telefoon.';
+      'Kies hoe opnames worden overgedragen van je FreeU-apparaat naar je telefoon.';
 
   @override
   String get wifiSpeed => '~150 KB/s via WiFi';
@@ -6888,7 +6888,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get fastTransferMethodDescription =>
-      'Maakt een directe WiFi-verbinding met je Omi-apparaat. Je telefoon wordt tijdens de overdracht tijdelijk losgekoppeld van je normale WiFi.';
+      'Maakt een directe WiFi-verbinding met je FreeU-apparaat. Je telefoon wordt tijdens de overdracht tijdelijk losgekoppeld van je normale WiFi.';
 
   @override
   String get bluetooth => 'Bluetooth';
@@ -6913,17 +6913,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get lowBatteryAlertBody => 'De batterij van uw apparaat is bijna leeg. Tijd om op te laden! 🔋';
 
   @override
-  String get deviceDisconnectedNotificationTitle => 'Uw Omi-apparaat is losgekoppeld';
+  String get deviceDisconnectedNotificationTitle => 'Uw FreeU-apparaat is losgekoppeld';
 
   @override
-  String get deviceDisconnectedNotificationBody => 'Verbind opnieuw om Omi te blijven gebruiken.';
+  String get deviceDisconnectedNotificationBody => 'Verbind opnieuw om FreeU te blijven gebruiken.';
 
   @override
   String get firmwareUpdateAvailable => 'Firmware-update beschikbaar';
 
   @override
   String firmwareUpdateAvailableDescription(String version) {
-    return 'Er is een nieuwe firmware-update ($version) beschikbaar voor uw Omi-apparaat. Wilt u nu bijwerken?';
+    return 'Er is een nieuwe firmware-update ($version) beschikbaar voor uw FreeU-apparaat. Wilt u nu bijwerken?';
   }
 
   @override
@@ -6961,7 +6961,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get almostDone => 'Bijna klaar...';
 
   @override
-  String get omiSays => 'omi zegt';
+  String get omiSays => 'FreeU zegt';
 
   @override
   String get analyzingYourData => 'Je gegevens analyseren...';
@@ -7139,7 +7139,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get personaFailedToCreate => 'Aanmaken van persona mislukt';
 
   @override
-  String get personaConnectKnowledgeSource => 'Verbind minstens één gegevensbron (Omi of Twitter)';
+  String get personaConnectKnowledgeSource => 'Verbind minstens één gegevensbron (FreeU of Twitter)';
 
   @override
   String get personaUpdatedSuccessfully => 'Persona succesvol bijgewerkt';
@@ -7244,7 +7244,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get xHandleTitle => 'Wat is je X-handle?';
 
   @override
-  String get xHandleDescription => 'We trainen je Omi-kloon voor\nop basis van de activiteit van je account';
+  String get xHandleDescription => 'We trainen je FreeU-kloon voor\nop basis van de activiteit van je account';
 
   @override
   String get xHandleHint => '@nikshevchenko';
@@ -7259,7 +7259,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get nextButton => 'Volgende';
 
   @override
-  String get connectOmiDevice => 'Omi-apparaat verbinden';
+  String get connectOmiDevice => 'FreeU-apparaat verbinden';
 
   @override
   String planSwitchingDescriptionWithTitle(String title) {
@@ -7291,7 +7291,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get transcriptionJsonPlaceholder => 'Plak hier je JSON-configuratie...';
 
   @override
-  String get transcriptionSourceOmi => 'Omi';
+  String get transcriptionSourceOmi => 'FreeU';
 
   @override
   String get pricePlaceholder => '0,00';
@@ -7321,7 +7321,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get dailyReflectionNotificationBody => 'Vertel me over je dag';
 
   @override
-  String get actionItemReminderTitle => 'Omi-herinnering';
+  String get actionItemReminderTitle => 'FreeU-herinnering';
 
   @override
   String deviceDisconnectedTitle(String deviceName) {
@@ -7349,7 +7349,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get onboardingComplete => 'Voltooid';
 
   @override
-  String get onboardingWelcomeToOmi => 'Welkom bij Omi';
+  String get onboardingWelcomeToOmi => 'Welkom bij FreeU';
 
   @override
   String get onboardingTellUsAboutYourself => 'Vertel ons over jezelf';
@@ -8107,20 +8107,20 @@ class AppLocalizationsNl extends AppLocalizations {
   String get reportAnIssue => 'Een probleem melden';
 
   @override
-  String get pairingTitleOmi => 'Zet Omi aan';
+  String get pairingTitleOmi => 'Zet FreeU aan';
 
   @override
   String get pairingDescOmi => 'Houd het apparaat ingedrukt totdat het trilt om het in te schakelen.';
 
   @override
-  String get pairingTitleOmiDevkit => 'Zet Omi DevKit in koppelingsmodus';
+  String get pairingTitleOmiDevkit => 'Zet FreeU DevKit in koppelingsmodus';
 
   @override
   String get pairingDescOmiDevkit =>
       'Druk eenmaal op de knop om in te schakelen. De LED knippert paars in koppelingsmodus.';
 
   @override
-  String get pairingTitleOmiGlass => 'Zet Omi Glass aan';
+  String get pairingTitleOmiGlass => 'Zet FreeU Glass aan';
 
   @override
   String get pairingDescOmiGlass => 'Houd de zijknop 3 seconden ingedrukt om in te schakelen.';
@@ -8163,7 +8163,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get pairingDescAppleWatch =>
-      'Installeer en open de Omi-app op je Apple Watch en tik vervolgens op Verbinden in de app.';
+      'Installeer en open de FreeU-app op je Apple Watch en tik vervolgens op Verbinden in de app.';
 
   @override
   String get pairingTitleNeoOne => 'Zet Neo One in koppelingsmodus';
@@ -8250,7 +8250,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get onboardingWhatIKnowAboutYouTitle => 'Here is what I know about you';
 
   @override
-  String get onboardingWhatIKnowAboutYouDescription => 'This map updates as Omi learns from your conversations.';
+  String get onboardingWhatIKnowAboutYouDescription => 'This map updates as FreeU learns from your conversations.';
 
   @override
   String get apiEnvironment => 'API Environment';

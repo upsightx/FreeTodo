@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class OnboardingCompleteScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -105,7 +105,7 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen> wit
                             fontFamily: 'Manrope',
                           ),
                           children: const [
-                            TextSpan(text: 'Just use Omi in the background for '),
+                            TextSpan(text: 'Just use FreeU in the background for '),
                             TextSpan(
                               text: '2\u00A0days',
                               style: TextStyle(color: Color(0xFF9B59B6)),
@@ -132,7 +132,7 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen> wit
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Start Using Omi',
+                                'Start Using FreeU',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,

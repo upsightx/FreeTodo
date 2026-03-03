@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:video_player/video_player.dart';
 
-import 'package:omi/pages/onboarding/wrapper.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/pages/onboarding/wrapper.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 class DeviceSelectionPage extends StatefulWidget {
   const DeviceSelectionPage({super.key});

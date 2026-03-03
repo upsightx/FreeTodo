@@ -1,18 +1,18 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/services/devices/limitless_connection.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/services/wals/wal.dart';
-import 'package:omi/services/wals/wal_interfaces.dart';
-import 'package:omi/utils/debug_log_manager.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/services/devices/limitless_connection.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/services/wals/wal.dart';
+import 'package:freeu/services/wals/wal_interfaces.dart';
+import 'package:freeu/utils/debug_log_manager.dart';
+import 'package:freeu/utils/logger.dart';
 
 class FlashPageWalSyncImpl implements FlashPageWalSync {
   static const int pagesPerChunk = 25;

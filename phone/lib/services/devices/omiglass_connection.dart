@@ -1,11 +1,11 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/devices/device_connection.dart';
-import 'package:omi/services/devices/models.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/devices/device_connection.dart';
+import 'package:freeu/services/devices/models.dart';
+import 'package:freeu/utils/logger.dart';
 import 'package:version/version.dart';
 
 /// OTA Update Status for OmiGlass
@@ -237,7 +237,7 @@ class OmiGlassConnection extends DeviceConnection {
       Logger.debug('OmiGlassConnection: Error getting device info: $e');
     }
 
-    deviceInfo['modelNumber'] ??= 'OMI Glass';
+    deviceInfo['modelNumber'] ??= 'FreeU Glass';
     deviceInfo['manufacturerName'] ??= 'Based Hardware';
 
     return deviceInfo;

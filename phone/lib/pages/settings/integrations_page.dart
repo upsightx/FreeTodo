@@ -1,16 +1,16 @@
 ﻿import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
-import 'package:omi/widgets/shimmer_with_timeout.dart';
+import 'package:freeu/widgets/shimmer_with_timeout.dart';
 
-import 'package:omi/pages/apps/add_app.dart';
-import 'package:omi/providers/integration_provider.dart';
-import 'package:omi/services/apple_health_service.dart';
-import 'package:omi/services/google_calendar_service.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/pages/apps/add_app.dart';
+import 'package:freeu/providers/integration_provider.dart';
+import 'package:freeu/services/apple_health_service.dart';
+import 'package:freeu/services/google_calendar_service.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 enum IntegrationApp {
   appleHealth,

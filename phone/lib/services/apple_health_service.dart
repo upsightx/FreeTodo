@@ -1,8 +1,8 @@
-import 'package:flutter/services.dart';
+﻿import 'package:flutter/services.dart';
 
-import 'package:omi/backend/http/api/integrations.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/http/api/integrations.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 class AppleHealthService {
   static const _channel = MethodChannel('com.omi.apple_health');

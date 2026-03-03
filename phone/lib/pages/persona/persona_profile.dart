@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -6,19 +6,19 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/core/app_shell.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/pages/onboarding/wrapper.dart';
-import 'package:omi/pages/persona/persona_provider.dart';
-import 'package:omi/pages/persona/twitter/social_profile.dart';
-import 'package:omi/providers/auth_provider.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/services/auth_service.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/core/app_shell.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/pages/onboarding/wrapper.dart';
+import 'package:freeu/pages/persona/persona_provider.dart';
+import 'package:freeu/pages/persona/twitter/social_profile.dart';
+import 'package:freeu/providers/auth_provider.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/services/auth_service.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class PersonaProfilePage extends StatefulWidget {
   final double? bottomMargin;

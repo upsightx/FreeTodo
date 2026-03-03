@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:gradient_borders/gradient_borders.dart';
 
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/core/app_shell.dart';
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/utils/wal_file_manager.dart';
-import 'package:omi/widgets/dialog.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/core/app_shell.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/utils/wal_file_manager.dart';
+import 'package:freeu/widgets/dialog.dart';
 
 class DeleteAccount extends StatefulWidget {
   const DeleteAccount({super.key});

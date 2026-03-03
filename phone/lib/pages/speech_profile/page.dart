@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -6,22 +6,22 @@ import 'package:flutter_provider_utilities/flutter_provider_utilities.dart';
 import 'package:gradient_borders/box_borders/gradient_box_border.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/pages/home/page.dart';
-import 'package:omi/pages/settings/language_selection_dialog.dart';
-import 'package:omi/pages/settings/people.dart';
-import 'package:omi/pages/speech_profile/user_speech_samples.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/providers/speech_profile_provider.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/utils/analytics/intercom.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/widgets/device_widget.dart';
-import 'package:omi/widgets/dialog.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/pages/home/page.dart';
+import 'package:freeu/pages/settings/language_selection_dialog.dart';
+import 'package:freeu/pages/settings/people.dart';
+import 'package:freeu/pages/speech_profile/user_speech_samples.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/providers/speech_profile_provider.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/utils/analytics/intercom.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/widgets/device_widget.dart';
+import 'package:freeu/widgets/dialog.dart';
 import 'percentage_bar_progress.dart';
 
 class SpeechProfilePage extends StatefulWidget {

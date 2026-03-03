@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -6,13 +6,13 @@ import 'package:flutter/foundation.dart';
 
 import 'package:version/version.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/devices/device_connection.dart';
-import 'package:omi/services/devices/models.dart';
-import 'package:omi/services/devices/wifi_sync_error.dart';
-import 'package:omi/services/notifications.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/devices/device_connection.dart';
+import 'package:freeu/services/devices/models.dart';
+import 'package:freeu/services/devices/wifi_sync_error.dart';
+import 'package:freeu/services/notifications.dart';
+import 'package:freeu/utils/logger.dart';
 
 class OmiDeviceConnection extends DeviceConnection {
   static const String settingsServiceUuid = '19b10010-e8f2-537e-4f6c-d104768a1214';
@@ -624,7 +624,7 @@ class OmiDeviceConnection extends DeviceConnection {
     }
 
     // Set defaults if values are empty
-    deviceInfo['modelNumber'] ??= 'Omi Device';
+    deviceInfo['modelNumber'] ??= 'FreeU Device';
     deviceInfo['firmwareRevision'] ??= '1.0.2';
     deviceInfo['hardwareRevision'] ??= 'Seeed Xiao BLE Sense';
     deviceInfo['manufacturerName'] ??= 'Based Hardware';

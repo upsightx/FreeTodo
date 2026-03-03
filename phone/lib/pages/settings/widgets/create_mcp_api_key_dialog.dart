@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 
-import 'package:omi/pages/settings/widgets/mcp_api_key_created_dialog.dart';
-import 'package:omi/providers/mcp_provider.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/pages/settings/widgets/mcp_api_key_created_dialog.dart';
+import 'package:freeu/providers/mcp_provider.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class CreateMcpApiKeyDialog extends StatefulWidget {
   const CreateMcpApiKeyDialog({super.key});

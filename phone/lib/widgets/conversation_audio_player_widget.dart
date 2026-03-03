@@ -1,13 +1,13 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import 'package:just_audio/just_audio.dart';
 
-import 'package:omi/backend/http/api/audio.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/audio.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 class ConversationAudioPlayerWidget extends StatefulWidget {
   final ServerConversation conversation;

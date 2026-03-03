@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -13,12 +13,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:omi/models/subscription.dart';
-import 'package:omi/models/user_usage.dart';
-import 'package:omi/pages/settings/transcription_settings_page.dart';
-import 'package:omi/pages/settings/widgets/plans_sheet.dart';
-import 'package:omi/providers/usage_provider.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/models/subscription.dart';
+import 'package:freeu/models/user_usage.dart';
+import 'package:freeu/pages/settings/transcription_settings_page.dart';
+import 'package:freeu/pages/settings/widgets/plans_sheet.dart';
+import 'package:freeu/providers/usage_provider.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class UsagePage extends StatefulWidget {
   final bool showUpgradeDialog;
@@ -72,7 +72,7 @@ class _UsagePageState extends State<UsagePage> with TickerProviderStateMixin {
     // Prepare the watermark text
     final textPainter = TextPainter(
       text: TextSpan(
-        text: 'omi.me',
+        text: 'FreeU',
         style: TextStyle(
           color: Colors.white.withOpacity(0.8),
           fontSize: 14 * 3.0, // Scale font size with pixelRatio

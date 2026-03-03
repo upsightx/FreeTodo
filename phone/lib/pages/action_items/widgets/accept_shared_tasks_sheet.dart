@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:intl/intl.dart';
 
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/backend/http/api/action_items.dart' as action_items_api;
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/responsive/responsive_helper.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/backend/http/api/action_items.dart' as action_items_api;
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/responsive/responsive_helper.dart';
 
 class AcceptSharedTasksSheet extends StatefulWidget {
   final String token;

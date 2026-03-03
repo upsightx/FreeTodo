@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/backend/schema/device_guide.dart';
-import 'package:omi/utils/analytics/intercom.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/responsive/responsive_helper.dart';
+import 'package:freeu/backend/schema/device_guide.dart';
+import 'package:freeu/utils/analytics/intercom.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/responsive/responsive_helper.dart';
 
 class DevicePairingSheet extends StatelessWidget {
   final DeviceGuideProduct product;

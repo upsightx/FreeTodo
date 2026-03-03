@@ -4,10 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/providers/notification_center_provider.dart';
-import 'package:omi/ui/mobile/mobile_tokens.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/providers/notification_center_provider.dart';
+import 'package:freeu/ui/mobile/mobile_tokens.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
 
 class BottomNavBar extends StatelessWidget {
   const BottomNavBar({

@@ -1,4 +1,4 @@
-import 'package:omi/models/stt_response_schema.dart';
+﻿import 'package:freeu/models/stt_response_schema.dart';
 
 /// Helper to extract numeric speaker ID from various formats
 int _extractSpeakerId(dynamic value) {

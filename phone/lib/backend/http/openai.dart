@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 
 import 'package:tuple/tuple.dart';
 
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/backend/schema/structured.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/backend/schema/structured.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/utils/logger.dart';
 
 class SummaryResult {
   final Structured structured;

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,13 +7,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tuple/tuple.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:omi/backend/http/api/memories.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/memory.dart';
-import 'package:omi/providers/connectivity_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/widgets/extensions/string.dart';
+import 'package:freeu/backend/http/api/memories.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/memory.dart';
+import 'package:freeu/providers/connectivity_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/widgets/extensions/string.dart';
 
 class MemoriesProvider extends ChangeNotifier {
   List<Memory> _memories = [];

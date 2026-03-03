@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -11,30 +11,30 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
-import 'package:omi/backend/http/api/agents.dart';
-import 'package:omi/backend/http/api/apps.dart';
-import 'package:omi/backend/http/api/messages.dart';
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/backend/schema/message.dart';
-import 'package:omi/providers/app_provider.dart';
-import 'package:omi/main.dart';
-import 'package:omi/services/agent_chat_service.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/file.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/http/api/agents.dart';
+import 'package:freeu/backend/http/api/apps.dart';
+import 'package:freeu/backend/http/api/messages.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/backend/schema/message.dart';
+import 'package:freeu/providers/app_provider.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/services/agent_chat_service.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/file.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 class MessageProvider extends ChangeNotifier {
   static late MethodChannel _askAIChannel;
 
   MessageProvider() {
     if (PlatformService.isDesktop) {
-      _askAIChannel = const MethodChannel('com.omi/ask_ai');
+      _askAIChannel = const MethodChannel('com.freeu/ask_ai');
       _askAIChannel.setMethodCallHandler(_handleAskAIMethodCall);
     }
   }

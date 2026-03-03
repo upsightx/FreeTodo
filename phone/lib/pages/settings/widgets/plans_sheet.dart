@@ -1,26 +1,26 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:omi/widgets/shimmer_with_timeout.dart';
+import 'package:freeu/widgets/shimmer_with_timeout.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/models/subscription.dart';
-import 'package:omi/pages/settings/transcription_settings_page.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/providers/usage_provider.dart';
-import 'package:omi/providers/user_provider.dart';
-import 'package:omi/services/freemium_transcription_service.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/widgets/confirmation_dialog.dart';
-import 'package:omi/pages/settings/payment_webview_page.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/models/subscription.dart';
+import 'package:freeu/pages/settings/transcription_settings_page.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/providers/usage_provider.dart';
+import 'package:freeu/providers/user_provider.dart';
+import 'package:freeu/services/freemium_transcription_service.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/widgets/confirmation_dialog.dart';
+import 'package:freeu/pages/settings/payment_webview_page.dart';
 
 class PlansSheet extends StatefulWidget {
   final AnimationController waveController;
@@ -1004,7 +1004,7 @@ class _PlansSheetState extends State<PlansSheet> {
                             );
                           } else {
                             return Text(
-                              isUnlimited ? 'Change Plan' : 'Keep Omi Unlimited',
+                              isUnlimited ? 'Change Plan' : 'Keep FreeU Unlimited',
                               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                             );
                           }
@@ -1023,7 +1023,7 @@ class _PlansSheetState extends State<PlansSheet> {
                           return Text(
                             isUnlimited
                                 ? 'You are on the Unlimited Plan.'
-                                : 'Choose your plan to unlock unlimited Omi.',
+                                : 'Choose your plan to unlock unlimited FreeU.',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
                           );
@@ -1088,12 +1088,12 @@ class _PlansSheetState extends State<PlansSheet> {
                             const SizedBox(height: 16),
                             _buildFeatureItem(
                               faIcon: FontAwesomeIcons.solidComments,
-                              text: 'Ask Omi anything about your life',
+                              text: 'Ask FreeU anything about your life',
                             ),
                             const SizedBox(height: 16),
                             _buildFeatureItem(
                               faIcon: FontAwesomeIcons.brain,
-                              text: 'Unlock Omi\'s infinite memory',
+                              text: 'Unlock FreeU\'s infinite memory',
                             ),
                           ],
                         ),
@@ -1526,7 +1526,7 @@ class _PlansSheetState extends State<PlansSheet> {
                       if (!isUnlimited) ...[
                         const SizedBox(height: 32),
                         Text(
-                          'Omi is free, but freemium has limits that affect your experience:',
+                          'FreeU is free, but freemium has limits that affect your experience:',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.grey.shade400,

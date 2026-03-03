@@ -1,11 +1,11 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/backend/schema/calendar_meeting_context.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/backend/schema/calendar_meeting_context.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/utils/logger.dart';
 
 /// Response from storing a meeting
 class StoreMeetingResponse {

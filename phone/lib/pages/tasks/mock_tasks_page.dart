@@ -2,10 +2,10 @@
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/providers/mobile_mock_provider.dart';
-import 'package:omi/ui/mobile/mobile_tokens.dart';
-import 'package:omi/widgets/mobile_bottom_sheet.dart';
-import 'package:omi/widgets/mobile_page_header.dart';
+import 'package:freeu/providers/mobile_mock_provider.dart';
+import 'package:freeu/ui/mobile/mobile_tokens.dart';
+import 'package:freeu/widgets/mobile_bottom_sheet.dart';
+import 'package:freeu/widgets/mobile_page_header.dart';
 
 class MockTasksPage extends StatefulWidget {
   const MockTasksPage({super.key});

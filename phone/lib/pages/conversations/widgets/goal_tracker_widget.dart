@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -6,10 +6,10 @@ import 'package:flutter/services.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:omi/backend/http/api/goals.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/pages/chat/page.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/goals.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/pages/chat/page.dart';
+import 'package:freeu/utils/logger.dart';
 
 /// Goal tracker widget with semicircle gauge
 class GoalTrackerWidget extends StatefulWidget {

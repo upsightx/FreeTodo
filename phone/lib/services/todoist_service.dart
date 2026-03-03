@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/http/api/task_integrations.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/task_integrations.dart';
+import 'package:freeu/utils/logger.dart';
 
 class TodoistService {
   static final TodoistService _instance = TodoistService._internal();

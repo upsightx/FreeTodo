@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 
-import 'package:omi/backend/http/api/messages.dart';
-import 'package:omi/main.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/file.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/backend/http/api/messages.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/file.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 enum VoiceRecorderState {
   idle,

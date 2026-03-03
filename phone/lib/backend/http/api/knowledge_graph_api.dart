@@ -1,7 +1,7 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/env/env.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/env/env.dart';
 
 class KnowledgeGraphApi {
   static final String _baseUrl = '${Env.apiBaseUrl}v1/knowledge-graph';

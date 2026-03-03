@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 
-import 'package:omi/main.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 /// Shared handler for action item notifications
 class ActionItemNotificationHandler {
@@ -42,7 +42,7 @@ class ActionItemNotificationHandler {
         content: NotificationContent(
           id: notificationId,
           channelKey: channelKey,
-          title: '⏰ ${ctx?.l10n.actionItemReminderTitle ?? 'Omi Reminder'}',
+          title: '⏰ ${ctx?.l10n.actionItemReminderTitle ?? 'FreeU Reminder'}',
           body: description,
           payload: {
             'action_item_id': actionItemId,

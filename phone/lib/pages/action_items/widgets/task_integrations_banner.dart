@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/pages/settings/task_integrations_page.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/pages/settings/task_integrations_page.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class TaskIntegrationsBanner extends StatelessWidget {
   const TaskIntegrationsBanner({super.key});

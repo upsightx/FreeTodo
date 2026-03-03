@@ -1,10 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
-import 'package:omi/env/env.dart';
-import 'package:omi/env/lifetrace_env.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/env/lifetrace_env.dart';
 
 class ConnectivityService {
   static final ConnectivityService _instance = ConnectivityService._internal();

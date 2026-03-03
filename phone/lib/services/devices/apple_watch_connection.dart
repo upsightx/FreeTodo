@@ -1,15 +1,15 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/devices/device_connection.dart';
-import 'package:omi/services/devices/models.dart';
-import 'package:omi/services/devices/transports/watch_transport.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/devices/device_connection.dart';
+import 'package:freeu/services/devices/models.dart';
+import 'package:freeu/services/devices/transports/watch_transport.dart';
+import 'package:freeu/utils/logger.dart';
 
 const String watchBatteryServiceUuid = 'watch-battery-service';
 const String watchBatteryLevelCharacteristicUuid = 'watch-battery-level';

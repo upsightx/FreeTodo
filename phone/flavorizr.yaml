@@ -1,7 +1,7 @@
 flavors:
   prod:
     app:
-      name: "Omi"
+      name: "FreeU"
       icon: "assets/images/app_launcher_icon.png"
     android:
       applicationId: "com.friend.ios"
@@ -15,7 +15,7 @@ flavors:
         config: "app/ios/Config/Prod/GoogleService-Info.plist"
   dev:
     app:
-      name: "Omi Dev"
+      name: "FreeU Dev"
       icon: "assets/images/app_launcher_icon.png"
     android:
       icon: "assets/images/app_launcher_icon.png"

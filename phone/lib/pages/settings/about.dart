@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/pages/settings/webview.dart';
-import 'package:omi/utils/analytics/intercom.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/pages/settings/webview.dart';
+import 'package:freeu/utils/analytics/intercom.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 class AboutOmiPage extends StatefulWidget {
   const AboutOmiPage({super.key});
@@ -43,7 +43,7 @@ class _AboutOmiPageState extends State<AboutOmiPage> {
             ListTile(
               contentPadding: const EdgeInsets.fromLTRB(4, 0, 24, 0),
               title: Text(context.l10n.visitWebsite, style: const TextStyle(color: Colors.white)),
-              subtitle: const Text('https://omi.me'),
+              subtitle: const Text('FreeU'),
               trailing: const Icon(Icons.language_outlined, size: 20),
               onTap: () {
                 MixpanelManager().pageOpened('About Visit Website');

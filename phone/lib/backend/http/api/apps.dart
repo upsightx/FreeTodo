@@ -1,13 +1,13 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_manager.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_manager.dart';
 
 Future<List<Map<String, dynamic>>> retrieveAppsGrouped({
   int offset = 0,

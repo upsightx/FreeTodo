@@ -1,19 +1,19 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
 import 'package:collection/collection.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/services/devices/device_connection.dart';
-import 'package:omi/services/devices/discovery/apple_watch_discoverer.dart';
-import 'package:omi/services/devices/discovery/bluetooth_discoverer.dart';
-import 'package:omi/services/devices/discovery/device_discoverer.dart';
-import 'package:omi/services/devices/errors.dart';
-import 'package:omi/utils/debug_log_manager.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/mutex.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/services/devices/device_connection.dart';
+import 'package:freeu/services/devices/discovery/apple_watch_discoverer.dart';
+import 'package:freeu/services/devices/discovery/bluetooth_discoverer.dart';
+import 'package:freeu/services/devices/discovery/device_discoverer.dart';
+import 'package:freeu/services/devices/errors.dart';
+import 'package:freeu/utils/debug_log_manager.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/mutex.dart';
 
 abstract class IDeviceService {
   void start();

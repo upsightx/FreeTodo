@@ -1,8 +1,8 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:just_audio/just_audio.dart';
 
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/utils/logger.dart';
 
 /// Plays a silent audio loop on iOS to prevent the system from suspending
 /// the app when it moves to the background.  Android does not need this

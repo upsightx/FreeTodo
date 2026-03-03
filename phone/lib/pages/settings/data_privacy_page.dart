@@ -1,17 +1,17 @@
-import 'package:flutter/gestures.dart';
+﻿import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/pages/apps/app_detail/app_detail.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/pages/settings/widgets/data_protection_section.dart';
-import 'package:omi/providers/app_provider.dart';
-import 'package:omi/providers/user_provider.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/pages/apps/app_detail/app_detail.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/pages/settings/widgets/data_protection_section.dart';
+import 'package:freeu/providers/app_provider.dart';
+import 'package:freeu/providers/user_provider.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 class DataPrivacyPage extends StatefulWidget {
   const DataPrivacyPage({super.key});

@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/backend/http/api/mcp_api.dart';
-import 'package:omi/backend/schema/mcp_api_key.dart';
+import 'package:freeu/backend/http/api/mcp_api.dart';
+import 'package:freeu/backend/schema/mcp_api_key.dart';
 
 class McpProvider with ChangeNotifier {
   List<McpApiKey> _keys = [];

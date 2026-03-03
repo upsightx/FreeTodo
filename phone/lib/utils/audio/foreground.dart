@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,8 +7,8 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 @pragma('vm:entry-point')
 void _startForegroundCallback() {
@@ -161,7 +161,7 @@ class ForegroundUtil {
         Logger.debug('[BGDBG] ForegroundTask restarted, result=$result');
       } else {
         result = await FlutterForegroundTask.startService(
-          notificationTitle: 'Your Omi Device is connected.',
+          notificationTitle: 'Your FreeU Device is connected.',
           notificationText: 'Transcription service is running in the background.',
           callback: _startForegroundCallback,
         );

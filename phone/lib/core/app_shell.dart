@@ -1,38 +1,38 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import 'package:app_links/app_links.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/http/api/action_items.dart' as action_items_api;
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/mobile/mobile_app.dart';
-import 'package:omi/pages/action_items/widgets/accept_shared_tasks_sheet.dart';
-import 'package:omi/pages/apps/app_detail/app_detail.dart';
-import 'package:omi/pages/settings/asana_settings_page.dart';
-import 'package:omi/pages/settings/clickup_settings_page.dart';
-import 'package:omi/pages/settings/usage_page.dart';
-import 'package:omi/pages/settings/wrapped_2025_page.dart';
-import 'package:omi/providers/action_items_provider.dart';
-import 'package:omi/providers/app_provider.dart';
-import 'package:omi/providers/auth_provider.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/providers/integration_provider.dart';
-import 'package:omi/providers/message_provider.dart';
-import 'package:omi/providers/people_provider.dart';
-import 'package:omi/providers/task_integration_provider.dart';
-import 'package:omi/providers/usage_provider.dart';
-import 'package:omi/providers/user_provider.dart';
-import 'package:omi/services/asana_service.dart';
-import 'package:omi/services/clickup_service.dart';
-import 'package:omi/services/google_tasks_service.dart';
-import 'package:omi/services/notifications.dart';
-import 'package:omi/services/todoist_service.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_manager.dart';
+import 'package:freeu/backend/http/api/action_items.dart' as action_items_api;
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/mobile/mobile_app.dart';
+import 'package:freeu/pages/action_items/widgets/accept_shared_tasks_sheet.dart';
+import 'package:freeu/pages/apps/app_detail/app_detail.dart';
+import 'package:freeu/pages/settings/asana_settings_page.dart';
+import 'package:freeu/pages/settings/clickup_settings_page.dart';
+import 'package:freeu/pages/settings/usage_page.dart';
+import 'package:freeu/pages/settings/wrapped_2025_page.dart';
+import 'package:freeu/providers/action_items_provider.dart';
+import 'package:freeu/providers/app_provider.dart';
+import 'package:freeu/providers/auth_provider.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/providers/integration_provider.dart';
+import 'package:freeu/providers/message_provider.dart';
+import 'package:freeu/providers/people_provider.dart';
+import 'package:freeu/providers/task_integration_provider.dart';
+import 'package:freeu/providers/usage_provider.dart';
+import 'package:freeu/providers/user_provider.dart';
+import 'package:freeu/services/asana_service.dart';
+import 'package:freeu/services/clickup_service.dart';
+import 'package:freeu/services/google_tasks_service.dart';
+import 'package:freeu/services/notifications.dart';
+import 'package:freeu/services/todoist_service.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_manager.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});

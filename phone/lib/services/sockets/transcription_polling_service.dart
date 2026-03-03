@@ -1,15 +1,15 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
 
-import 'package:omi/models/stt_response_schema.dart';
-import 'package:omi/models/stt_result.dart';
-import 'package:omi/services/custom_stt_log_service.dart';
-import 'package:omi/services/sockets/pure_polling.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/models/stt_response_schema.dart';
+import 'package:freeu/models/stt_result.dart';
+import 'package:freeu/services/custom_stt_log_service.dart';
+import 'package:freeu/services/sockets/pure_polling.dart';
+import 'package:freeu/utils/logger.dart';
 
 enum SttRequestBodyType {
   multipartForm,

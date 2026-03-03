@@ -1,11 +1,11 @@
 ﻿import 'dart:convert';
 import 'dart:io';
 
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/backend/schema/message.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/other/string_utils.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/backend/schema/message.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/other/string_utils.dart';
 
 String? _lastSessionId;
 

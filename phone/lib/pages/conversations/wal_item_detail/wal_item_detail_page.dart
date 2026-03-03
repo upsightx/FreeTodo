@@ -1,26 +1,26 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 import 'package:provider/provider.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/models/playback_state.dart';
-import 'package:omi/pages/conversations/sync_widgets/fast_transfer_suggestion_dialog.dart';
-import 'package:omi/pages/conversations/sync_widgets/location_permission_dialog.dart';
-import 'package:omi/providers/sync_provider.dart';
-import 'package:omi/services/devices/wifi_sync_error.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/services/wals.dart';
-import 'package:omi/services/wifi/wifi_network_service.dart';
-import 'package:omi/ui/molecules/omi_confirm_dialog.dart';
-import 'package:omi/pages/conversations/sync_widgets/wifi_connection_sheet.dart';
-import 'package:omi/utils/device.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/utils/other/time_utils.dart';
-import 'package:omi/widgets/waveform_section.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/models/playback_state.dart';
+import 'package:freeu/pages/conversations/sync_widgets/fast_transfer_suggestion_dialog.dart';
+import 'package:freeu/pages/conversations/sync_widgets/location_permission_dialog.dart';
+import 'package:freeu/providers/sync_provider.dart';
+import 'package:freeu/services/devices/wifi_sync_error.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/services/wals.dart';
+import 'package:freeu/services/wifi/wifi_network_service.dart';
+import 'package:freeu/ui/molecules/omi_confirm_dialog.dart';
+import 'package:freeu/pages/conversations/sync_widgets/wifi_connection_sheet.dart';
+import 'package:freeu/utils/device.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/utils/other/time_utils.dart';
+import 'package:freeu/widgets/waveform_section.dart';
 
 class WalItemDetailPage extends StatefulWidget {
   final Wal wal;
@@ -585,7 +585,7 @@ class _WalItemDetailPageState extends State<WalItemDetailPage> {
 
         final sheetController = await WifiConnectionSheet.show(
           context,
-          deviceName: 'Omi',
+          devicename: 'FreeU',
           onCancel: () {
             syncProvider.cancelSync();
           },

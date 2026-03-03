@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/schema/person.dart';
-import 'package:omi/providers/connectivity_provider.dart';
-import 'package:omi/providers/people_provider.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/widgets/dialog.dart';
-import 'package:omi/widgets/extensions/functions.dart';
+import 'package:freeu/backend/schema/person.dart';
+import 'package:freeu/providers/connectivity_provider.dart';
+import 'package:freeu/providers/people_provider.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/widgets/dialog.dart';
+import 'package:freeu/widgets/extensions/functions.dart';
 
 class UserPeoplePage extends StatelessWidget {
   const UserPeoplePage({super.key});

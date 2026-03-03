@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart';
 
-import 'package:omi/backend/http/api/folders.dart';
-import 'package:omi/backend/schema/folder.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/folders.dart';
+import 'package:freeu/backend/schema/folder.dart';
+import 'package:freeu/utils/logger.dart';
 
 class FolderProvider extends ChangeNotifier {
   List<Folder> _folders = [];

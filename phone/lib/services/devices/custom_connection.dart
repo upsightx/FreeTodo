@@ -1,9 +1,9 @@
-import 'dart:async';
+﻿import 'dart:async';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/devices/device_connection.dart';
-import 'package:omi/services/devices/models.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/devices/device_connection.dart';
+import 'package:freeu/services/devices/models.dart';
 
 abstract class CustomDeviceConnection extends DeviceConnection {
   String get serviceUuid;

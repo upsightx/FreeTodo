@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shimmer/shimmer.dart';
 
-import 'package:omi/widgets/shimmer_with_timeout.dart';
+import 'package:freeu/widgets/shimmer_with_timeout.dart';
 
 void main() {
   testWidgets('shows shimmer before timeout and hides after', (tester) async {

@@ -4,22 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_down_button/pull_down_button.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/models/sync_state.dart';
-import 'package:omi/providers/connectivity_provider.dart';
-import 'package:omi/providers/sync_provider.dart';
-import 'package:omi/providers/user_provider.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/services/wals.dart';
-import 'package:omi/ui/molecules/omi_confirm_dialog.dart';
-import 'package:omi/pages/conversations/sync_widgets/wifi_connection_sheet.dart';
-import 'package:omi/utils/device.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/utils/other/time_utils.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/models/sync_state.dart';
+import 'package:freeu/providers/connectivity_provider.dart';
+import 'package:freeu/providers/sync_provider.dart';
+import 'package:freeu/providers/user_provider.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/services/wals.dart';
+import 'package:freeu/ui/molecules/omi_confirm_dialog.dart';
+import 'package:freeu/pages/conversations/sync_widgets/wifi_connection_sheet.dart';
+import 'package:freeu/utils/device.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/utils/other/time_utils.dart';
 import 'fast_transfer_settings_page.dart';
 import 'local_storage_page.dart';
 import 'private_cloud_sync_page.dart';
@@ -693,7 +693,7 @@ class _SyncPageState extends State<SyncPage> {
 
       final controller = await WifiConnectionSheet.show(
         context,
-        deviceName: 'Omi',
+        devicename: 'FreeU',
         onCancel: () {
           syncProvider.cancelSync();
         },

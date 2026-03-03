@@ -1,7 +1,7 @@
-import 'package:flutter/widgets.dart';
+﻿import 'package:flutter/widgets.dart';
 
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/l10n/app_localizations.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/l10n/app_localizations.dart';
 
 /// Helper extension to get localized titles for app schema classes.
 /// Falls back to the API-provided title if no localization key exists.

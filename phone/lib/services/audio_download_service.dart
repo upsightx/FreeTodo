@@ -1,12 +1,12 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
-import 'package:omi/backend/http/api/audio.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/utils/audio/wav_combiner.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/audio.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/utils/audio/wav_combiner.dart';
+import 'package:freeu/utils/logger.dart';
 
 enum AudioDownloadStage {
   preparing,

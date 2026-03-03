@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -13,18 +13,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/models/custom_stt_config.dart';
-import 'package:omi/models/stt_provider.dart';
-import 'package:omi/pages/settings/usage_page.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/services/custom_stt_log_service.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/services/sockets/transcription_service.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/models/custom_stt_config.dart';
+import 'package:freeu/models/stt_provider.dart';
+import 'package:freeu/pages/settings/usage_page.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/services/custom_stt_log_service.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/services/sockets/transcription_service.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 class TranscriptionSettingsPage extends StatefulWidget {
   const TranscriptionSettingsPage({super.key});

@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/utils/logger.dart';
 
 enum CustomSttLogLevel { info, warning, error }
 

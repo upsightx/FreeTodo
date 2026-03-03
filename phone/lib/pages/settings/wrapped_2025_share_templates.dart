@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 // Bold color palette - matching wrapped_2025_page.dart
 class WrappedColors {
@@ -50,7 +50,7 @@ class WrappedShareFrame extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: const Text(
-                    'omi.me/wrapped',
+                    'FreeU',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 28,
@@ -1166,7 +1166,7 @@ class FinalCollageShareTemplate extends StatelessWidget {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: const Text(
-                  'omi.me/wrapped',
+                  'FreeU',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,

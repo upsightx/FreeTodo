@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/backend/http/api/notifications.dart';
+import 'package:freeu/backend/http/api/notifications.dart';
 
 class NotificationCenterProvider extends ChangeNotifier {
   List<AppNotification> _notifications = <AppNotification>[];

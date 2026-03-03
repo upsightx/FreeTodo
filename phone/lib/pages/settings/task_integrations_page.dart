@@ -2,23 +2,23 @@
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:omi/widgets/shimmer_with_timeout.dart';
+import 'package:freeu/widgets/shimmer_with_timeout.dart';
 
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/pages/settings/asana_settings_page.dart';
-import 'package:omi/pages/settings/clickup_settings_page.dart';
-import 'package:omi/pages/settings/google_tasks_settings_page.dart';
-import 'package:omi/pages/settings/todoist_settings_page.dart';
-import 'package:omi/providers/task_integration_provider.dart';
-import 'package:omi/services/apple_reminders_service.dart';
-import 'package:omi/services/asana_service.dart';
-import 'package:omi/services/clickup_service.dart';
-import 'package:omi/services/google_tasks_service.dart';
-import 'package:omi/services/todoist_service.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/pages/settings/asana_settings_page.dart';
+import 'package:freeu/pages/settings/clickup_settings_page.dart';
+import 'package:freeu/pages/settings/google_tasks_settings_page.dart';
+import 'package:freeu/pages/settings/todoist_settings_page.dart';
+import 'package:freeu/providers/task_integration_provider.dart';
+import 'package:freeu/services/apple_reminders_service.dart';
+import 'package:freeu/services/asana_service.dart';
+import 'package:freeu/services/clickup_service.dart';
+import 'package:freeu/services/google_tasks_service.dart';
+import 'package:freeu/services/todoist_service.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 enum TaskIntegrationApp {
   appleReminders,

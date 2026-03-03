@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class CustomBackendURLForm extends StatefulWidget {
   const CustomBackendURLForm({super.key});

@@ -1,4 +1,4 @@
-// ignore: unused_import
+﻿// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -9,7 +9,7 @@ class AppLocalizationsLt extends AppLocalizations {
   AppLocalizationsLt([String locale = 'lt']) : super(locale);
 
   @override
-  String get appTitle => 'Omi';
+  String get appTitle => 'FreeU';
 
   @override
   String get conversationTab => 'Pokalbis';
@@ -122,7 +122,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get editPerson => 'Redaguoti asmenį';
 
   @override
-  String get createPersonHint => 'Sukurkite naują asmenį ir apmokykite Omi atpažinti jų kalbą!';
+  String get createPersonHint => 'Sukurkite naują asmenį ir apmokykite FreeU atpažinti jų kalbą!';
 
   @override
   String get speechProfile => 'Kalbos Profilis';
@@ -160,7 +160,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get couldNotAccessFile => 'Nepavyko pasiekti pasirinkto failo';
 
   @override
-  String get askOmi => 'Paklausti Omi';
+  String get askOmi => 'Paklausti FreeU';
 
   @override
   String get done => 'Atlikta';
@@ -261,7 +261,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get noMessagesYet => 'Kol kas nėra žinučių!\nKodėl gi nepradėtumėte pokalbio?';
 
   @override
-  String get deletingMessages => 'Ištrinami jūsų pranešimai iš Omi atminties...';
+  String get deletingMessages => 'Ištrinami jūsų pranešimai iš FreeU atminties...';
 
   @override
   String get messageCopied => '✨ Pranešimas nukopijuotas į iškarpinę';
@@ -291,7 +291,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get maxFilesLimit => 'Galite įkelti tik 4 failus vienu metu';
 
   @override
-  String get chatWithOmi => 'Pokalbis su Omi';
+  String get chatWithOmi => 'Pokalbis su FreeU';
 
   @override
   String get apps => 'Programėlės';
@@ -322,7 +322,7 @@ class AppLocalizationsLt extends AppLocalizations {
       'Nepavyko gauti programėlių :(\n\nPatikrinkite interneto ryšį ir bandykite dar kartą.';
 
   @override
-  String get aboutOmi => 'Apie Omi';
+  String get aboutOmi => 'Apie FreeU';
 
   @override
   String get privacyPolicy => 'Privatumo politika';
@@ -437,7 +437,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get developerSettings => 'Kūrėjo nustatymai';
 
   @override
-  String get getOmiForMac => 'Gauti Omi Mac';
+  String get getOmiForMac => 'Gauti FreeU Mac';
 
   @override
   String get referralProgram => 'Rekomendacijų programa';
@@ -456,7 +456,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get privacyIntro =>
-      'Omi įsipareigoja saugoti jūsų privatumą. Šis puslapis leidžia kontroliuoti, kaip jūsų duomenys saugomi ir naudojami.';
+      'FreeU įsipareigoja saugoti jūsų privatumą. Šis puslapis leidžia kontroliuoti, kaip jūsų duomenys saugomi ir naudojami.';
 
   @override
   String get learnMore => 'Sužinoti daugiau...';
@@ -527,7 +527,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get unpairAndForget => 'Atjungti ir pamiršti įrenginį';
 
   @override
-  String get deviceDisconnectedMessage => 'Jūsų Omi buvo atjungtas 😔';
+  String get deviceDisconnectedMessage => 'Jūsų FreeU buvo atjungtas 😔';
 
   @override
   String get deviceUnpairedMessage =>
@@ -544,7 +544,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get deviceNotConnected => 'Įrenginys neprijungtas';
 
   @override
-  String get connectDeviceMessage => 'Prijunkite Omi įrenginį, kad pasiektumėte\nįrenginio nustatymus ir pritaikymą';
+  String get connectDeviceMessage => 'Prijunkite FreeU įrenginį, kad pasiektumėte\nįrenginio nustatymus ir pritaikymą';
 
   @override
   String get deviceInfoSection => 'Įrenginio informacija';
@@ -677,7 +677,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get docs => 'Dokumentacija';
 
   @override
-  String get yourOmiInsights => 'Jūsų Omi įžvalgos';
+  String get yourOmiInsights => 'Jūsų FreeU įžvalgos';
 
   @override
   String get today => 'Šiandien';
@@ -695,13 +695,13 @@ class AppLocalizationsLt extends AppLocalizations {
   String get noActivityYet => 'Kol kas nėra veiklos';
 
   @override
-  String get startConversationToSeeInsights => 'Pradėkite pokalbį su Omi,\nkad čia matytumėte naudojimo įžvalgas.';
+  String get startConversationToSeeInsights => 'Pradėkite pokalbį su FreeU,\nkad čia matytumėte naudojimo įžvalgas.';
 
   @override
   String get listening => 'Klausymasis';
 
   @override
-  String get listeningSubtitle => 'Bendras laikas, kurį Omi aktyviai klausėsi.';
+  String get listeningSubtitle => 'Bendras laikas, kurį FreeU aktyviai klausėsi.';
 
   @override
   String get understanding => 'Supratimas';
@@ -757,19 +757,19 @@ class AppLocalizationsLt extends AppLocalizations {
   }
 
   @override
-  String get shareStatsMessage => 'Dalinu savo Omi statistika! (omi.me – jūsų visada veikiantis DI asistentas)';
+  String get shareStatsMessage => 'Dalinu savo FreeU statistika! (FreeU.me – jūsų visada veikiantis DI asistentas)';
 
   @override
-  String get sharePeriodToday => 'Šiandien omi:';
+  String get sharePeriodToday => 'Šiandien FreeU:';
 
   @override
-  String get sharePeriodMonth => 'Šį mėnesį omi:';
+  String get sharePeriodMonth => 'Šį mėnesį FreeU:';
 
   @override
-  String get sharePeriodYear => 'Šiais metais omi:';
+  String get sharePeriodYear => 'Šiais metais FreeU:';
 
   @override
-  String get sharePeriodAllTime => 'Iki šiol omi:';
+  String get sharePeriodAllTime => 'Iki šiol FreeU:';
 
   @override
   String shareStatsListened(String minutes) {
@@ -804,7 +804,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get noLogFilesFound => 'Nerasta jokių žurnalo failų.';
 
   @override
-  String get omiDebugLog => 'Omi derinimo žurnalas';
+  String get omiDebugLog => 'FreeU derinimo žurnalas';
 
   @override
   String get logShared => 'Žurnalas bendrintas';
@@ -828,7 +828,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get exportDataDesc => 'Eksportuoti pokalbius į JSON failą';
 
   @override
-  String get exportedConversations => 'Eksportuoti pokalbiai iš Omi';
+  String get exportedConversations => 'Eksportuoti pokalbiai iš FreeU';
 
   @override
   String get exportShared => 'Eksportas bendrintas';
@@ -1010,7 +1010,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get addWordsDesc => 'Vardai, terminai ar neįprasti žodžiai';
 
   @override
-  String get vocabularyHint => 'Omi, Callie, OpenAI';
+  String get vocabularyHint => 'FreeU, Callie, OpenAI';
 
   @override
   String get connect => 'Connect';
@@ -1054,7 +1054,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String authAccessMessage(String appName) {
-    return 'Jums reikės autorizuoti Omi prieigą prie jūsų $appName duomenų. Bus atidaryta naršyklė autentifikacijai.';
+    return 'Jums reikės autorizuoti FreeU prieigą prie jūsų $appName duomenų. Bus atidaryta naršyklė autentifikacijai.';
   }
 
   @override
@@ -1148,7 +1148,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get editName => 'Redaguoti vardą';
 
   @override
-  String get howShouldOmiCallYou => 'Kaip Omi turėtų jus vadinti?';
+  String get howShouldOmiCallYou => 'Kaip FreeU turėtų jus vadinti?';
 
   @override
   String get enterYourName => 'Įveskite savo vardą';
@@ -1419,7 +1419,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String authorizeOmiForTasks(String appName) {
-    return 'Jums reikės autorizuoti Omi kurti užduotis jūsų $appName paskyroje. Bus atidaryta naršyklė autentifikacijai.';
+    return 'Jums reikės autorizuoti FreeU kurti užduotis jūsų $appName paskyroje. Bus atidaryta naršyklė autentifikacijai.';
   }
 
   @override
@@ -1454,13 +1454,13 @@ class AppLocalizationsLt extends AppLocalizations {
   String get bringYourOwn => 'Naudokite savo';
 
   @override
-  String get payYourSttProvider => 'Laisvai naudokite omi. Mokate tik savo STT teikėjui tiesiogiai.';
+  String get payYourSttProvider => 'Laisvai naudokite FreeU. Mokate tik savo STT teikėjui tiesiogiai.';
 
   @override
   String get freeMinutesMonth => '1 200 nemokamų minučių per mėnesį įtraukta. Neribota su ';
 
   @override
-  String get omiUnlimited => 'Omi Unlimited';
+  String get omiUnlimited => 'FreeU Unlimited';
 
   @override
   String get hostRequired => 'Reikalingas pagrindinis kompiuteris';
@@ -1578,11 +1578,11 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String deviceUsesCodec(String device, String reason) {
-    return '$device naudoja $reason. Bus naudojamas Omi.';
+    return '$device naudoja $reason. Bus naudojamas FreeU.';
   }
 
   @override
-  String get omiTranscription => 'Omi transkripcija';
+  String get omiTranscription => 'FreeU transkripcija';
 
   @override
   String get bestInClassTranscription => 'Geriausia klasės transkripcija be jokio nustatymo';
@@ -1734,7 +1734,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get bluetoothNeeded =>
-      'Omi reikia Bluetooth, kad prisijungtų prie jūsų nešiojamo įrenginio. Įjunkite Bluetooth ir bandykite dar kartą.';
+      'FreeU reikia Bluetooth, kad prisijungtų prie jūsų nešiojamo įrenginio. Įjunkite Bluetooth ir bandykite dar kartą.';
 
   @override
   String get contactSupport => 'Susisiekti su palaikymu?';
@@ -1749,7 +1749,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get backgroundActivity => 'Foninė veikla';
 
   @override
-  String get backgroundActivityDesc => 'Leiskite Omi veikti fone geresniam stabilumui';
+  String get backgroundActivityDesc => 'Leiskite FreeU veikti fone geresniam stabilumui';
 
   @override
   String get locationAccess => 'Vietos prieiga';
@@ -1778,7 +1778,7 @@ class AppLocalizationsLt extends AppLocalizations {
       'Eikite į įrenginio nustatymus ir nustatykite vietos leidimą į „Visada leisti\"';
 
   @override
-  String get lovingOmi => 'Patinka Omi?';
+  String get lovingOmi => 'Patinka FreeU?';
 
   @override
   String get leaveReviewIos =>
@@ -1798,7 +1798,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get maybeLater => 'Gal vėliau';
 
   @override
-  String get speechProfileIntro => 'Omi turi išmokti jūsų tikslus ir balsą. Vėliau galėsite tai pakeisti.';
+  String get speechProfileIntro => 'FreeU turi išmokti jūsų tikslus ir balsą. Vėliau galėsite tai pakeisti.';
 
   @override
   String get getStarted => 'Pradėti';
@@ -1852,7 +1852,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get tryAgain => 'Bandyti dar kartą';
 
   @override
-  String get connectOmiOmiGlass => 'Prijungti Omi / OmiGlass';
+  String get connectOmiOmiGlass => 'Prijungti FreeU / OmiGlass';
 
   @override
   String get continueWithoutDevice => 'Tęsti be įrenginio';
@@ -1889,7 +1889,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get termsOfUse => 'Naudojimo sąlygomis';
 
   @override
-  String get omiYourAiCompanion => 'Omi – jūsų DI palydovas';
+  String get omiYourAiCompanion => 'FreeU – jūsų DI palydovas';
 
   @override
   String get captureEveryMoment =>
@@ -1906,7 +1906,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get permissionGrantedNow =>
-      'Leidimas suteiktas! Dabar:\n\nAtidarykite Omi programą savo laikrodyje ir paspauskite „Tęsti\" žemiau';
+      'Leidimas suteiktas! Dabar:\n\nAtidarykite FreeU programą savo laikrodyje ir paspauskite „Tęsti\" žemiau';
 
   @override
   String get needMicrophonePermission =>
@@ -1920,7 +1920,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get troubleshootingSteps =>
-      'Trikčių šalinimas:\n\n1. Įsitikinkite, kad Omi įdiegtas jūsų laikrodyje\n2. Atidarykite Omi programą savo laikrodyje\n3. Ieškokite leidimo iššokančio lango\n4. Paspauskite „Leisti\", kai bus paprašyta\n5. Programėlė jūsų laikrodyje užsidarys – atidarykite ją iš naujo\n6. Grįžkite ir paspauskite „Tęsti\" savo iPhone';
+      'Trikčių šalinimas:\n\n1. Įsitikinkite, kad FreeU įdiegtas jūsų laikrodyje\n2. Atidarykite FreeU programą savo laikrodyje\n3. Ieškokite leidimo iššokančio lango\n4. Paspauskite „Leisti\", kai bus paprašyta\n5. Programėlė jūsų laikrodyje užsidarys – atidarykite ją iš naujo\n6. Grįžkite ir paspauskite „Tęsti\" savo iPhone';
 
   @override
   String get recordingStartedSuccessfully => 'Įrašymas pradėtas sėkmingai!';
@@ -2073,16 +2073,16 @@ class AppLocalizationsLt extends AppLocalizations {
   String get addFirstMemory => 'Pridėti pirmąjį prisiminimą';
 
   @override
-  String get clearMemoryTitle => 'Išvalyti Omi atmintį';
+  String get clearMemoryTitle => 'Išvalyti FreeU atmintį';
 
   @override
-  String get clearMemoryMessage => 'Ar tikrai norite išvalyti Omi atmintį? Šio veiksmo negalima atšaukti.';
+  String get clearMemoryMessage => 'Ar tikrai norite išvalyti FreeU atmintį? Šio veiksmo negalima atšaukti.';
 
   @override
   String get clearMemoryButton => 'Išvalyti atmintį';
 
   @override
-  String get memoryClearedSuccess => 'Omi atmintis apie jus išvalyta';
+  String get memoryClearedSuccess => 'FreeU atmintis apie jus išvalyta';
 
   @override
   String get noMemoriesToDelete => 'Nėra atminimų trynimui';
@@ -2230,7 +2230,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get translationNoticeMessage =>
-      'Omi verčia pokalbius į jūsų pagrindinę kalbą. Atnaujinkite bet kada skiltyje Nustatymai → Profiliai.';
+      'FreeU verčia pokalbius į jūsų pagrindinę kalbą. Atnaujinkite bet kada skiltyje Nustatymai → Profiliai.';
 
   @override
   String get pleaseCheckInternetConnection => 'Patikrinkite interneto ryšį ir bandykite dar kartą';
@@ -2410,7 +2410,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get privacyPolicyTitle => 'Privatumo politika';
 
   @override
-  String get omiSttProvider => 'Omi';
+  String get omiSttProvider => 'FreeU';
 
   @override
   String labelCopied(String label) {
@@ -2568,7 +2568,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get checksForAudioFiles => 'Patikrina garso failus SD kortelėje';
 
   @override
-  String get omiSyncsAudioFiles => 'Omi tada sinchronizuoja garso failus su serveriu';
+  String get omiSyncsAudioFiles => 'FreeU tada sinchronizuoja garso failus su serveriu';
 
   @override
   String get serverProcessesAudio => 'Serveris apdoroja garso failus ir sukuria atsiminimus';
@@ -2578,10 +2578,10 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get welcomeToOmiDescription =>
-      'Sveiki atvykę į Omi! Jūsų AI palydovas pasirengęs padėti jums pokalbių, užduočių ir daugiau.';
+      'Sveiki atvykę į FreeU! Jūsų AI palydovas pasirengęs padėti jums pokalbių, užduočių ir daugiau.';
 
   @override
-  String get startUsingOmi => 'Pradėti naudoti Omi';
+  String get startUsingOmi => 'Pradėti naudoti FreeU';
 
   @override
   String get back => 'Atgal';
@@ -2657,7 +2657,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get reviewAndManageConversations => 'Peržiūrėkite ir tvarkykite įrašytus pokalbius';
 
   @override
-  String get startCapturingConversations => 'Pradėkite fiksuoti pokalbius su Omi įrenginiu, kad juos matytumėte čia.';
+  String get startCapturingConversations => 'Pradėkite fiksuoti pokalbius su FreeU įrenginiu, kad juos matytumėte čia.';
 
   @override
   String get useMobileAppToCapture => 'Naudokite mobilią programą garso įrašymui';
@@ -2673,7 +2673,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get noTasksForToday =>
-      'Šiandien nėra užduočių.\\nPaprašykite Omi daugiau užduočių arba sukurkite rankiniu būdu.';
+      'Šiandien nėra užduočių.\\nPaprašykite FreeU daugiau užduočių arba sukurkite rankiniu būdu.';
 
   @override
   String get dailyScore => 'DIENOS BALAS';
@@ -2822,7 +2822,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get createNewApp => 'Sukurti naują programėlę';
 
   @override
-  String get buildSubmitCustomOmiApp => 'Sukurkite ir pateikite savo tinkintą Omi programėlę';
+  String get buildSubmitCustomOmiApp => 'Sukurkite ir pateikite savo tinkintą FreeU programėlę';
 
   @override
   String get submittingYourApp => 'Jūsų programėlė pateikiama...';
@@ -2870,7 +2870,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get submitAppTermsAgreement =>
-      'Pateikdamas šią programėlę, sutinku su Omi AI paslaugų teikimo sąlygomis ir privatumo politika';
+      'Pateikdamas šią programėlę, sutinku su FreeU AI paslaugų teikimo sąlygomis ir privatumo politika';
 
   @override
   String get submitApp => 'Pateikti programėlę';
@@ -2915,7 +2915,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get dataAccessWarning =>
-      'Ši programa turės prieigą prie jūsų duomenų. Omi AI neatsako už tai, kaip ši programa naudoja, modifikuoja ar ištrina jūsų duomenis';
+      'Ši programa turės prieigą prie jūsų duomenų. FreeU AI neatsako už tai, kaip ši programa naudoja, modifikuoja ar ištrina jūsų duomenis';
 
   @override
   String get installApp => 'Įdiegti programą';
@@ -3264,7 +3264,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get upgradeToPro => 'Atnaujinti į Pro';
 
   @override
-  String get getOmiDevice => 'Gauti Omi įrenginį';
+  String get getOmiDevice => 'Gauti FreeU įrenginį';
 
   @override
   String get wearableAiCompanion => 'Nešiojamas AI palydovas';
@@ -3330,7 +3330,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get setAllMemoriesToPublic => 'Nustatyti visus atminimus kaip viešus';
 
   @override
-  String get permanentlyRemoveAllMemories => 'Visam laikui pašalinti visus atminimus iš Omi';
+  String get permanentlyRemoveAllMemories => 'Visam laikui pašalinti visus atminimus iš FreeU';
 
   @override
   String get allMemoriesAreNowPrivate => 'Visi atminimai dabar privatūs';
@@ -3339,18 +3339,18 @@ class AppLocalizationsLt extends AppLocalizations {
   String get allMemoriesAreNowPublic => 'Visi atminimai dabar vieši';
 
   @override
-  String get clearOmisMemory => 'Išvalyti Omi atmintį';
+  String get clearOmisMemory => 'Išvalyti FreeU atmintį';
 
   @override
   String clearMemoryConfirmation(int count) {
-    return 'Ar tikrai norite išvalyti Omi atmintį? Šio veiksmo negalima atšaukti ir bus visam laikui ištrinti visi $count atminimai.';
+    return 'Ar tikrai norite išvalyti FreeU atmintį? Šio veiksmo negalima atšaukti ir bus visam laikui ištrinti visi $count atminimai.';
   }
 
   @override
-  String get omisMemoryCleared => 'Omi atmintis apie jus buvo išvalyta';
+  String get omisMemoryCleared => 'FreeU atmintis apie jus buvo išvalyta';
 
   @override
-  String get welcomeToOmi => 'Sveiki atvykę į Omi';
+  String get welcomeToOmi => 'Sveiki atvykę į FreeU';
 
   @override
   String get continueWithApple => 'Tęsti su Apple';
@@ -3396,7 +3396,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get chooseYourLanguage => 'Pasirinkite kalbą';
 
   @override
-  String get selectPreferredLanguageForBestExperience => 'Pasirinkite pageidaujamą kalbą geriausiam Omi patirčiai';
+  String get selectPreferredLanguageForBestExperience => 'Pasirinkite pageidaujamą kalbą geriausiam FreeU patirčiai';
 
   @override
   String get searchLanguages => 'Ieškoti kalbų...';
@@ -3415,7 +3415,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get tellUsHowYouWouldLikeToBeAddressed =>
-      'Pasakykite mums, kaip norėtumėte būti kreipiamasi. Tai padeda personalizuoti jūsų Omi patirtį.';
+      'Pasakykite mums, kaip norėtumėte būti kreipiamasi. Tai padeda personalizuoti jūsų FreeU patirtį.';
 
   @override
   String charactersCount(int count) {
@@ -3423,7 +3423,7 @@ class AppLocalizationsLt extends AppLocalizations {
   }
 
   @override
-  String get enableFeaturesForBestExperience => 'Įjunkite funkcijas geriausiai Omi patirčiai jūsų įrenginyje.';
+  String get enableFeaturesForBestExperience => 'Įjunkite funkcijas geriausiai FreeU patirčiai jūsų įrenginyje.';
 
   @override
   String get microphoneAccess => 'Mikrofono prieiga';
@@ -3433,7 +3433,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get microphoneAccessDescription =>
-      'Omi reikia mikrofono prieigos, kad įrašytų jūsų pokalbius ir pateiktų transkripciją.';
+      'FreeU reikia mikrofono prieigos, kad įrašytų jūsų pokalbius ir pateiktų transkripciją.';
 
   @override
   String get screenRecording => 'Ekrano įrašymas';
@@ -3443,7 +3443,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get screenRecordingDescription =>
-      'Omi reikia ekrano įrašymo leidimo, kad užfiksuotų sistemos garsą iš jūsų naršyklėje vykstančių susitikimų.';
+      'FreeU reikia ekrano įrašymo leidimo, kad užfiksuotų sistemos garsą iš jūsų naršyklėje vykstančių susitikimų.';
 
   @override
   String get accessibility => 'Prieinamumas';
@@ -3453,7 +3453,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get accessibilityDescription =>
-      'Omi reikia prieinamumo leidimo, kad aptiktų, kada prisijungiate prie Zoom, Meet ar Teams susitikimų naršyklėje.';
+      'FreeU reikia prieinamumo leidimo, kad aptiktų, kada prisijungiate prie Zoom, Meet ar Teams susitikimų naršyklėje.';
 
   @override
   String get pleaseWait => 'Prašome palaukti...';
@@ -3483,16 +3483,16 @@ class AppLocalizationsLt extends AppLocalizations {
   String get changeYourName => 'Pakeisti savo vardą';
 
   @override
-  String get manageYourOmiPersona => 'Valdyti savo Omi personą';
+  String get manageYourOmiPersona => 'Valdyti savo FreeU personą';
 
   @override
   String get voiceAndPeople => 'Balsas ir Žmonės';
 
   @override
-  String get teachOmiYourVoice => 'Išmokykite Omi savo balsą';
+  String get teachOmiYourVoice => 'Išmokykite FreeU savo balsą';
 
   @override
-  String get tellOmiWhoSaidIt => 'Pasakykite Omi, kas tai pasakė 🗣️';
+  String get tellOmiWhoSaidIt => 'Pasakykite FreeU, kas tai pasakė 🗣️';
 
   @override
   String get payment => 'Mokėjimas';
@@ -3504,7 +3504,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get preferences => 'Nuostatos';
 
   @override
-  String get helpImproveOmiBySharing => 'Padėkite tobulinti Omi dalindamiesi anoniminiais analitikos duomenimis';
+  String get helpImproveOmiBySharing => 'Padėkite tobulinti FreeU dalindamiesi anoniminiais analitikos duomenimis';
 
   @override
   String get deleteAccount => 'Ištrinti Paskyrą';
@@ -3530,7 +3530,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get mcpDescription =>
-      'Norėdami prijungti Omi prie kitų programų, kad skaitytumėte, ieškotumėte ir tvarkytumėte savo prisiminimus ir pokalbius. Sukurkite raktą, kad pradėtumėte.';
+      'Norėdami prijungti FreeU prie kitų programų, kad skaitytumėte, ieškotumėte ir tvarkytumėte savo prisiminimus ir pokalbius. Sukurkite raktą, kad pradėtumėte.';
 
   @override
   String get apiKeys => 'API raktai';
@@ -3565,7 +3565,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get triggersWhenDaySummaryGenerated => 'Suaktyvinamas, kai generuojama dienos santrauka.';
 
   @override
-  String get tryLatestExperimentalFeatures => 'Išbandykite naujausias eksperimentines Omi komandos funkcijas.';
+  String get tryLatestExperimentalFeatures => 'Išbandykite naujausias eksperimentines FreeU komandos funkcijas.';
 
   @override
   String get transcriptionServiceDiagnosticStatus => 'Transkripcijos paslaugos diagnostikos būsena';
@@ -3636,7 +3636,7 @@ class AppLocalizationsLt extends AppLocalizations {
   }
 
   @override
-  String get letOmiChooseAutomatically => 'Leisti Omi automatiškai pasirinkti geriausią programėlę';
+  String get letOmiChooseAutomatically => 'Leisti FreeU automatiškai pasirinkti geriausią programėlę';
 
   @override
   String get deleteConversationConfirmation => 'Ar tikrai norite ištrinti šį pokalbį? Šio veiksmo negalima atšaukti.';
@@ -3773,7 +3773,7 @@ class AppLocalizationsLt extends AppLocalizations {
   }
 
   @override
-  String get translatedByOmi => 'išvertė omi';
+  String get translatedByOmi => 'išvertė FreeU';
 
   @override
   String get backToConversations => 'Grįžti į pokalbius';
@@ -3834,7 +3834,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get customVocabularyHeader => 'PASIRINKTINIS ŽODYNAS';
 
   @override
-  String get addWordsDescription => 'Pridėkite žodžius, kuriuos Omi turėtų atpažinti transkribavimo metu.';
+  String get addWordsDescription => 'Pridėkite žodžius, kuriuos FreeU turėtų atpažinti transkribavimo metu.';
 
   @override
   String get enterWordsHint => 'Įveskite žodžius (atskirti kableliais)';
@@ -3923,7 +3923,7 @@ class AppLocalizationsLt extends AppLocalizations {
       'Tai ištrins visus išvestinius žinių grafiko duomenis. Jūsų originalios atminties išliks saugios.';
 
   @override
-  String get connectOmiWithAI => 'Prijunkite Omi prie AI asistentų';
+  String get connectOmiWithAI => 'Prijunkite FreeU prie AI asistentų';
 
   @override
   String get noAPIKeys => 'Nėra API raktų. Sukurkite vieną, kad pradėtumėte.';
@@ -3959,7 +3959,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get holdOnPreparingForm => 'Palaukite, ruošiame jums formą';
 
   @override
-  String get bySubmittingYouAgreeToOmi => 'Pateikdami sutinkate su Omi ';
+  String get bySubmittingYouAgreeToOmi => 'Pateikdami sutinkate su FreeU ';
 
   @override
   String get termsAndPrivacyPolicy => 'Sąlygos ir Privatumo Politika';
@@ -4121,7 +4121,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get dataAccessNoticeDescription =>
-      'Ši programėlė turės prieigą prie jūsų duomenų. Omi AI nėra atsakinga už tai, kaip jūsų duomenis naudoja, keičia ar ištrina ši programėlė';
+      'Ši programėlė turės prieigą prie jūsų duomenų. FreeU AI nėra atsakinga už tai, kaip jūsų duomenis naudoja, keičia ar ištrina ši programėlė';
 
   @override
   String get copyUrl => 'Kopijuoti URL';
@@ -4206,14 +4206,14 @@ class AppLocalizationsLt extends AppLocalizations {
   }
 
   @override
-  String get omiApiKeys => 'Omi API raktai';
+  String get omiApiKeys => 'FreeU API raktai';
 
   @override
   String get apiKeysDescription =>
-      'API raktai naudojami autentifikavimui, kai jūsų programa bendrauja su OMI serveriu. Jie leidžia jūsų programai kurti prisiminimus ir saugiai pasiekti kitas OMI paslaugas.';
+      'API raktai naudojami autentifikavimui, kai jūsų programa bendrauja su FreeU serveriu. Jie leidžia jūsų programai kurti prisiminimus ir saugiai pasiekti kitas FreeU paslaugas.';
 
   @override
-  String get aboutOmiApiKeys => 'Apie Omi API raktus';
+  String get aboutOmiApiKeys => 'Apie FreeU API raktus';
 
   @override
   String get yourNewKey => 'Jūsų naujas raktas:';
@@ -4356,7 +4356,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get e2eeDescription =>
-      'Šifravimas nuo galo iki galo yra privatumo aukso standartas. Kai įjungta, jūsų duomenys užšifruojami jūsų įrenginyje prieš juos siunčiant į mūsų serverius. Tai reiškia, kad niekas, net Omi, negali pasiekti jūsų turinio.';
+      'Šifravimas nuo galo iki galo yra privatumo aukso standartas. Kai įjungta, jūsų duomenys užšifruojami jūsų įrenginyje prieš juos siunčiant į mūsų serverius. Tai reiškia, kad niekas, net FreeU, negali pasiekti jūsų turinio.';
 
   @override
   String get importantTradeoffs => 'Svarbūs kompromisai:';
@@ -4391,7 +4391,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get secureEncryptionDescription =>
-      'Jūsų duomenys yra užšifruoti jums unikaliu raktu mūsų serveriuose, prieglobstuose Google Cloud. Tai reiškia, kad jūsų neapdoroti duomenys yra neprieinami niekam, įskaitant Omi darbuotojus ar Google, tiesiogiai iš duomenų bazės.';
+      'Jūsų duomenys yra užšifruoti jums unikaliu raktu mūsų serveriuose, prieglobstuose Google Cloud. Tai reiškia, kad jūsų neapdoroti duomenys yra neprieinami niekam, įskaitant FreeU darbuotojus ar Google, tiesiogiai iš duomenų bazės.';
 
   @override
   String get endToEndEncryption => 'Šifravimas nuo galo iki galo';
@@ -4461,21 +4461,21 @@ class AppLocalizationsLt extends AppLocalizations {
   }
 
   @override
-  String get omiTraining => 'Omi Mokymai';
+  String get omiTraining => 'FreeU Mokymai';
 
   @override
   String get trainingDataProgram => 'Mokymo duomenų programa';
 
   @override
   String get getOmiUnlimitedFree =>
-      'Gaukite Omi Unlimited nemokamai, prisidėdami savo duomenimis prie AI modelių mokymo.';
+      'Gaukite FreeU Unlimited nemokamai, prisidėdami savo duomenimis prie AI modelių mokymo.';
 
   @override
   String get trainingDataBullets =>
       '• Jūsų duomenys padeda tobulinti AI modelius\n• Dalijamasi tik nejautriais duomenimis\n• Visiškai skaidrus procesas';
 
   @override
-  String get learnMoreAtOmiTraining => 'Sužinokite daugiau omi.me/training';
+  String get learnMoreAtOmiTraining => 'Sužinokite daugiau FreeU.me/training';
 
   @override
   String get agreeToContributeData => 'Suprantu ir sutinku prisidėti savo duomenimis AI mokymui';
@@ -4553,7 +4553,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get youAreOnUnlimitedPlan => 'Jūs esate Neribotame plane.';
 
   @override
-  String get yourOmiUnleashed => 'Jūsų Omi, paleistas. Tapkite neribotu dėl begalinių galimybių.';
+  String get yourOmiUnleashed => 'Jūsų FreeU, paleistas. Tapkite neribotu dėl begalinių galimybių.';
 
   @override
   String planEndedOn(String date) {
@@ -4578,10 +4578,10 @@ class AppLocalizationsLt extends AppLocalizations {
   String get unlimitedConversations => 'Neribotos pokalbiai';
 
   @override
-  String get askOmiAnything => 'Paklauskite Omi bet ko apie savo gyvenimą';
+  String get askOmiAnything => 'Paklauskite FreeU bet ko apie savo gyvenimą';
 
   @override
-  String get unlockOmiInfiniteMemory => 'Atrakinkite Omi begalinę atmintį';
+  String get unlockOmiInfiniteMemory => 'Atrakinkite FreeU begalinę atmintį';
 
   @override
   String get youreOnAnnualPlan => 'Jūs esate metiniame plane';
@@ -4635,7 +4635,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get privacyIntroText =>
-      'Omi labai rimtai žiūrime į jūsų privatumą. Norime būti skaidrūs dėl renkamų duomenų ir kaip juos naudojame. Štai ką turite žinoti:';
+      'FreeU labai rimtai žiūrime į jūsų privatumą. Norime būti skaidrūs dėl renkamų duomenų ir kaip juos naudojame. Štai ką turite žinoti:';
 
   @override
   String get whatWeTrack => 'Ką sekame';
@@ -4651,11 +4651,11 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get commitmentText =>
-      'Mes įsipareigojame naudoti surinktus duomenis tik tam, kad Omi būtų geresnis produktas jums. Jūsų privatumas ir pasitikėjimas mums yra svarbiausias.';
+      'Mes įsipareigojame naudoti surinktus duomenis tik tam, kad FreeU būtų geresnis produktas jums. Jūsų privatumas ir pasitikėjimas mums yra svarbiausias.';
 
   @override
   String get thankYouText =>
-      'Dėkojame, kad esate vertinamas Omi vartotojas. Jei turite klausimų ar rūpesčių, susisiekite su mumis adresu team@basedhardware.com.';
+      'Dėkojame, kad esate vertinamas FreeU vartotojas. Jei turite klausimų ar rūpesčių, susisiekite su mumis adresu team@basedhardware.com.';
 
   @override
   String get wifiSyncSettings => 'WiFi sinchronizavimo nustatymai';
@@ -4767,7 +4767,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get minutes => 'minučių';
 
   @override
-  String get omiHas => 'Omi turi:';
+  String get omiHas => 'FreeU turi:';
 
   @override
   String get premiumMinutesUsed => 'Premium minutės išnaudotos.';
@@ -4860,7 +4860,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get howPeopleWorks =>
-      'Kai asmuo sukurtas, galite eiti į pokalbio transkripciją ir priskirti jam atitinkamus segmentus, tokiu būdu Omi galės atpažinti ir jų kalbą!';
+      'Kai asmuo sukurtas, galite eiti į pokalbio transkripciją ir priskirti jam atitinkamus segmentus, tokiu būdu FreeU galės atpažinti ir jų kalbą!';
 
   @override
   String get tapToDelete => 'Bakstelėkite, kad ištrintumėte';
@@ -5142,7 +5142,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get enableApps => 'Įjungti programas';
 
   @override
-  String get omiAppName => 'Omi';
+  String get omiAppName => 'FreeU';
 
   @override
   String get showMore => 'rodyti daugiau ↓';
@@ -5166,18 +5166,18 @@ class AppLocalizationsLt extends AppLocalizations {
   String get checkingAppleWatch => 'Tikrinamas Apple Watch...';
 
   @override
-  String get installOmiOnAppleWatch => 'Įdiekite Omi savo\nApple Watch';
+  String get installOmiOnAppleWatch => 'Įdiekite FreeU savo\nApple Watch';
 
   @override
   String get installOmiOnAppleWatchDescription =>
-      'Norėdami naudoti Apple Watch su Omi, pirmiausia turite įdiegti Omi programą savo laikrodyje.';
+      'Norėdami naudoti Apple Watch su FreeU, pirmiausia turite įdiegti FreeU programą savo laikrodyje.';
 
   @override
-  String get openOmiOnAppleWatch => 'Atidarykite Omi savo\nApple Watch';
+  String get openOmiOnAppleWatch => 'Atidarykite FreeU savo\nApple Watch';
 
   @override
   String get openOmiOnAppleWatchDescription =>
-      'Omi programa įdiegta jūsų Apple Watch. Atidarykite ją ir bakstelėkite Pradėti.';
+      'FreeU programa įdiegta jūsų Apple Watch. Atidarykite ją ir bakstelėkite Pradėti.';
 
   @override
   String get openWatchApp => 'Atidaryti Watch programą';
@@ -5187,14 +5187,14 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get unableToOpenWatchApp =>
-      'Nepavyko atidaryti Apple Watch programos. Rankiniu būdu atidarykite Watch programą savo Apple Watch ir įdiekite Omi iš skyriaus \"Galimos programos\".';
+      'Nepavyko atidaryti Apple Watch programos. Rankiniu būdu atidarykite Watch programą savo Apple Watch ir įdiekite FreeU iš skyriaus \"Galimos programos\".';
 
   @override
   String get appleWatchConnectedSuccessfully => 'Apple Watch sėkmingai prijungtas!';
 
   @override
   String get appleWatchNotReachable =>
-      'Apple Watch vis dar nepasiekiamas. Įsitikinkite, kad Omi programa atidaryta jūsų laikrodyje.';
+      'Apple Watch vis dar nepasiekiamas. Įsitikinkite, kad FreeU programa atidaryta jūsų laikrodyje.';
 
   @override
   String errorCheckingConnection(String error) {
@@ -5272,7 +5272,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get noSummary => 'Nėra santraukos';
 
   @override
-  String get updateOmiFirmware => 'Atnaujinti omi programinę įrangą';
+  String get updateOmiFirmware => 'Atnaujinti FreeU programinę įrangą';
 
   @override
   String get anErrorOccurredTryAgain => 'Įvyko klaida. Bandykite dar kartą.';
@@ -5281,7 +5281,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get welcomeBackSimple => 'Sveiki sugrįžę';
 
   @override
-  String get addVocabularyDescription => 'Pridėkite žodžius, kuriuos Omi turėtų atpažinti transkripcijos metu.';
+  String get addVocabularyDescription => 'Pridėkite žodžius, kuriuos FreeU turėtų atpažinti transkripcijos metu.';
 
   @override
   String get enterWordsCommaSeparated => 'Įveskite žodžius (atskirti kableliais)';
@@ -5442,13 +5442,13 @@ class AppLocalizationsLt extends AppLocalizations {
   String get wrappedNoDataAvailable => 'Nėra duomenų';
 
   @override
-  String get wrappedOmiLifeRecap => 'Omi gyvenimo apžvalga';
+  String get wrappedOmiLifeRecap => 'FreeU gyvenimo apžvalga';
 
   @override
   String get wrappedSwipeUpToBegin => 'Braukite aukštyn, kad pradėtumėte';
 
   @override
-  String get wrappedShareText => 'Mano 2025, įsiminta Omi ✨ omi.me/wrapped';
+  String get wrappedShareText => 'Mano 2025, įsiminta FreeU ✨ FreeU.me/wrapped';
 
   @override
   String get wrappedFailedToShare => 'Nepavyko dalintis. Bandykite dar kartą.';
@@ -5469,7 +5469,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get wrappedMy2025 => 'Mano 2025';
 
   @override
-  String get wrappedRememberedByOmi => 'įsiminta Omi';
+  String get wrappedRememberedByOmi => 'įsiminta FreeU';
 
   @override
   String get wrappedMostFunDay => 'Linksmiausia';
@@ -5684,7 +5684,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get notificationFrequency => 'Pranešimų dažnumas';
 
   @override
-  String get controlNotificationFrequency => 'Valdykite, kaip dažnai Omi siunčia jums aktyvius pranešimus.';
+  String get controlNotificationFrequency => 'Valdykite, kaip dažnai FreeU siunčia jums aktyvius pranešimus.';
 
   @override
   String get yourScore => 'Jūsų balas';
@@ -5710,7 +5710,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get notificationFrequencyDescription =>
-      'Valdykite, kaip dažnai Omi siunčia jums aktyvius pranešimus ir priminimus.';
+      'Valdykite, kaip dažnai FreeU siunčia jums aktyvius pranešimus ir priminimus.';
 
   @override
   String get sliderOff => 'Išjungta';
@@ -5947,7 +5947,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get noRecordings => 'Nėra įrašų';
 
   @override
-  String get audioFromOmiWillAppearHere => 'Garsas iš jūsų Omi įrenginio bus rodomas čia';
+  String get audioFromOmiWillAppearHere => 'Garsas iš jūsų FreeU įrenginio bus rodomas čia';
 
   @override
   String get deleteProcessed => 'Ištrinti apdorotus';
@@ -6068,7 +6068,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get batteryUsageHigher => 'Baterijos naudojimas bus didesnis nei debesies transkripcijos.';
 
   @override
-  String get considerOmiCloud => 'Apsvarstykite Omi Cloud naudojimą geresniam veikimui.';
+  String get considerOmiCloud => 'Apsvarstykite FreeU Cloud naudojimą geresniam veikimui.';
 
   @override
   String get highResourceUsage => 'Didelis išteklių naudojimas';
@@ -6227,7 +6227,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get omiTranscriptionOptimized =>
-      'Omi integruota tiesioginė transkripcija optimizuota realaus laiko pokalbiams su automatiniu kalbėtojų aptikimu ir diarizacija.';
+      'FreeU integruota tiesioginė transkripcija optimizuota realaus laiko pokalbiams su automatiniu kalbėtojų aptikimu ir diarizacija.';
 
   @override
   String get reset => 'Atstatyti';
@@ -6315,13 +6315,13 @@ class AppLocalizationsLt extends AppLocalizations {
   String get writeReviewOptional => 'Parašykite atsiliepimą (neprivaloma)';
 
   @override
-  String get setupQuestionsIntro => 'Padėkite mums tobulinti Omi atsakydami į kelis klausimus. 👋';
+  String get setupQuestionsIntro => 'Padėkite mums tobulinti FreeU atsakydami į kelis klausimus. 👋';
 
   @override
   String get setupQuestionProfession => '1. Kuo užsiimate?';
 
   @override
-  String get setupQuestionUsage => '2. Kur planuojate naudoti savo Omi?';
+  String get setupQuestionUsage => '2. Kur planuojate naudoti savo FreeU?';
 
   @override
   String get setupQuestionAge => '3. Koks jūsų amžiaus intervalas?';
@@ -6550,10 +6550,10 @@ class AppLocalizationsLt extends AppLocalizations {
   String get getOmiDeviceDescription => 'Sukurkite tikslesnį kloną naudodami savo asmeninius pokalbius';
 
   @override
-  String get getOmi => 'Gauti Omi';
+  String get getOmi => 'Gauti FreeU';
 
   @override
-  String get iHaveOmiDevice => 'Turiu Omi įrenginį';
+  String get iHaveOmiDevice => 'Turiu FreeU įrenginį';
 
   @override
   String get goal => 'TIKSLAS';
@@ -6852,13 +6852,13 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get fastTransferDescription =>
-      'Greitas perdavimas naudoja WiFi ~5x greitesniam greičiui. Perdavimo metu telefonas laikinai prisijungs prie Omi įrenginio WiFi tinklo.';
+      'Greitas perdavimas naudoja WiFi ~5x greitesniam greičiui. Perdavimo metu telefonas laikinai prisijungs prie FreeU įrenginio WiFi tinklo.';
 
   @override
   String get internetAccessPausedDuringTransfer => 'Interneto prieiga pristabdyta perdavimo metu';
 
   @override
-  String get chooseTransferMethodDescription => 'Pasirinkite, kaip įrašai perduodami iš Omi įrenginio į telefoną.';
+  String get chooseTransferMethodDescription => 'Pasirinkite, kaip įrašai perduodami iš FreeU įrenginio į telefoną.';
 
   @override
   String get wifiSpeed => '~150 KB/s per WiFi';
@@ -6868,7 +6868,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get fastTransferMethodDescription =>
-      'Sukuria tiesioginį WiFi ryšį su Omi įrenginiu. Perdavimo metu telefonas laikinai atsijungia nuo įprasto WiFi.';
+      'Sukuria tiesioginį WiFi ryšį su FreeU įrenginiu. Perdavimo metu telefonas laikinai atsijungia nuo įprasto WiFi.';
 
   @override
   String get bluetooth => 'Bluetooth';
@@ -6893,17 +6893,17 @@ class AppLocalizationsLt extends AppLocalizations {
   String get lowBatteryAlertBody => 'Jūsų įrenginio baterija senka. Laikas įkrauti! 🔋';
 
   @override
-  String get deviceDisconnectedNotificationTitle => 'Jūsų Omi įrenginys atsijungė';
+  String get deviceDisconnectedNotificationTitle => 'Jūsų FreeU įrenginys atsijungė';
 
   @override
-  String get deviceDisconnectedNotificationBody => 'Prašome prisijungti iš naujo, kad galėtumėte toliau naudoti Omi.';
+  String get deviceDisconnectedNotificationBody => 'Prašome prisijungti iš naujo, kad galėtumėte toliau naudoti FreeU.';
 
   @override
   String get firmwareUpdateAvailable => 'Yra programinės aparatinės įrangos atnaujinimas';
 
   @override
   String firmwareUpdateAvailableDescription(String version) {
-    return 'Jūsų Omi įrenginiui yra naujas programinės aparatinės įrangos atnaujinimas ($version). Ar norite atnaujinti dabar?';
+    return 'Jūsų FreeU įrenginiui yra naujas programinės aparatinės įrangos atnaujinimas ($version). Ar norite atnaujinti dabar?';
   }
 
   @override
@@ -6941,7 +6941,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get almostDone => 'Beveik baigta...';
 
   @override
-  String get omiSays => 'omi says';
+  String get omiSays => 'FreeU says';
 
   @override
   String get analyzingYourData => 'Analizuojami jūsų duomenys...';
@@ -7120,7 +7120,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get personaFailedToCreate => 'Nepavyko sukurti persona';
 
   @override
-  String get personaConnectKnowledgeSource => 'Prijunkite bent vieną duomenų šaltinį (Omi arba Twitter)';
+  String get personaConnectKnowledgeSource => 'Prijunkite bent vieną duomenų šaltinį (FreeU arba Twitter)';
 
   @override
   String get personaUpdatedSuccessfully => 'Persona sėkmingai atnaujinta';
@@ -7225,7 +7225,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get xHandleTitle => 'Koks jūsų X vardas?';
 
   @override
-  String get xHandleDescription => 'Mes iš anksto apmokysime jūsų Omi kloną';
+  String get xHandleDescription => 'Mes iš anksto apmokysime jūsų FreeU kloną';
 
   @override
   String get xHandleHint => '@nikshevchenko';
@@ -7240,7 +7240,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get nextButton => 'Toliau';
 
   @override
-  String get connectOmiDevice => 'Prijungti Omi įrenginį';
+  String get connectOmiDevice => 'Prijungti FreeU įrenginį';
 
   @override
   String planSwitchingDescriptionWithTitle(String title) {
@@ -7272,7 +7272,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get transcriptionJsonPlaceholder => 'Įklijuokite savo JSON konfigūraciją čia...';
 
   @override
-  String get transcriptionSourceOmi => 'Omi';
+  String get transcriptionSourceOmi => 'FreeU';
 
   @override
   String get pricePlaceholder => '0.00';
@@ -7302,7 +7302,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get dailyReflectionNotificationBody => 'Papasakok apie savo dieną';
 
   @override
-  String get actionItemReminderTitle => 'Omi priminimas';
+  String get actionItemReminderTitle => 'FreeU priminimas';
 
   @override
   String deviceDisconnectedTitle(String deviceName) {
@@ -7330,7 +7330,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get onboardingComplete => 'Baigta';
 
   @override
-  String get onboardingWelcomeToOmi => 'Sveiki atvykę į Omi';
+  String get onboardingWelcomeToOmi => 'Sveiki atvykę į FreeU';
 
   @override
   String get onboardingTellUsAboutYourself => 'Papasakokite apie save';
@@ -8087,20 +8087,20 @@ class AppLocalizationsLt extends AppLocalizations {
   String get reportAnIssue => 'Pranešti apie problemą';
 
   @override
-  String get pairingTitleOmi => 'Įjunkite Omi';
+  String get pairingTitleOmi => 'Įjunkite FreeU';
 
   @override
   String get pairingDescOmi => 'Paspauskite ir palaikykite įrenginį, kol jis suvibruos, kad įjungtumėte.';
 
   @override
-  String get pairingTitleOmiDevkit => 'Įjunkite Omi DevKit susiejimo režimą';
+  String get pairingTitleOmiDevkit => 'Įjunkite FreeU DevKit susiejimo režimą';
 
   @override
   String get pairingDescOmiDevkit =>
       'Paspauskite mygtuką vieną kartą, kad įjungtumėte. LED mirksės violetine spalva susiejimo režimu.';
 
   @override
-  String get pairingTitleOmiGlass => 'Įjunkite Omi Glass';
+  String get pairingTitleOmiGlass => 'Įjunkite FreeU Glass';
 
   @override
   String get pairingDescOmiGlass => 'Paspauskite ir palaikykite šoninį mygtuką 3 sekundes, kad įjungtumėte.';
@@ -8143,7 +8143,7 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get pairingDescAppleWatch =>
-      'Įdiekite ir atidarykite Omi programėlę savo Apple Watch, tada bakstelėkite Prisijungti programėlėje.';
+      'Įdiekite ir atidarykite FreeU programėlę savo Apple Watch, tada bakstelėkite Prisijungti programėlėje.';
 
   @override
   String get pairingTitleNeoOne => 'Įjunkite Neo One susiejimo režimą';
@@ -8231,7 +8231,7 @@ class AppLocalizationsLt extends AppLocalizations {
   String get onboardingWhatIKnowAboutYouTitle => 'Here is what I know about you';
 
   @override
-  String get onboardingWhatIKnowAboutYouDescription => 'This map updates as Omi learns from your conversations.';
+  String get onboardingWhatIKnowAboutYouDescription => 'This map updates as FreeU learns from your conversations.';
 
   @override
   String get apiEnvironment => 'API Environment';

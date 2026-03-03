@@ -2,15 +2,15 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import 'package:omi/widgets/shimmer_with_timeout.dart';
+import 'package:freeu/widgets/shimmer_with_timeout.dart';
 
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/pages/apps/providers/add_app_provider.dart';
-import 'package:omi/pages/apps/widgets/api_keys_widget.dart';
-import 'package:omi/pages/apps/widgets/full_screen_image_viewer.dart';
-import 'package:omi/pages/apps/widgets/notification_scopes_chips_widget.dart';
-import 'package:omi/widgets/dialog.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/pages/apps/providers/add_app_provider.dart';
+import 'package:freeu/pages/apps/widgets/api_keys_widget.dart';
+import 'package:freeu/pages/apps/widgets/full_screen_image_viewer.dart';
+import 'package:freeu/pages/apps/widgets/notification_scopes_chips_widget.dart';
+import 'package:freeu/widgets/dialog.dart';
 import 'widgets/app_metadata_widget.dart';
 import 'widgets/capabilities_chips_widget.dart';
 import 'widgets/external_trigger_fields_widget.dart';

@@ -1,5 +1,5 @@
-import 'package:flutter/widgets.dart';
-import 'package:omi/l10n/app_localizations.dart';
+﻿import 'package:flutter/widgets.dart';
+import 'package:freeu/l10n/app_localizations.dart';
 
 String secondsToHumanReadable(int seconds, [BuildContext? context]) {
   final l10n = context != null ? AppLocalizations.of(context) : null;

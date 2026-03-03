@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/http/api/integrations.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/integrations.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/utils/logger.dart';
 
 abstract class BaseIntegrationService {
   final String appKey;

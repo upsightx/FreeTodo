@@ -1,6 +1,6 @@
-import 'dart:io';
+﻿import 'dart:io';
 
-import 'package:omi/utils/platform/platform_manager.dart';
+import 'package:freeu/utils/platform/platform_manager.dart';
 
 class AnalyticsManager {
   static final AnalyticsManager _instance = AnalyticsManager._internal();

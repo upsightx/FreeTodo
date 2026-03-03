@@ -1,15 +1,15 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import 'package:intl/intl.dart';
 
-import 'package:omi/backend/http/api/action_items.dart';
-import 'package:omi/backend/http/api/conversations.dart' hide getActionItems;
-import 'package:omi/backend/http/api/memories.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/action_items.dart';
+import 'package:freeu/backend/http/api/conversations.dart' hide getActionItems;
+import 'package:freeu/backend/http/api/memories.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/utils/logger.dart';
 
 /// Daily grade record for history tracking
 class DailyGrade {

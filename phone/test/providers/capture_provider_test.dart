@@ -1,15 +1,15 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/backend/schema/message_event.dart';
-import 'package:omi/backend/schema/transcript_segment.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/providers/people_provider.dart';
-import 'package:omi/services/services.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/backend/schema/message_event.dart';
+import 'package:freeu/backend/schema/transcript_segment.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/providers/people_provider.dart';
+import 'package:freeu/services/services.dart';
 
 /// Mock PeopleProvider that tracks setPeople calls
 class MockPeopleProvider extends PeopleProvider {

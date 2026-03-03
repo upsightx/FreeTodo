@@ -1,17 +1,17 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import 'package:image_picker/image_picker.dart';
 
-import 'package:omi/backend/http/api/apps.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/main.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/apps.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/logger.dart';
 
 typedef ShowSuccessDialogCallback = void Function(String url);
 

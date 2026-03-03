@@ -1,12 +1,12 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:flutter/material.dart';
 
 import 'package:webview_flutter/webview_flutter.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/utils/browser.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/utils/browser.dart';
 
 class AppHomeWebPage extends StatefulWidget {
   final App app;

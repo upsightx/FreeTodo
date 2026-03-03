@@ -1,9 +1,9 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class SdCardTransferProgress extends StatefulWidget {
   final double progress;

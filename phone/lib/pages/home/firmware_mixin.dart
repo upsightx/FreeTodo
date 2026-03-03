@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -8,12 +8,12 @@ import 'package:nordic_dfu/nordic_dfu.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/http/api/device.dart';
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/utils/device.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/device.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/utils/device.dart';
+import 'package:freeu/utils/logger.dart';
 
 mixin FirmwareMixin<T extends StatefulWidget> on State<T> {
   Map latestFirmwareDetails = {};

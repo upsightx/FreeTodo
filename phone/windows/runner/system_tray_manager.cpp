@@ -1,7 +1,7 @@
 #include "system_tray_manager.h"
 #include <iostream>
 
-const wchar_t* TRAY_CLASS_NAME = L"OmiTrayWindowClass";
+const wchar_t* TRAY_CLASS_NAME = L"FreeUTrayWindowClass";
 
 SystemTrayManager::SystemTrayManager()
     : parent_hwnd_(nullptr)
@@ -38,7 +38,7 @@ bool SystemTrayManager::Create(HWND parentHwnd) {
 
     // Create invisible window for tray messages
     tray_hwnd_ = CreateWindowExW(
-        0, TRAY_CLASS_NAME, L"OmiTrayWindow", 0,
+        0, TRAY_CLASS_NAME, L"FreeUTrayWindow", 0,
         0, 0, 0, 0, HWND_MESSAGE, nullptr, hinstance_, this
     );
 
@@ -70,7 +70,7 @@ void SystemTrayManager::CreateTrayIcon() {
     tray_data_.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     tray_data_.uCallbackMessage = WM_TRAY_MESSAGE;
     tray_data_.hIcon = default_icon_;
-    wcscpy_s(tray_data_.szTip, L"Omi - Always On AI");
+    wcscpy_s(tray_data_.szTip, L"FreeU - Always On AI");
 
     Shell_NotifyIconW(NIM_ADD, &tray_data_);
 }
@@ -106,7 +106,7 @@ void SystemTrayManager::UpdateStatus(const std::string& status, bool isActive) {
         UpdateTrayIcon(isActive);
 
         // Update tooltip with status
-        std::string tooltip = "Omi - " + status;
+        std::string tooltip = "FreeU - " + status;
         UpdateTooltip(tooltip);
     }
 }
@@ -199,7 +199,7 @@ void SystemTrayManager::ShowContextMenu(int x, int y) {
     }
 
     AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
-    AppendMenuW(hMenu, MF_STRING, ID_QUIT, L"Quit Omi");
+    AppendMenuW(hMenu, MF_STRING, ID_QUIT, L"Quit FreeU");
 
     // Set foreground window to ensure menu displays properly
     SetForegroundWindow(tray_hwnd_);

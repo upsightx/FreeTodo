@@ -2,7 +2,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/models/announcement.dart';
+import 'package:freeu/models/announcement.dart';
 
 class AnnouncementDialog extends StatelessWidget {
   final Announcement announcement;

@@ -1,13 +1,13 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 
-import 'package:omi/models/playback_state.dart';
-import 'package:omi/providers/sync_provider.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/widgets/waveform_painter.dart';
+import 'package:freeu/models/playback_state.dart';
+import 'package:freeu/providers/sync_provider.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/widgets/waveform_painter.dart';
 
 class WaveformSection extends StatefulWidget {
   final int seconds;

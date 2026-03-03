@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
@@ -11,16 +11,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 
-import 'package:omi/backend/http/api/notifications.dart';
-import 'package:omi/backend/schema/message.dart';
-import 'package:omi/services/notifications/action_item_notification_handler.dart';
-import 'package:omi/services/notifications/important_conversation_notification_handler.dart';
-import 'package:omi/services/notifications/merge_notification_handler.dart';
-import 'package:omi/services/notifications/notification_interface.dart';
-import 'package:omi/services/apple_reminders_service.dart';
-import 'package:omi/utils/analytics/intercom.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/http/api/notifications.dart';
+import 'package:freeu/backend/schema/message.dart';
+import 'package:freeu/services/notifications/action_item_notification_handler.dart';
+import 'package:freeu/services/notifications/important_conversation_notification_handler.dart';
+import 'package:freeu/services/notifications/merge_notification_handler.dart';
+import 'package:freeu/services/notifications/notification_interface.dart';
+import 'package:freeu/services/apple_reminders_service.dart';
+import 'package:freeu/utils/analytics/intercom.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 /// Firebase Cloud Messaging enabled notification service
 /// Supports iOS, Android, macOS, web, and Linux with full FCM functionality
@@ -33,8 +33,8 @@ class _FCMNotificationService implements NotificationInterface {
   final channel = NotificationChannel(
     channelGroupKey: 'channel_group_key',
     channelKey: 'channel',
-    channelName: 'Omi Notifications',
-    channelDescription: 'Notification channel for Omi',
+    channelName: 'FreeU Notifications',
+    channelDescription: 'Notification channel for FreeU',
     defaultColor: const Color(0xFF9D50DD),
     ledColor: Colors.white,
   );
@@ -128,8 +128,8 @@ class _FCMNotificationService implements NotificationInterface {
       await platform.invokeMethod(
         'setNotificationOnKillService',
         {
-          'title': "Your Omi Device Disconnected",
-          'description': "Please keep your app opened to continue using your Omi.",
+          'title': "Your FreeU Device Disconnected",
+          'description': "Please keep your app opened to continue using your FreeU.",
         },
       );
     } catch (e) {

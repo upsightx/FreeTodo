@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:omi/widgets/shimmer_with_timeout.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:freeu/widgets/shimmer_with_timeout.dart';
 
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/models/announcement.dart';
-import 'package:omi/utils/responsive/responsive_helper.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/models/announcement.dart';
+import 'package:freeu/utils/responsive/responsive_helper.dart';
 
 class ChangelogSheet extends StatefulWidget {
   final List<Announcement>? changelogs;

@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/backend/http/api/integrations.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/pages/settings/integrations_page.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/integrations.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/pages/settings/integrations_page.dart';
+import 'package:freeu/utils/logger.dart';
 
 class IntegrationProvider extends ChangeNotifier {
   final Map<String, bool> _integrations = {};

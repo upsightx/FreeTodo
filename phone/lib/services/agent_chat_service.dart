@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,9 +7,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import 'package:omi/env/env.dart';
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/utils/logger.dart';
 
 /// File-based logging for agent chat — works in release builds (print/developer.log are stripped).
 /// Pull with: pymobiledevice3 apps pull com.friend-app-with-wearable.ios12 Documents/agent_chat.log /tmp/agent_chat.log

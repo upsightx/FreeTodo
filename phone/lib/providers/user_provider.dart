@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 
-import 'package:omi/backend/http/api/privacy.dart';
-import 'package:omi/backend/http/api/users.dart' as users_api;
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/geolocation.dart';
-import 'package:omi/main.dart';
-import 'package:omi/services/notifications.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/privacy.dart';
+import 'package:freeu/backend/http/api/users.dart' as users_api;
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/geolocation.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/services/notifications.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 class UserProvider with ChangeNotifier {
   static const int _migrationNotificationId = 1337;

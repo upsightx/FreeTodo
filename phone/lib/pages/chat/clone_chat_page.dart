@@ -1,20 +1,20 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/pages/chat/page.dart';
-import 'package:omi/pages/home/widgets/chat_apps_dropdown_widget.dart';
-import 'package:omi/pages/persona/persona_profile.dart';
-import 'package:omi/pages/persona/persona_provider.dart';
-import 'package:omi/providers/app_provider.dart';
-import 'package:omi/providers/connectivity_provider.dart';
-import 'package:omi/providers/message_provider.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/pages/chat/page.dart';
+import 'package:freeu/pages/home/widgets/chat_apps_dropdown_widget.dart';
+import 'package:freeu/pages/persona/persona_profile.dart';
+import 'package:freeu/pages/persona/persona_provider.dart';
+import 'package:freeu/providers/app_provider.dart';
+import 'package:freeu/providers/connectivity_provider.dart';
+import 'package:freeu/providers/message_provider.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 class CloneChatPage extends StatefulWidget {
   const CloneChatPage({

@@ -1,32 +1,32 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/backend/schema/message_event.dart';
-import 'package:omi/backend/schema/transcript_segment.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/models/custom_stt_config.dart';
-import 'package:omi/models/stt_provider.dart';
-import 'package:omi/services/notifications.dart';
-import 'package:omi/services/sockets/on_device_apple_provider.dart';
-import 'package:omi/services/sockets/on_device_whisper_provider.dart';
-import 'package:omi/services/sockets/pure_socket.dart';
-import 'package:omi/services/sockets/transcription_service.dart';
-import 'package:omi/utils/debug_log_manager.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/backend/schema/message_event.dart';
+import 'package:freeu/backend/schema/transcript_segment.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/models/custom_stt_config.dart';
+import 'package:freeu/models/stt_provider.dart';
+import 'package:freeu/services/notifications.dart';
+import 'package:freeu/services/sockets/on_device_apple_provider.dart';
+import 'package:freeu/services/sockets/on_device_whisper_provider.dart';
+import 'package:freeu/services/sockets/pure_socket.dart';
+import 'package:freeu/services/sockets/transcription_service.dart';
+import 'package:freeu/utils/debug_log_manager.dart';
+import 'package:freeu/utils/logger.dart';
 
-export 'package:omi/utils/audio/audio_transcoder.dart';
-export 'package:omi/services/sockets/composite_transcription_socket.dart';
-export 'package:omi/services/sockets/pure_polling.dart';
-export 'package:omi/services/sockets/pure_streaming_stt.dart';
-export 'package:omi/models/stt_response_schema.dart';
-export 'package:omi/models/stt_result.dart';
-export 'package:omi/services/sockets/transcription_polling_service.dart';
+export 'package:freeu/utils/audio/audio_transcoder.dart';
+export 'package:freeu/services/sockets/composite_transcription_socket.dart';
+export 'package:freeu/services/sockets/pure_polling.dart';
+export 'package:freeu/services/sockets/pure_streaming_stt.dart';
+export 'package:freeu/models/stt_response_schema.dart';
+export 'package:freeu/models/stt_result.dart';
+export 'package:freeu/services/sockets/transcription_polling_service.dart';
 
 abstract interface class ITransctiptSegmentSocketServiceListener {
   void onMessageEventReceived(MessageEvent event);

@@ -20,68 +20,68 @@ import 'package:opus_flutter/opus_flutter.dart' as opus_flutter;
 import 'package:provider/provider.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/core/app_shell.dart';
-import 'package:omi/env/dev_env.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/env/prod_env.dart';
-import 'package:omi/firebase_options_dev.dart' as dev;
-import 'package:omi/firebase_options_prod.dart' as prod;
-import 'package:omi/flavors.dart';
-import 'package:omi/l10n/app_localizations.dart';
-import 'package:omi/pages/apps/providers/add_app_provider.dart';
-import 'package:omi/pages/conversation_detail/conversation_detail_provider.dart';
-import 'package:omi/pages/payments/payment_method_provider.dart';
-import 'package:omi/pages/persona/persona_provider.dart';
-import 'package:omi/pages/settings/ai_app_generator_provider.dart';
-import 'package:omi/providers/action_items_provider.dart';
-import 'package:omi/providers/app_mode_provider.dart';
-import 'package:omi/providers/announcement_provider.dart';
-import 'package:omi/providers/app_provider.dart';
-import 'package:omi/providers/auth_provider.dart';
-import 'package:omi/providers/calendar_provider.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/providers/connectivity_provider.dart';
-import 'package:omi/providers/conversation_provider.dart';
-import 'package:omi/providers/developer_mode_provider.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/providers/folder_provider.dart';
-import 'package:omi/providers/goals_provider.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/providers/integration_provider.dart';
-import 'package:omi/providers/locale_provider.dart';
-import 'package:omi/providers/mcp_provider.dart';
-import 'package:omi/providers/memories_provider.dart';
-import 'package:omi/providers/message_provider.dart';
-import 'package:omi/providers/mobile_mock_provider.dart';
-import 'package:omi/providers/notification_center_provider.dart';
-import 'package:omi/providers/onboarding_provider.dart';
-import 'package:omi/providers/people_provider.dart';
-import 'package:omi/providers/speech_profile_provider.dart';
-import 'package:omi/providers/sync_provider.dart';
-import 'package:omi/providers/task_integration_provider.dart';
-import 'package:omi/providers/usage_provider.dart';
-import 'package:omi/providers/user_provider.dart';
-import 'package:omi/providers/voice_recorder_provider.dart';
-import 'package:omi/providers/perception_provider.dart';
-import 'package:omi/services/auth_service.dart';
-import 'package:omi/services/notifications.dart';
-import 'package:omi/services/notifications/action_item_notification_handler.dart';
-import 'package:omi/services/notifications/important_conversation_notification_handler.dart';
-import 'package:omi/services/notifications/merge_notification_handler.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/utils/analytics/growthbook.dart';
-import 'package:omi/utils/debug_log_manager.dart';
-import 'package:omi/utils/debugging/crashlytics_manager.dart';
-import 'package:omi/utils/enums.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/environment_detector.dart';
-import 'package:omi/pages/settings/developer.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_manager.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/core/app_shell.dart';
+import 'package:freeu/env/dev_env.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/env/prod_env.dart';
+import 'package:freeu/firebase_options_dev.dart' as dev;
+import 'package:freeu/firebase_options_prod.dart' as prod;
+import 'package:freeu/flavors.dart';
+import 'package:freeu/l10n/app_localizations.dart';
+import 'package:freeu/pages/apps/providers/add_app_provider.dart';
+import 'package:freeu/pages/conversation_detail/conversation_detail_provider.dart';
+import 'package:freeu/pages/payments/payment_method_provider.dart';
+import 'package:freeu/pages/persona/persona_provider.dart';
+import 'package:freeu/pages/settings/ai_app_generator_provider.dart';
+import 'package:freeu/providers/action_items_provider.dart';
+import 'package:freeu/providers/app_mode_provider.dart';
+import 'package:freeu/providers/announcement_provider.dart';
+import 'package:freeu/providers/app_provider.dart';
+import 'package:freeu/providers/auth_provider.dart';
+import 'package:freeu/providers/calendar_provider.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/providers/connectivity_provider.dart';
+import 'package:freeu/providers/conversation_provider.dart';
+import 'package:freeu/providers/developer_mode_provider.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/providers/folder_provider.dart';
+import 'package:freeu/providers/goals_provider.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/providers/integration_provider.dart';
+import 'package:freeu/providers/locale_provider.dart';
+import 'package:freeu/providers/mcp_provider.dart';
+import 'package:freeu/providers/memories_provider.dart';
+import 'package:freeu/providers/message_provider.dart';
+import 'package:freeu/providers/mobile_mock_provider.dart';
+import 'package:freeu/providers/notification_center_provider.dart';
+import 'package:freeu/providers/onboarding_provider.dart';
+import 'package:freeu/providers/people_provider.dart';
+import 'package:freeu/providers/speech_profile_provider.dart';
+import 'package:freeu/providers/sync_provider.dart';
+import 'package:freeu/providers/task_integration_provider.dart';
+import 'package:freeu/providers/usage_provider.dart';
+import 'package:freeu/providers/user_provider.dart';
+import 'package:freeu/providers/voice_recorder_provider.dart';
+import 'package:freeu/providers/perception_provider.dart';
+import 'package:freeu/services/auth_service.dart';
+import 'package:freeu/services/notifications.dart';
+import 'package:freeu/services/notifications/action_item_notification_handler.dart';
+import 'package:freeu/services/notifications/important_conversation_notification_handler.dart';
+import 'package:freeu/services/notifications/merge_notification_handler.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/utils/analytics/growthbook.dart';
+import 'package:freeu/utils/debug_log_manager.dart';
+import 'package:freeu/utils/debugging/crashlytics_manager.dart';
+import 'package:freeu/utils/enums.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/environment_detector.dart';
+import 'package:freeu/pages/settings/developer.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_manager.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 /// Background message handler for FCM data messages
 @pragma('vm:entry-point')
@@ -91,8 +91,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await AwesomeNotifications().initialize(null, [
     NotificationChannel(
       channelKey: 'channel',
-      channelName: 'Omi Notifications',
-      channelDescription: 'Notification channel for Omi',
+      channelName: 'FreeU Notifications',
+      channelDescription: 'Notification channel for FreeU',
       defaultColor: const Color(0xFF9D50DD),
       ledColor: Colors.white,
     ),

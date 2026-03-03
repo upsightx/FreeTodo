@@ -1,15 +1,15 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/message_event.dart';
-import 'package:omi/backend/schema/transcript_segment.dart';
-import 'package:omi/l10n/app_localizations.dart';
-import 'package:omi/widgets/transcript.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/message_event.dart';
+import 'package:freeu/backend/schema/transcript_segment.dart';
+import 'package:freeu/l10n/app_localizations.dart';
+import 'package:freeu/widgets/transcript.dart';
 
 void main() {
   setUpAll(() async {

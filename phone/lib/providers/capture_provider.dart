@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -13,40 +13,40 @@ import 'package:geolocator/geolocator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'package:omi/backend/http/api/conversations.dart';
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/backend/schema/geolocation.dart';
-import 'package:omi/backend/schema/message.dart';
-import 'package:omi/backend/schema/person.dart';
-import 'package:omi/backend/schema/structured.dart';
-import 'package:omi/backend/schema/transcript_segment.dart';
-import 'package:omi/models/custom_stt_config.dart';
-import 'package:omi/models/stt_provider.dart';
-import 'package:omi/providers/calendar_provider.dart';
-import 'package:omi/providers/conversation_provider.dart';
-import 'package:omi/providers/message_provider.dart';
-import 'package:omi/providers/people_provider.dart';
-import 'package:omi/providers/usage_provider.dart';
-import 'package:omi/services/connectivity_service.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/services/sockets/transcription_service.dart';
-import 'package:omi/services/wals.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/audio/ios_background_keepalive.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/debug_log_manager.dart';
-import 'package:omi/utils/enums.dart';
-import 'package:omi/utils/image/image_utils.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
-import 'package:omi/main.dart';
+import 'package:freeu/backend/http/api/conversations.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/backend/schema/geolocation.dart';
+import 'package:freeu/backend/schema/message.dart';
+import 'package:freeu/backend/schema/person.dart';
+import 'package:freeu/backend/schema/structured.dart';
+import 'package:freeu/backend/schema/transcript_segment.dart';
+import 'package:freeu/models/custom_stt_config.dart';
+import 'package:freeu/models/stt_provider.dart';
+import 'package:freeu/providers/calendar_provider.dart';
+import 'package:freeu/providers/conversation_provider.dart';
+import 'package:freeu/providers/message_provider.dart';
+import 'package:freeu/providers/people_provider.dart';
+import 'package:freeu/providers/usage_provider.dart';
+import 'package:freeu/services/connectivity_service.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/services/sockets/transcription_service.dart';
+import 'package:freeu/services/wals.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/audio/ios_background_keepalive.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/debug_log_manager.dart';
+import 'package:freeu/utils/enums.dart';
+import 'package:freeu/utils/image/image_utils.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
+import 'package:freeu/main.dart';
 
-import 'package:omi/backend/schema/message_event.dart'
+import 'package:freeu/backend/schema/message_event.dart'
     show
         MessageEvent,
         MessageServiceStatusEvent,
@@ -183,7 +183,7 @@ class CaptureProvider extends ChangeNotifier
 
     if (PlatformService.isDesktop) {
       _screenCaptureChannel = const MethodChannel('screenCapturePlatform');
-      _controlBarChannel = const MethodChannel('com.omi/floating_control_bar');
+      _controlBarChannel = const MethodChannel('com.freeu/floating_control_bar');
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _controlBarChannel.setMethodCallHandler(_handleFloatingControlBarMethodCall);
@@ -338,7 +338,7 @@ class CaptureProvider extends ChangeNotifier
       case DeviceType.friendPendant:
         return 'friend_com';
       case DeviceType.omi:
-        return 'omi';
+        return 'freeu';
       case DeviceType.openglass:
         return 'openglass';
       case DeviceType.fieldy:
@@ -540,7 +540,7 @@ class CaptureProvider extends ChangeNotifier
     // Check codec compatibility for custom STT - fallback to default if incompatible
     CustomSttConfig? effectiveConfig = customSttConfig.isEnabled ? customSttConfig : null;
     if (effectiveConfig != null && !TranscriptSocketServiceFactory.isCodecSupportedForCustomStt(codec)) {
-      Logger.debug('[CustomSTT] Codec $codec not supported, falling back to Omi');
+      Logger.debug('[CustomSTT] Codec $codec not supported, falling back to FreeU');
       effectiveConfig = null;
     }
 
@@ -870,7 +870,7 @@ class CaptureProvider extends ChangeNotifier
 
     // Set device info for WAL creation
     final pd = await device.getDeviceInfo(connection);
-    final deviceModel = pd.modelNumber.isNotEmpty ? pd.modelNumber : "Omi";
+    final deviceModel = pd.modelNumber.isNotEmpty ? pd.modelNumber : "FreeU";
     _wal.getSyncs().phone.setDeviceInfo(deviceId, deviceModel);
 
     await streamButton(deviceId);

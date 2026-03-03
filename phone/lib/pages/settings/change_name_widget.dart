@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/services/auth_service.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/services/auth_service.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class ChangeNameWidget extends StatefulWidget {
   const ChangeNameWidget({super.key});

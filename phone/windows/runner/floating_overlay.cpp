@@ -5,7 +5,7 @@
 
 #pragma comment(lib, "dwmapi.lib")
 
-const wchar_t* OVERLAY_CLASS_NAME = L"OmiFloatingOverlay";
+const wchar_t* OVERLAY_CLASS_NAME = L"FreeUFloatingOverlay";
 
 FloatingOverlay::FloatingOverlay()
     : hwnd_(nullptr)
@@ -58,7 +58,7 @@ bool FloatingOverlay::Create() {
     hwnd_ = CreateWindowExW(
         WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
         OVERLAY_CLASS_NAME,
-        L"Omi Recording Overlay",
+        L"FreeU Recording Overlay",
         WS_POPUP,
         x, y, OVERLAY_WIDTH, OVERLAY_HEIGHT,
         nullptr, nullptr, hinstance_, this

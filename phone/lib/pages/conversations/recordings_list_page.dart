@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_down_button/pull_down_button.dart';
 
-import 'package:omi/providers/sync_provider.dart';
-import 'package:omi/services/wals.dart';
-import 'package:omi/ui/molecules/omi_confirm_dialog.dart';
-import 'package:omi/pages/conversations/sync_page.dart';
+import 'package:freeu/providers/sync_provider.dart';
+import 'package:freeu/services/wals.dart';
+import 'package:freeu/ui/molecules/omi_confirm_dialog.dart';
+import 'package:freeu/pages/conversations/sync_page.dart';
 
 Widget _buildFaIcon(IconData icon, {double size = 18, Color color = const Color(0xFF8E8E93)}) {
   return Padding(

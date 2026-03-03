@@ -1,10 +1,10 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:intl/intl.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 String dateTimeFormat(String format, DateTime? dateTime, {String? locale}) {
   if (dateTime == null) return '';

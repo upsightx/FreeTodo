@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,9 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 class UserReviewPage extends StatefulWidget {
   final VoidCallback goNext;
@@ -84,7 +84,7 @@ class _UserReviewPageState extends State<UserReviewPage> {
 
                 // Main title
                 const Text(
-                  'Loving Omi?',
+                  'Loving FreeU?',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 32,

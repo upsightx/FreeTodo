@@ -1,17 +1,17 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/backend/schema/memory.dart';
-import 'package:omi/backend/schema/message.dart';
-import 'package:omi/backend/schema/person.dart';
-import 'package:omi/models/custom_stt_config.dart';
-import 'package:omi/models/stt_provider.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/backend/schema/memory.dart';
+import 'package:freeu/backend/schema/message.dart';
+import 'package:freeu/backend/schema/person.dart';
+import 'package:freeu/models/custom_stt_config.dart';
+import 'package:freeu/models/stt_provider.dart';
+import 'package:freeu/utils/logger.dart';
 
 class SharedPreferencesUtil {
   static final SharedPreferencesUtil _instance = SharedPreferencesUtil._internal();

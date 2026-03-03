@@ -1,24 +1,24 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_provider_utilities/flutter_provider_utilities.dart';
 
-import 'package:omi/backend/http/api/apps.dart';
-import 'package:omi/backend/http/api/audio.dart';
-import 'package:omi/backend/http/api/conversations.dart';
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/backend/schema/structured.dart';
-import 'package:omi/backend/schema/transcript_segment.dart';
-import 'package:omi/providers/app_provider.dart';
-import 'package:omi/providers/conversation_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_manager.dart';
+import 'package:freeu/backend/http/api/apps.dart';
+import 'package:freeu/backend/http/api/audio.dart';
+import 'package:freeu/backend/http/api/conversations.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/backend/schema/structured.dart';
+import 'package:freeu/backend/schema/transcript_segment.dart';
+import 'package:freeu/providers/app_provider.dart';
+import 'package:freeu/providers/conversation_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_manager.dart';
 
 class ConversationDetailProvider extends ChangeNotifier with MessageNotifierMixin {
   AppProvider? appProvider;

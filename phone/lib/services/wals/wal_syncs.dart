@@ -1,17 +1,17 @@
-import 'dart:async';
+﻿import 'dart:async';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/models/sync_state.dart';
-import 'package:omi/services/connectivity_service.dart';
-import 'package:omi/services/wals/flash_page_wal_sync.dart';
-import 'package:omi/services/wals/local_wal_sync.dart';
-import 'package:omi/services/wals/sdcard_wal_sync.dart';
-import 'package:omi/services/wals/wal.dart';
-import 'package:omi/services/wals/wal_interfaces.dart';
-import 'package:omi/utils/debug_log_manager.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/models/sync_state.dart';
+import 'package:freeu/services/connectivity_service.dart';
+import 'package:freeu/services/wals/flash_page_wal_sync.dart';
+import 'package:freeu/services/wals/local_wal_sync.dart';
+import 'package:freeu/services/wals/sdcard_wal_sync.dart';
+import 'package:freeu/services/wals/wal.dart';
+import 'package:freeu/services/wals/wal_interfaces.dart';
+import 'package:freeu/utils/debug_log_manager.dart';
+import 'package:freeu/utils/logger.dart';
 
 class WalSyncs implements IWalSync {
   late LocalWalSyncImpl _phoneSync;

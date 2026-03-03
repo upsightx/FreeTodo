@@ -1,11 +1,11 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 
-import 'package:omi/main.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 /// Event data for important conversation completion
 class ImportantConversationEvent {

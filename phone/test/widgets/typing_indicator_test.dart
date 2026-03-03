@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:omi/pages/chat/widgets/typing_indicator.dart';
+import 'package:freeu/pages/chat/widgets/typing_indicator.dart';
 
 void main() {
   group('TypingIndicator', () {

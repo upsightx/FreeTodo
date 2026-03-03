@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/services/wals/wal_interfaces.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/services/wals/wal_interfaces.dart';
 
 /// Represents the current step of WiFi connection process
 enum WifiConnectionStep {
@@ -17,14 +17,14 @@ class WifiConnectionSheet extends StatefulWidget {
 
   const WifiConnectionSheet({
     super.key,
-    this.deviceName = 'Omi',
+    this.deviceName = 'FreeU',
     this.onCancel,
   });
 
   /// Shows the WiFi connection sheet and returns a controller to update progress
   static Future<WifiConnectionSheetController> show(
     BuildContext context, {
-    String deviceName = 'Omi',
+    String deviceName = 'FreeU',
     VoidCallback? onCancel,
     VoidCallback? onRetry,
   }) async {

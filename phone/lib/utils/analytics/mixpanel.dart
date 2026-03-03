@@ -1,11 +1,11 @@
-import 'package:mixpanel_analytics/mixpanel_analytics.dart';
+﻿import 'package:mixpanel_analytics/mixpanel_analytics.dart';
 import 'package:mixpanel_flutter/mixpanel_flutter.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/backend/schema/memory.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/backend/schema/memory.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 class MixpanelManager {
   static final MixpanelManager _instance = MixpanelManager._internal();
@@ -476,7 +476,7 @@ class MixpanelManager {
 
   void setUserProperties(String whatDoYouDo, String whereDoYouPlanToUseYourFriend, String ageRange) {
     setUserProperty('What the user does', whatDoYouDo);
-    setUserProperty('Using Omi At', whereDoYouPlanToUseYourFriend);
+    setUserProperty('Using FreeU At', whereDoYouPlanToUseYourFriend);
     setUserProperty('Age Range', ageRange);
   }
 
@@ -1554,7 +1554,7 @@ class MixpanelManager {
     required String feature,
     Map<String, dynamic>? additionalProperties,
   }) {
-    track('Omi Double Tap', properties: {
+    track('FreeU Double Tap', properties: {
       'feature': feature,
       if (additionalProperties != null) ...additionalProperties,
     });

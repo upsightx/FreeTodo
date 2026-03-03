@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,20 +7,20 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/pages/conversations/sync_page.dart';
-import 'package:omi/pages/home/firmware_update.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/utils/analytics/intercom.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/utils/platform/platform_service.dart';
-import 'package:omi/widgets/dialog.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/pages/conversations/sync_page.dart';
+import 'package:freeu/pages/home/firmware_update.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/utils/analytics/intercom.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
+import 'package:freeu/widgets/dialog.dart';
 
 class DeviceSettings extends StatefulWidget {
   const DeviceSettings({super.key});
@@ -230,7 +230,7 @@ class _DeviceSettingsState extends State<DeviceSettings> {
   }
 
   Widget _buildDeviceInfoSection(BtDevice? device, DeviceProvider provider) {
-    final deviceName = device?.name ?? 'Omi DevKit';
+    final deviceName = device?.name ?? 'FreeU DevKit';
     final deviceId = device?.id ?? '12AB34CD:56EF78GH';
 
     String truncateId(String id) {
@@ -296,7 +296,7 @@ class _DeviceSettingsState extends State<DeviceSettings> {
 
   Widget _buildHardwareInfoSection(BtDevice? device) {
     final hardwareRevision = device?.hardwareRevision ?? 'XIAO';
-    final modelNumber = device?.modelNumber ?? 'Omi DevKit';
+    final modelNumber = device?.modelNumber ?? 'FreeU DevKit';
     final manufacturer = device?.manufacturerName ?? 'Based Hardware';
 
     return Container(
@@ -727,7 +727,7 @@ class _DeviceSettingsState extends State<DeviceSettings> {
                 // Fallback to web URL for desktop platforms
                 final deviceName = provider.pairedDevice?.name ?? 'DevKit1';
                 String url;
-                if (deviceName == 'Omi DevKit 2') {
+                if (deviceName == 'FreeU DevKit 2') {
                   url = 'https://www.omi.me/pages/charging-devkit2';
                 } else if (deviceName == 'Omi') {
                   url = 'https://www.omi.me/pages/charging-omi';

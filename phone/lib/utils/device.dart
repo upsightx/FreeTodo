@@ -1,10 +1,10 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:version/version.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/gen/assets.gen.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/gen/assets.gen.dart';
 
 class DeviceUtils {
   static Future<(String, bool, String)> shouldUpdateFirmware({
@@ -39,7 +39,7 @@ class DeviceUtils {
             latestVersionStr
           );
         } else {
-          return ('A new version is available! Update your Omi now.', true, latestVersionStr);
+          return ('A new version is available! Update your FreeU now.', true, latestVersionStr);
         }
       } else {
         return ('You are already on the latest version', false, latestVersionStr);
@@ -120,7 +120,7 @@ class DeviceUtils {
       if (upperModel.contains('FRIEND PENDANT')) {
         return Assets.images.friendPendant.path;
       }
-      if (upperModel.contains('OMI DEVKIT 2') || upperModel.contains('FRIEND')) {
+      if (upperModel.contains('FreeU DevKit 2') || upperModel.contains('FRIEND')) {
         return Assets.images.omiDevkitWithoutRope.path;
       }
       if (upperModel.contains('GLASS')) {
@@ -156,7 +156,7 @@ class DeviceUtils {
       if (upperName.startsWith('FRIEND_')) {
         return Assets.images.friendPendant.path;
       }
-      if (upperName.contains('OMI DEVKIT') || upperName.contains('OMI DEV') || upperName.contains('FRIEND')) {
+      if (upperName.contains('FreeU DevKit') || upperName.contains('FreeU Dev') || upperName.contains('FRIEND')) {
         return Assets.images.omiDevkitWithoutRope.path;
       }
       if (upperName.contains('BEE')) {

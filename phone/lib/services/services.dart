@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -8,13 +8,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 
-import 'package:omi/backend/http/shared.dart';
-import 'package:omi/services/connectivity_service.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/sockets.dart';
-import 'package:omi/services/wals.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/http/shared.dart';
+import 'package:freeu/services/connectivity_service.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/sockets.dart';
+import 'package:freeu/services/wals.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 class ServiceManager {
   late IMicRecorderService _mic;

@@ -1,22 +1,22 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_provider_utilities/flutter_provider_utilities.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/gen/flutter_communicator.g.dart';
-import 'package:omi/pages/onboarding/apple_watch_permission_page.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/providers/onboarding_provider.dart';
-import 'package:omi/services/devices/apple_watch_connection.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/utils/device.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/widgets/apple_watch_setup_bottom_sheet.dart';
-import 'package:omi/widgets/confirmation_dialog.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/gen/flutter_communicator.g.dart';
+import 'package:freeu/pages/onboarding/apple_watch_permission_page.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/providers/onboarding_provider.dart';
+import 'package:freeu/services/devices/apple_watch_connection.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/utils/device.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/widgets/apple_watch_setup_bottom_sheet.dart';
+import 'package:freeu/widgets/confirmation_dialog.dart';
 
 class FoundDevices extends StatefulWidget {
   final bool isFromOnboarding;

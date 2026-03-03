@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/providers/sync_provider.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/providers/sync_provider.dart';
 import 'widgets/synced_conversation_list_item.dart';
 
 class SyncedConversationsPage extends StatelessWidget {

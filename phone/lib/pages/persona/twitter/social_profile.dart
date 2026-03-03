@@ -1,18 +1,18 @@
 ﻿import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/pages/onboarding/wrapper.dart';
-import 'package:omi/pages/persona/persona_provider.dart';
-import 'package:omi/pages/persona/twitter/verify_identity_screen.dart';
-import 'package:omi/services/auth_service.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/pages/onboarding/wrapper.dart';
+import 'package:freeu/pages/persona/persona_provider.dart';
+import 'package:freeu/pages/persona/twitter/verify_identity_screen.dart';
+import 'package:freeu/services/auth_service.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 class SocialHandleScreen extends StatefulWidget {
   final PersonaProfileRouting routing;

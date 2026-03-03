@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/l10n/app_localizations.dart';
-import 'package:omi/utils/app_localizations_helper.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/l10n/app_localizations.dart';
+import 'package:freeu/utils/app_localizations_helper.dart';
 
 void main() {
   group('AppLocalizationsHelper', () {

@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/backend/preferences.dart';
+import 'package:freeu/backend/preferences.dart';
 
 /// 感知权限管理Provider
 class PerceptionProvider extends ChangeNotifier {

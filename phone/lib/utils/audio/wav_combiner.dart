@@ -1,7 +1,7 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/utils/logger.dart';
 
 class WavMetadata {
   final int sampleRate;

@@ -4,14 +4,14 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/services/wals/wal.dart';
-import 'package:omi/services/wals/wal_interfaces.dart';
-import 'package:omi/utils/debug_log_manager.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/wal_file_manager.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/services/wals/wal.dart';
+import 'package:freeu/services/wals/wal_interfaces.dart';
+import 'package:freeu/utils/debug_log_manager.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/wal_file_manager.dart';
 
 class LocalWalSyncImpl implements LocalWalSync {
   List<Wal> _wals = const [];
@@ -187,7 +187,7 @@ class LocalWalSyncImpl implements LocalWalSync {
           storage: WalStorage.mem,
           status: syncedOffset == chunkFrameCount ? WalStatus.synced : WalStatus.miss,
           device: _deviceId ?? "omi",
-          deviceModel: _deviceModel ?? "Omi",
+          deviceModel: _deviceModel ?? "FreeU",
           seconds: chunkFrameCount ~/ _framesPerSecond,
           totalFrames: chunkFrameCount,
           syncedFrameOffset: syncedOffset,

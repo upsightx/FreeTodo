@@ -1,10 +1,10 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'package:omi/main.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class AppDialog {
   static _getDialog({

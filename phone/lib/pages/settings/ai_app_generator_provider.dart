@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-import 'package:omi/backend/http/api/apps.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/main.dart';
-import 'package:omi/providers/app_provider.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/apps.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/providers/app_provider.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 /// State enum for the AI app generation process
 enum GenerationState {

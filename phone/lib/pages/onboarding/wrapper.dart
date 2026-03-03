@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -6,29 +6,29 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/http/api/knowledge_graph_api.dart';
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/pages/home/page.dart';
-import 'package:omi/pages/onboarding/auth.dart';
-import 'package:omi/pages/onboarding/found_omi/found_omi_widget.dart';
-import 'package:omi/pages/onboarding/knowledge_graph_step.dart';
-import 'package:omi/pages/onboarding/name/name_widget.dart';
-import 'package:omi/pages/onboarding/permissions/permissions_widget.dart';
-import 'package:omi/pages/onboarding/primary_language/primary_language_widget.dart';
-import 'package:omi/pages/onboarding/complete_screen.dart';
-import 'package:omi/pages/onboarding/speech_profile_widget.dart';
-import 'package:omi/pages/onboarding/user_review_page.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/providers/onboarding_provider.dart';
-import 'package:omi/providers/speech_profile_provider.dart';
-import 'package:omi/services/auth_service.dart';
-import 'package:omi/utils/analytics/intercom.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/widgets/device_widget.dart';
+import 'package:freeu/backend/http/api/knowledge_graph_api.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/pages/home/page.dart';
+import 'package:freeu/pages/onboarding/auth.dart';
+import 'package:freeu/pages/onboarding/found_omi/found_omi_widget.dart';
+import 'package:freeu/pages/onboarding/knowledge_graph_step.dart';
+import 'package:freeu/pages/onboarding/name/name_widget.dart';
+import 'package:freeu/pages/onboarding/permissions/permissions_widget.dart';
+import 'package:freeu/pages/onboarding/primary_language/primary_language_widget.dart';
+import 'package:freeu/pages/onboarding/complete_screen.dart';
+import 'package:freeu/pages/onboarding/speech_profile_widget.dart';
+import 'package:freeu/pages/onboarding/user_review_page.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/providers/onboarding_provider.dart';
+import 'package:freeu/providers/speech_profile_provider.dart';
+import 'package:freeu/services/auth_service.dart';
+import 'package:freeu/utils/analytics/intercom.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/widgets/device_widget.dart';
 
 class OnboardingWrapper extends StatefulWidget {
   const OnboardingWrapper({super.key});
@@ -44,7 +44,7 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> with TickerProvid
   static const int kPrimaryLanguagePage = 2;
   static const int kFoundOmiPage = 3;
   static const int kPermissionsPage = 4;
-  static const int kUserReviewPage = 5; // "Loving Omi?" screen
+  static const int kUserReviewPage = 5; // "Loving FreeU?" screen
   static const int kWelcomePage = 6;
   static const int kFindDevicesPage = 7;
   static const int kSpeechProfilePage = 8; // Speech profile with questions (requires device)

@@ -6,21 +6,21 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/http/api/action_items.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/schema.dart';
-import 'package:omi/pages/settings/task_integrations_page.dart';
-import 'package:omi/pages/settings/usage_page.dart';
-import 'package:omi/providers/task_integration_provider.dart';
-import 'package:omi/services/apple_reminders_service.dart';
-import 'package:omi/services/asana_service.dart';
-import 'package:omi/services/clickup_service.dart';
-import 'package:omi/services/google_tasks_service.dart';
-import 'package:omi/services/todoist_service.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/http/api/action_items.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/schema.dart';
+import 'package:freeu/pages/settings/task_integrations_page.dart';
+import 'package:freeu/pages/settings/usage_page.dart';
+import 'package:freeu/providers/task_integration_provider.dart';
+import 'package:freeu/services/apple_reminders_service.dart';
+import 'package:freeu/services/asana_service.dart';
+import 'package:freeu/services/clickup_service.dart';
+import 'package:freeu/services/google_tasks_service.dart';
+import 'package:freeu/services/todoist_service.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 import 'action_item_form_sheet.dart';
 
 class ActionItemTileWidget extends StatefulWidget {
@@ -419,7 +419,7 @@ class _ActionItemTileWidgetState extends State<ActionItemTileWidget> {
     // Create task in Todoist
     final success = await service.createTask(
       content: widget.actionItem.description,
-      description: 'From Omi',
+      description: 'From FreeU',
       dueDate: widget.actionItem.dueAt,
     );
 
@@ -536,7 +536,7 @@ class _ActionItemTileWidgetState extends State<ActionItemTileWidget> {
     // Create task in Asana (workspace/project from settings, assignee is current user)
     final success = await service.createTask(
       name: widget.actionItem.description,
-      notes: 'From Omi',
+      notes: 'From FreeU',
       dueDate: widget.actionItem.dueAt,
     );
 
@@ -653,7 +653,7 @@ class _ActionItemTileWidgetState extends State<ActionItemTileWidget> {
     // Create task in Google Tasks
     final success = await service.createTask(
       title: widget.actionItem.description,
-      notes: 'From Omi',
+      notes: 'From FreeU',
       dueDate: widget.actionItem.dueAt,
     );
 
@@ -750,7 +750,7 @@ class _ActionItemTileWidgetState extends State<ActionItemTileWidget> {
     // Create task in ClickUp
     final success = await service.createTask(
       name: widget.actionItem.description,
-      description: 'From Omi',
+      description: 'From FreeU',
       dueDate: widget.actionItem.dueAt,
     );
 
@@ -876,7 +876,7 @@ class _ActionItemTileWidgetState extends State<ActionItemTileWidget> {
     // Add to Apple Reminders
     final success = await service.addReminder(
       title: widget.actionItem.description,
-      notes: 'From Omi',
+      notes: 'From FreeU',
       dueDate: widget.actionItem.dueAt,
       listName: 'Reminders',
     );

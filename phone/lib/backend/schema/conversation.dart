@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/schema/geolocation.dart';
-import 'package:omi/backend/schema/message.dart';
-import 'package:omi/backend/schema/structured.dart';
-import 'package:omi/backend/schema/transcript_segment.dart';
+import 'package:freeu/backend/schema/geolocation.dart';
+import 'package:freeu/backend/schema/message.dart';
+import 'package:freeu/backend/schema/structured.dart';
+import 'package:freeu/backend/schema/transcript_segment.dart';
 
 class CreateConversationResponse {
   final List<ServerMessage> messages;

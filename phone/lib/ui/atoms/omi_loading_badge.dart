@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/ui/adaptive_widget.dart';
-import 'package:omi/utils/responsive/responsive_helper.dart';
+import 'package:freeu/ui/adaptive_widget.dart';
+import 'package:freeu/utils/responsive/responsive_helper.dart';
 
 /// Tiny pill badge that shows a spinner + text. Used for inline loading states
 /// such as "Searching…", "Syncing…", etc.

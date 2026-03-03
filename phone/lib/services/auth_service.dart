@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -13,13 +13,13 @@ import 'package:http/http.dart' as http;
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -215,7 +215,7 @@ class AuthService {
   }
 
   // Method channel for direct deep link delivery (fallback for app_links)
-  static const _deepLinkChannel = MethodChannel('com.omi/deep_links');
+  static const _deepLinkChannel = MethodChannel('com.freeu/deep_links');
 
   Future<UserCredential?> authenticateWithProvider(String provider) async {
     try {

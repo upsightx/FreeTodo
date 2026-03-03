@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:omi/env/env.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:freeu/env/env.dart';
 
 /// Minimal EnvFields stub for testing Env logic in isolation.
 /// Since Env._instance is late final (can only be set once per process),

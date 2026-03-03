@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 /// Shows a dialog suggesting Fast Transfer when user has BLE selected but device supports WiFi.
 /// Returns 'switch' to switch to Fast Transfer, 'continue' to proceed with BLE, or null if cancelled.

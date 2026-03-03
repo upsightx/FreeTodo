@@ -1,31 +1,31 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/devices/apple_watch_connection.dart';
-import 'package:omi/services/devices/bee_connection.dart';
-import 'package:omi/services/devices/discovery/device_locator.dart';
-import 'package:omi/services/devices/fieldy_connection.dart';
-import 'package:omi/services/devices/frame_connection.dart';
-import 'package:omi/services/devices/friend_pendant_connection.dart';
-import 'package:omi/services/devices/limitless_connection.dart';
-import 'package:omi/services/devices/models.dart';
-import 'package:omi/services/devices/omi_connection.dart';
-import 'package:omi/services/devices/omiglass_connection.dart';
-import 'package:omi/services/devices/plaud_connection.dart';
-import 'package:omi/services/devices/wifi_sync_error.dart';
-import 'package:omi/main.dart';
-import 'package:omi/services/notifications.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/services/devices/transports/device_transport.dart';
-import 'package:omi/services/devices/transports/ble_transport.dart';
-import 'package:omi/services/devices/transports/frame_transport.dart';
-import 'package:omi/services/devices/transports/watch_transport.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/devices/apple_watch_connection.dart';
+import 'package:freeu/services/devices/bee_connection.dart';
+import 'package:freeu/services/devices/discovery/device_locator.dart';
+import 'package:freeu/services/devices/fieldy_connection.dart';
+import 'package:freeu/services/devices/frame_connection.dart';
+import 'package:freeu/services/devices/friend_pendant_connection.dart';
+import 'package:freeu/services/devices/limitless_connection.dart';
+import 'package:freeu/services/devices/models.dart';
+import 'package:freeu/services/devices/omi_connection.dart';
+import 'package:freeu/services/devices/omiglass_connection.dart';
+import 'package:freeu/services/devices/plaud_connection.dart';
+import 'package:freeu/services/devices/wifi_sync_error.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/services/notifications.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/services/devices/transports/device_transport.dart';
+import 'package:freeu/services/devices/transports/ble_transport.dart';
+import 'package:freeu/services/devices/transports/frame_transport.dart';
+import 'package:freeu/services/devices/transports/watch_transport.dart';
+import 'package:freeu/utils/logger.dart';
 
 class DeviceConnectionFactory {
   static DeviceConnection? create(BtDevice device) {

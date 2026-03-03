@@ -1,10 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/services.dart';
 
 class CalendarService {
-  static const MethodChannel _methodChannel = MethodChannel('com.omi/calendar');
-  static const EventChannel _eventChannel = EventChannel('com.omi/calendar/events');
+  static const MethodChannel _methodChannel = MethodChannel('com.freeu/calendar');
+  static const EventChannel _eventChannel = EventChannel('com.freeu/calendar/events');
 
   Stream<CalendarMeetingEvent>? _calendarStream;
   StreamSubscription? _streamSubscription;

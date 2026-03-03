@@ -8,13 +8,13 @@ import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:omi/backend/http/api/action_items.dart' as action_items_api;
-import 'package:omi/backend/schema/schema.dart';
-import 'package:omi/providers/action_items_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/responsive/responsive_helper.dart';
-import 'package:omi/widgets/calendar_date_picker_sheet.dart';
+import 'package:freeu/backend/http/api/action_items.dart' as action_items_api;
+import 'package:freeu/backend/schema/schema.dart';
+import 'package:freeu/providers/action_items_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/responsive/responsive_helper.dart';
+import 'package:freeu/widgets/calendar_date_picker_sheet.dart';
 
 class ActionItemFormSheet extends StatefulWidget {
   final ActionItemWithMetadata? actionItem; // null for create, non-null for edit

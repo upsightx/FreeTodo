@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import 'package:omi/models/stt_response_schema.dart';
+import 'package:freeu/models/stt_response_schema.dart';
 
 enum SttProvider {
   omi,
@@ -142,8 +142,8 @@ class SttProviderConfig {
   static final _configs = <SttProvider, SttProviderConfig>{
     SttProvider.omi: SttProviderConfig(
       provider: SttProvider.omi,
-      displayName: 'Omi',
-      description: 'Omi\'s optimized transcription service',
+      displayName: 'FreeU',
+      description: 'FreeU\'s optimized transcription service',
       icon: FontAwesomeIcons.robot,
       requestType: SttRequestType.streaming,
       responseSchema: const SttResponseSchema(),

@@ -1,19 +1,19 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/message_event.dart';
-import 'package:omi/backend/schema/person.dart';
-import 'package:omi/backend/schema/transcript_segment.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/models/stt_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/constants.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/message_event.dart';
+import 'package:freeu/backend/schema/person.dart';
+import 'package:freeu/backend/schema/transcript_segment.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/models/stt_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/constants.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 // Use speaker colors from person.dart for bubble colors
 final List<Color> _speakerColors = speakerColors;
@@ -772,7 +772,7 @@ class _TranscriptWidgetState extends State<TranscriptWidget> {
             ),
             SizedBox(width: 4),
             Text(
-              'translated by omi',
+              'translated by freeu',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey,

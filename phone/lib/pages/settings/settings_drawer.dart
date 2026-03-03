@@ -1,36 +1,36 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/core/app_shell.dart';
-import 'package:omi/pages/persona/persona_provider.dart';
-import 'package:omi/services/auth_service.dart';
-import 'package:omi/pages/settings/developer.dart';
-import 'package:omi/pages/settings/notifications_settings_page.dart';
-import 'package:omi/pages/settings/profile.dart';
-import 'package:omi/pages/settings/integrations_page.dart';
-import 'package:omi/pages/settings/usage_page.dart';
-import 'package:omi/pages/referral/referral_page.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/providers/usage_provider.dart';
-import 'package:omi/models/subscription.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/utils/platform/platform_service.dart';
-import 'package:omi/widgets/dialog.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/core/app_shell.dart';
+import 'package:freeu/pages/persona/persona_provider.dart';
+import 'package:freeu/services/auth_service.dart';
+import 'package:freeu/pages/settings/developer.dart';
+import 'package:freeu/pages/settings/notifications_settings_page.dart';
+import 'package:freeu/pages/settings/profile.dart';
+import 'package:freeu/pages/settings/integrations_page.dart';
+import 'package:freeu/pages/settings/usage_page.dart';
+import 'package:freeu/pages/referral/referral_page.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/providers/usage_provider.dart';
+import 'package:freeu/models/subscription.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
+import 'package:freeu/widgets/dialog.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:omi/backend/http/api/announcements.dart';
-import 'package:omi/pages/announcements/changelog_sheet.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
+import 'package:freeu/backend/http/api/announcements.dart';
+import 'package:freeu/pages/announcements/changelog_sheet.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
 import 'device_settings.dart';
-import 'package:omi/pages/conversations/sync_page.dart';
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/pages/settings/server_settings_page.dart';
+import 'package:freeu/pages/conversations/sync_page.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/pages/settings/server_settings_page.dart';
 
 enum SettingsMode {
   no_device,
@@ -249,7 +249,7 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
   }
 
   Future<void> _copyVersionInfo() async {
-    final versionPart = buildVersion != null ? 'Omi AI ${version ?? ""} ($buildVersion)' : 'Omi AI ${version ?? ""}';
+    final versionPart = buildVersion != null ? 'FreeU AI ${version ?? ""} ($buildVersion)' : 'FreeU AI ${version ?? ""}';
     final devicePart = shortDeviceInfo ?? context.l10n.unknownDevice;
     final fullVersionInfo = '$versionPart — $devicePart';
 

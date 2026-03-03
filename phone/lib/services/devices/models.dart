@@ -1,12 +1,12 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/services/devices/errors.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/services/devices/errors.dart';
+import 'package:freeu/utils/logger.dart';
 
 class OrientedImage {
   final Uint8List imageBytes;

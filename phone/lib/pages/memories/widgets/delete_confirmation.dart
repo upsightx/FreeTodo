@@ -1,9 +1,9 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class DeleteConfirmation {
   static Future<bool> show(BuildContext context, {String? title, String? content}) async {

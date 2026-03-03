@@ -5,14 +5,14 @@ import 'package:collection/collection.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/schema/folder.dart';
-import 'package:omi/pages/conversations/widgets/create_folder_sheet.dart';
-import 'package:omi/providers/conversation_provider.dart';
-import 'package:omi/providers/folder_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/folders/folder_icon_mapper.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/responsive/responsive_helper.dart';
+import 'package:freeu/backend/schema/folder.dart';
+import 'package:freeu/pages/conversations/widgets/create_folder_sheet.dart';
+import 'package:freeu/providers/conversation_provider.dart';
+import 'package:freeu/providers/folder_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/folders/folder_icon_mapper.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/responsive/responsive_helper.dart';
 
 class FolderTabs extends StatefulWidget {
   final List<Folder> folders;

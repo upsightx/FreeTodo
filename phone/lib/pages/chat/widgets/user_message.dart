@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/backend/schema/message.dart';
-import 'package:omi/pages/chat/widgets/files_handler_widget.dart';
-import 'package:omi/widgets/extensions/string.dart';
-import 'package:omi/widgets/text_selection_controls.dart';
+import 'package:freeu/backend/schema/message.dart';
+import 'package:freeu/pages/chat/widgets/files_handler_widget.dart';
+import 'package:freeu/widgets/extensions/string.dart';
+import 'package:freeu/widgets/text_selection_controls.dart';
 
 class HumanMessage extends StatelessWidget {
   final ServerMessage message;

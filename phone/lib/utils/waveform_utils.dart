@@ -1,10 +1,10 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/utils/logger.dart';
 
 class WavInfo {
   final int sampleRate;

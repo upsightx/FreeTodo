@@ -1,13 +1,13 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/models/custom_stt_config.dart';
-import 'package:omi/models/stt_provider.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/models/custom_stt_config.dart';
+import 'package:freeu/models/stt_provider.dart';
+import 'package:freeu/utils/logger.dart';
 
 /// Enum representing the current freemium transcription state
 enum FreemiumTranscriptionState {

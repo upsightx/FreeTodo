@@ -1,17 +1,17 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/services/wals.dart';
-import 'package:omi/utils/debug_log_manager.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/other/time_utils.dart';
-import 'package:omi/models/sync_state.dart';
-import 'package:omi/utils/audio_player_utils.dart';
-import 'package:omi/utils/conversation_sync_utils.dart';
-import 'package:omi/utils/waveform_utils.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/services/wals.dart';
+import 'package:freeu/utils/debug_log_manager.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/other/time_utils.dart';
+import 'package:freeu/models/sync_state.dart';
+import 'package:freeu/utils/audio_player_utils.dart';
+import 'package:freeu/utils/conversation_sync_utils.dart';
+import 'package:freeu/utils/waveform_utils.dart';
 
 enum WalStatusFilter { pending, synced }
 

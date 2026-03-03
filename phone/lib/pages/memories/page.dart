@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:omi/widgets/shimmer_with_timeout.dart';
+import 'package:freeu/widgets/shimmer_with_timeout.dart';
 
-import 'package:omi/backend/schema/memory.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/providers/memories_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/ui_guidelines.dart';
-import 'package:omi/widgets/extensions/functions.dart';
+import 'package:freeu/backend/schema/memory.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/providers/memories_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/ui_guidelines.dart';
+import 'package:freeu/widgets/extensions/functions.dart';
 import 'widgets/memory_dialog.dart';
 import 'widgets/memory_edit_sheet.dart';
 import 'widgets/memory_graph_page.dart';

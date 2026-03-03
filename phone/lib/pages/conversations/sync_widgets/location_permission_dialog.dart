@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class LocationPermissionHelper {

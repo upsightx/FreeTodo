@@ -1,8 +1,8 @@
-import 'package:flutter_test/flutter_test.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/services/wals.dart';
-import 'package:omi/utils/audio_player_utils.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/services/wals.dart';
+import 'package:freeu/utils/audio_player_utils.dart';
 
 void main() {
   late AudioPlayerUtils player;

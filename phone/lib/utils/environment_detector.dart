@@ -1,10 +1,10 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class EnvironmentDetector {
-  static const _channel = MethodChannel('com.omi/environment');
+  static const _channel = MethodChannel('com.freeu/environment');
 
   static Future<bool> isTestFlight() async {
     if (!Platform.isIOS) return false;

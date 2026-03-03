@@ -11,12 +11,12 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:omi/backend/http/api/wrapped.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/pages/settings/wrapped_2025_share_templates.dart' as templates;
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/wrapped.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/pages/settings/wrapped_2025_share_templates.dart' as templates;
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
 
 // Bold color palette inspired by LinkedIn Wrapped
 class WrappedColors {
@@ -1436,7 +1436,7 @@ class _Wrapped2025PageState extends State<Wrapped2025Page> {
                 borderRadius: BorderRadius.circular(40),
               ),
               child: const Text(
-                'omi.me/wrapped',
+                'FreeU',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 32,
@@ -5252,7 +5252,7 @@ class _ThatsAWrapAnimatedState extends State<_ThatsAWrapAnimated> with TickerPro
                   opacity: buttonOpacity * 0.7,
                   child: Center(
                     child: Text(
-                      'omi.me/wrapped',
+                      'FreeU',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 14,

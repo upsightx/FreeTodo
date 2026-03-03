@@ -1,5 +1,5 @@
-import 'package:omi/backend/http/api/conversations.dart';
-import 'package:omi/backend/schema/conversation.dart';
+﻿import 'package:freeu/backend/http/api/conversations.dart';
+import 'package:freeu/backend/schema/conversation.dart';
 
 class ConversationSyncUtils {
   static const Duration _fetchTimeout = Duration(seconds: 30);

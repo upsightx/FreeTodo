@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:omi/backend/schema/dev_api_key.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/backend/schema/dev_api_key.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class DevApiKeyCreatedSheet extends StatefulWidget {
   final DevApiKeyCreated apiKey;

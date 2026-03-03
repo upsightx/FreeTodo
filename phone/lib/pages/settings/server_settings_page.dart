@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/env/lifetrace_env.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/env/lifetrace_env.dart';
 
 class ServerSettingsPage extends StatefulWidget {
   const ServerSettingsPage({super.key});

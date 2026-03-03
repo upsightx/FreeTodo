@@ -2,14 +2,14 @@
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/pages/capture/connect.dart';
-import 'package:omi/pages/settings/data_privacy_page.dart';
-import 'package:omi/pages/settings/settings_drawer.dart';
-import 'package:omi/providers/connectivity_provider.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/providers/perception_provider.dart';
-import 'package:omi/ui/mobile/mobile_tokens.dart';
-import 'package:omi/widgets/mobile_page_header.dart';
+import 'package:freeu/pages/capture/connect.dart';
+import 'package:freeu/pages/settings/data_privacy_page.dart';
+import 'package:freeu/pages/settings/settings_drawer.dart';
+import 'package:freeu/providers/connectivity_provider.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/providers/perception_provider.dart';
+import 'package:freeu/ui/mobile/mobile_tokens.dart';
+import 'package:freeu/widgets/mobile_page_header.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});

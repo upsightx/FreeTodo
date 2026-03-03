@@ -2,12 +2,12 @@
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/pages/settings/center_node_test_page.dart';
-import 'package:omi/providers/connectivity_provider.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/providers/perception_provider.dart';
-import 'package:omi/ui/mobile/mobile_tokens.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/pages/settings/center_node_test_page.dart';
+import 'package:freeu/providers/connectivity_provider.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/providers/perception_provider.dart';
+import 'package:freeu/ui/mobile/mobile_tokens.dart';
 
 class TopStatusBar extends StatelessWidget {
   const TopStatusBar({super.key});

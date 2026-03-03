@@ -1,10 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:intercom_flutter/intercom_flutter.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 class IntercomManager {
   static final IntercomManager _instance = IntercomManager._internal();
@@ -37,7 +37,7 @@ class IntercomManager {
     return PlatformService.executeIfSupportedAsync(
       _isIntercomEnabled,
       () async {
-        if (device == 'Omi DevKit 2') {
+        if (device == 'FreeU DevKit 2') {
           return await intercom.displayArticle('10003257-how-to-charge-devkit2');
         } else if (device == 'Omi') {
           return await intercom.displayArticle('12123047-how-to-charge-omi');

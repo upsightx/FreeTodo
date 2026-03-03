@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:skeletonizer/skeletonizer.dart';
 
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/pages/payments/models/payment_method_config.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/pages/payments/models/payment_method_config.dart';
 
 class PaymentMethodCard extends StatelessWidget {
   final Widget icon;

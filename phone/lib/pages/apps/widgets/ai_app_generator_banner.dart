@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import 'package:omi/pages/settings/ai_app_generator_page.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
+import 'package:freeu/pages/settings/ai_app_generator_page.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
 
 class AiAppGeneratorBanner extends StatelessWidget {
   const AiAppGeneratorBanner({super.key});

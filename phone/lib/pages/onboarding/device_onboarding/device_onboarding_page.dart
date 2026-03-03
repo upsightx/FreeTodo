@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -34,28 +34,28 @@ class _DeviceOnboardingPageState extends State<DeviceOnboardingPage> with Single
   // Content for each slide
   final List<Map<String, String>> _slideContent = [
     {
-      'title': 'Charging Your Omi',
-      'subtitle': 'Place your Omi on the charging dock. An orange light indicates that it\'s charging.',
+      'title': 'Charging Your FreeU',
+      'subtitle': 'Place your FreeU on the charging dock. An orange light indicates that it\'s charging.',
       'buttonText': 'Got it'
     },
     {
       'title': 'Device Disconnected',
-      'subtitle': 'When disconnected, your Omi will show a red light to indicate offline status.',
+      'subtitle': 'When disconnected, your FreeU will show a red light to indicate offline status.',
       'buttonText': 'Understood'
     },
     {
       'title': 'Device Connected',
-      'subtitle': 'A blue light indicates that your Omi is connected and capturing conversations.',
+      'subtitle': 'A blue light indicates that your FreeU is connected and capturing conversations.',
       'buttonText': 'Perfect'
     },
     {
       'title': 'Ask Questions',
-      'subtitle': 'Long press Omi and speak out to ask questions. Omi will respond through notifications.',
+      'subtitle': 'Long press FreeU and speak out to ask questions. FreeU will respond through notifications.',
       'buttonText': 'Cool'
     },
     {
       'title': 'Power Control',
-      'subtitle': 'Short press the button to turn your Omi device on or off as needed.',
+      'subtitle': 'Short press the button to turn your FreeU device on or off as needed.',
       'buttonText': 'Let\'s Go!'
     },
   ];

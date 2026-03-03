@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import 'package:omi/ui/atoms/omi_badge.dart';
-import 'package:omi/ui/atoms/omi_icon_button.dart';
-import 'package:omi/utils/responsive/responsive_helper.dart';
+import 'package:freeu/ui/atoms/omi_badge.dart';
+import 'package:freeu/ui/atoms/omi_icon_button.dart';
+import 'package:freeu/utils/responsive/responsive_helper.dart';
 
 /// Generic header used inside side-panels, drawers, bottom-sheets, etc.
 ///

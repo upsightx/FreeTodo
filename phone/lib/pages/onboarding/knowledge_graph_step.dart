@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
-import 'package:omi/pages/memories/widgets/memory_graph_page.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/pages/memories/widgets/memory_graph_page.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class OnboardingKnowledgeGraphStep extends StatelessWidget {
   final VoidCallback onContinue;

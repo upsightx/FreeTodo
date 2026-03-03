@@ -6,10 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:omi/backend/http/api/goals.dart';
-import 'package:omi/providers/goals_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/backend/http/api/goals.dart';
+import 'package:freeu/providers/goals_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 /// Multi-goal widget supporting up to 3 goals with minimalistic UI
 class GoalsWidget extends StatefulWidget {

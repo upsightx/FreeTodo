@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/http/api/apps.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/pages/persona/persona_provider.dart';
-import 'package:omi/pages/persona/twitter/clone_success_sceen.dart';
-import 'package:omi/utils/other/string_utils.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/backend/http/api/apps.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/pages/persona/persona_provider.dart';
+import 'package:freeu/pages/persona/twitter/clone_success_sceen.dart';
+import 'package:freeu/utils/other/string_utils.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 class VerifyIdentityScreen extends StatefulWidget {
   final PersonaProfileRouting routing;

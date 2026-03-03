@@ -1,5 +1,5 @@
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/backend/schema/transcript_segment.dart';
+﻿import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/backend/schema/transcript_segment.dart';
 
 abstract class MessageEvent {
   final String eventType;

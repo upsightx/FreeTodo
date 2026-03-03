@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/pages/home/firmware_mixin.dart';
-import 'package:omi/pages/home/page.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/utils/analytics/intercom.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/pages/home/firmware_mixin.dart';
+import 'package:freeu/pages/home/page.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/utils/analytics/intercom.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
 import 'firmware_update_dialog.dart';
 
 class FirmwareUpdate extends StatefulWidget {
@@ -289,7 +289,7 @@ class _FirmwareUpdateState extends State<FirmwareUpdate> with FirmwareMixin {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  context.l10n.restartDeviceToComplete(widget.device?.name ?? "Omi device"),
+                  context.l10n.restartDeviceToComplete(widget.device?.name ?? "FreeU Device"),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,

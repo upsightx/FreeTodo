@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/pages/settings/widgets/plans_sheet.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/services/freemium_transcription_service.dart';
+import 'package:freeu/pages/settings/widgets/plans_sheet.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/services/freemium_transcription_service.dart';
 
 /// Handler for freemium transcription switching
 /// Manages when to show the plans sheet and navigation

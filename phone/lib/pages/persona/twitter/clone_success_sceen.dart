@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/pages/chat/clone_chat_page.dart';
-import 'package:omi/pages/persona/persona_provider.dart';
-import 'package:omi/utils/other/string_utils.dart';
-import 'package:omi/utils/other/temp.dart';
-import 'package:omi/widgets/extensions/string.dart';
-import 'package:omi/pages/persona/persona_profile.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/pages/chat/clone_chat_page.dart';
+import 'package:freeu/pages/persona/persona_provider.dart';
+import 'package:freeu/utils/other/string_utils.dart';
+import 'package:freeu/utils/other/temp.dart';
+import 'package:freeu/widgets/extensions/string.dart';
+import 'package:freeu/pages/persona/persona_profile.dart';
 
 class CloneSuccessScreen extends StatefulWidget {
   final String message;
@@ -67,7 +67,7 @@ class _CloneSuccessScreenState extends State<CloneSuccessScreen> {
                     Text(
                       !LifeTraceEnv.enabled && FirebaseAuth.instance.currentUser?.isAnonymous == false
                           ? 'X Connected Successfully!'
-                          : 'Your Omi clone is\nverified and live!',
+                          : 'Your FreeU clone is\nverified and live!',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white,

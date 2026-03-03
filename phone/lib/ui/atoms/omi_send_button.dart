@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:omi/ui/adaptive_widget.dart';
-import 'package:omi/utils/responsive/responsive_helper.dart';
+import 'package:freeu/ui/adaptive_widget.dart';
+import 'package:freeu/utils/responsive/responsive_helper.dart';
 
 class OmiSendButton extends AdaptiveWidget {
   final bool enabled;

@@ -1,21 +1,21 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/pages/payments/payments_page.dart';
-import 'package:omi/pages/settings/change_name_widget.dart';
-import 'package:omi/pages/settings/language_settings_page.dart';
-import 'package:omi/pages/settings/custom_vocabulary_page.dart';
-import 'package:omi/pages/settings/people.dart';
-import 'package:omi/pages/settings/data_privacy_page.dart';
-import 'package:omi/pages/speech_profile/page.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/pages/payments/payments_page.dart';
+import 'package:freeu/pages/settings/change_name_widget.dart';
+import 'package:freeu/pages/settings/language_settings_page.dart';
+import 'package:freeu/pages/settings/custom_vocabulary_page.dart';
+import 'package:freeu/pages/settings/people.dart';
+import 'package:freeu/pages/settings/data_privacy_page.dart';
+import 'package:freeu/pages/speech_profile/page.dart';
 
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 
-import 'package:omi/pages/settings/conversation_display_settings.dart';
+import 'package:freeu/pages/settings/conversation_display_settings.dart';
 
 import 'delete_account.dart';
 

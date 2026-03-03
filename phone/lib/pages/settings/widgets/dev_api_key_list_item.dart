@@ -3,9 +3,9 @@
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/schema/dev_api_key.dart';
-import 'package:omi/providers/dev_api_key_provider.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/backend/schema/dev_api_key.dart';
+import 'package:freeu/providers/dev_api_key_provider.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class DevApiKeyListItem extends StatelessWidget {
   final DevApiKey apiKey;

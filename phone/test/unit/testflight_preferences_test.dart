@@ -1,6 +1,6 @@
-import 'package:flutter_test/flutter_test.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:omi/backend/preferences.dart';
+import 'package:freeu/backend/preferences.dart';
 
 void main() {
   group('SharedPreferencesUtil TestFlight API Environment', () {

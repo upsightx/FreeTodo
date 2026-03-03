@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/providers/app_provider.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/providers/message_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/widgets/dialog.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/providers/app_provider.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/providers/message_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/widgets/dialog.dart';
 
 enum ChatMode { chat, chat_clone }
 

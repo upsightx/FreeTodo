@@ -1,9 +1,9 @@
-import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
+﻿import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/services/services.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/services/services.dart';
 
 class _TestConnectivityPlatform extends ConnectivityPlatform {
   @override

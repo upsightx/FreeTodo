@@ -1,19 +1,19 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:version/version.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/pages/home/page.dart';
-import 'package:omi/services/devices/omiglass_connection.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/pages/home/page.dart';
+import 'package:freeu/services/devices/omiglass_connection.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/other/temp.dart';
 import 'package:provider/provider.dart';
 
 class OmiGlassOtaUpdate extends StatefulWidget {
@@ -766,7 +766,7 @@ class _OmiGlassOtaUpdateState extends State<OmiGlassOtaUpdate> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your ${widget.device?.name ?? "OmiGlass"} has been updated successfully. The device will restart automatically.',
+                  'Your ${widget.device?.name ?? "FreeU Glass"} has been updated successfully. The device will restart automatically.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,

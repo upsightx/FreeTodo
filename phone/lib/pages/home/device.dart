@@ -5,20 +5,20 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/providers/sync_provider.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/utils/analytics/intercom.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/time_utils.dart';
-import 'package:omi/utils/platform/platform_service.dart';
-import 'package:omi/widgets/device_widget.dart';
-import 'package:omi/widgets/dialog.dart';
-import 'package:omi/pages/conversations/sync_page.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/providers/sync_provider.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/utils/analytics/intercom.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/time_utils.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
+import 'package:freeu/widgets/device_widget.dart';
+import 'package:freeu/widgets/dialog.dart';
+import 'package:freeu/pages/conversations/sync_page.dart';
 import 'firmware_update.dart';
 import 'omiglass_ota_update.dart';
 
@@ -311,7 +311,7 @@ class _ConnectedDeviceState extends State<ConnectedDevice> {
               } else {
                 final deviceName = provider.pairedDevice?.name ?? 'DevKit1';
                 String url;
-                if (deviceName == 'Omi DevKit 2') {
+                if (deviceName == 'FreeU DevKit 2') {
                   url = 'https://www.omi.me/pages/charging-devkit2';
                 } else if (deviceName == 'Omi') {
                   url = 'https://www.omi.me/pages/charging-omi';

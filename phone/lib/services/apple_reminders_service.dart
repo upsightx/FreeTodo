@@ -1,8 +1,8 @@
-import 'package:flutter/services.dart';
+﻿import 'package:flutter/services.dart';
 
-import 'package:omi/backend/http/api/action_items.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/http/api/action_items.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 class AppleRemindersService {
   static const _channel = MethodChannel('com.omi.apple_reminders');
@@ -173,7 +173,7 @@ class AppleRemindersService {
     // Add the reminder
     final success = await addReminder(
       title: actionItemDescription,
-      notes: 'From Omi',
+      notes: 'From FreeU',
       listName: 'Reminders',
     );
 

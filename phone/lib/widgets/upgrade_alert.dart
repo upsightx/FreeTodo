@@ -1,12 +1,12 @@
-// Copyright (c) 2023 Larry Aasen. All rights reserved.
+﻿// Copyright (c) 2023 Larry Aasen. All rights reserved.
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:upgrader/upgrader.dart';
 
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/l10n_extensions.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
 
 class MyUpgrader extends Upgrader {
   MyUpgrader({super.debugLogging, super.debugDisplayOnce});

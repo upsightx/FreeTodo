@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -11,21 +11,21 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_provider_utilities/flutter_provider_utilities.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/main.dart';
-import 'package:omi/providers/base_provider.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/services/devices.dart';
-import 'package:omi/services/notifications.dart';
-import 'package:omi/services/services.dart';
-import 'package:omi/utils/alerts/app_snackbar.dart';
-import 'package:omi/utils/analytics/analytics_manager.dart';
-import 'package:omi/utils/audio/foreground.dart';
-import 'package:omi/utils/bluetooth/bluetooth_adapter.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_service.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/main.dart';
+import 'package:freeu/providers/base_provider.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/services/devices.dart';
+import 'package:freeu/services/notifications.dart';
+import 'package:freeu/services/services.dart';
+import 'package:freeu/utils/alerts/app_snackbar.dart';
+import 'package:freeu/utils/analytics/analytics_manager.dart';
+import 'package:freeu/utils/audio/foreground.dart';
+import 'package:freeu/utils/bluetooth/bluetooth_adapter.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
 
 class OnboardingProvider extends BaseProvider with MessageNotifierMixin implements IDeviceServiceSubsciption {
   DeviceProvider? deviceProvider;

@@ -1,6 +1,6 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 
-import 'package:omi/gen/flutter_communicator.g.dart';
+import 'package:freeu/gen/flutter_communicator.g.dart';
 
 /// Public bridge that implements Pigeon callbacks and forwards them to Dart-side listeners.
 class AppleWatchFlutterBridge implements WatchRecorderFlutterAPI {

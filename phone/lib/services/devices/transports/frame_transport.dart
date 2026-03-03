@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -8,8 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:frame_sdk/bluetooth.dart';
 import 'package:frame_sdk/frame_sdk.dart';
 
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/utils/logger.dart';
 import 'device_transport.dart';
 
 class FrameTransport extends DeviceTransport {

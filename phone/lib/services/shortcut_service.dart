@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/services.dart';
 
@@ -23,7 +23,7 @@ class ShortcutInfo {
 }
 
 class ShortcutService {
-  static const _channel = MethodChannel('com.omi/shortcuts');
+  static const _channel = MethodChannel('com.freeu/shortcuts');
 
   static bool get isSupported => Platform.isMacOS;
 

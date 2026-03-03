@@ -1,17 +1,17 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 
-import 'package:omi/backend/http/http_pool_manager.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/env/env.dart';
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/services/auth_service.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/utils/platform/platform_manager.dart';
+import 'package:freeu/backend/http/http_pool_manager.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/env/env.dart';
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/services/auth_service.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/utils/platform/platform_manager.dart';
 
 class ApiClient {
   static const Duration requestTimeoutRead = Duration(seconds: 30);

@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/http/api/apps.dart';
-import 'package:omi/backend/schema/app.dart';
-import 'package:omi/pages/apps/list_item.dart';
-import 'package:omi/providers/app_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/app_localizations_helper.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/backend/http/api/apps.dart';
+import 'package:freeu/backend/schema/app.dart';
+import 'package:freeu/pages/apps/list_item.dart';
+import 'package:freeu/providers/app_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/app_localizations_helper.dart';
+import 'package:freeu/utils/logger.dart';
 
 class CategoryAppsPage extends StatefulWidget {
   final Category category;

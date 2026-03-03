@@ -1,11 +1,11 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:omi/gen/flutter_communicator.g.dart';
-import 'package:omi/services/bridges/apple_watch_bridge.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/gen/flutter_communicator.g.dart';
+import 'package:freeu/services/bridges/apple_watch_bridge.dart';
+import 'package:freeu/utils/logger.dart';
 import 'device_transport.dart';
 
 class WatchTransport extends DeviceTransport {

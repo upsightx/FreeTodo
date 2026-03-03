@@ -6,21 +6,21 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/conversation.dart';
-import 'package:omi/backend/schema/message_event.dart';
-import 'package:omi/backend/schema/transcript_segment.dart';
-import 'package:omi/pages/capture/widgets/widgets.dart';
-import 'package:omi/pages/conversation_detail/widgets/name_speaker_sheet.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/providers/connectivity_provider.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/enums.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/platform/platform_service.dart';
-import 'package:omi/widgets/confirmation_dialog.dart';
-import 'package:omi/widgets/photo_viewer_page.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/conversation.dart';
+import 'package:freeu/backend/schema/message_event.dart';
+import 'package:freeu/backend/schema/transcript_segment.dart';
+import 'package:freeu/pages/capture/widgets/widgets.dart';
+import 'package:freeu/pages/conversation_detail/widgets/name_speaker_sheet.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/providers/connectivity_provider.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/enums.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/platform/platform_service.dart';
+import 'package:freeu/widgets/confirmation_dialog.dart';
+import 'package:freeu/widgets/photo_viewer_page.dart';
 
 class ConversationCapturingPage extends StatefulWidget {
   final String? topConversationId;

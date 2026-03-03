@@ -1,18 +1,18 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/backend/schema/bt_device/bt_device.dart';
-import 'package:omi/gen/assets.gen.dart';
-import 'package:omi/pages/capture/connect.dart';
-import 'package:omi/pages/home/device.dart';
-import 'package:omi/providers/device_provider.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/device.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/backend/schema/bt_device/bt_device.dart';
+import 'package:freeu/gen/assets.gen.dart';
+import 'package:freeu/pages/capture/connect.dart';
+import 'package:freeu/pages/home/device.dart';
+import 'package:freeu/providers/device_provider.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/device.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/other/temp.dart';
 
 class BatteryInfoWidget extends StatelessWidget {
   const BatteryInfoWidget({super.key});

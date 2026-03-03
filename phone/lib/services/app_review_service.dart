@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,8 +7,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/logger.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/logger.dart';
 
 class AppReviewService {
   static final AppReviewService _instance = AppReviewService._internal();
@@ -136,7 +136,7 @@ class AppReviewService {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Loving Omi?',
+                  'Loving FreeU?',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,

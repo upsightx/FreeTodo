@@ -5,14 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_provider_utilities/flutter_provider_utilities.dart';
 import 'package:provider/provider.dart';
 
-import 'package:omi/pages/settings/language_selection_dialog.dart';
-import 'package:omi/pages/speech_profile/percentage_bar_progress.dart';
-import 'package:omi/providers/capture_provider.dart';
-import 'package:omi/providers/home_provider.dart';
-import 'package:omi/providers/speech_profile_provider.dart';
-import 'package:omi/utils/l10n_extensions.dart';
-import 'package:omi/utils/logger.dart';
-import 'package:omi/widgets/dialog.dart';
+import 'package:freeu/pages/settings/language_selection_dialog.dart';
+import 'package:freeu/pages/speech_profile/percentage_bar_progress.dart';
+import 'package:freeu/providers/capture_provider.dart';
+import 'package:freeu/providers/home_provider.dart';
+import 'package:freeu/providers/speech_profile_provider.dart';
+import 'package:freeu/utils/l10n_extensions.dart';
+import 'package:freeu/utils/logger.dart';
+import 'package:freeu/widgets/dialog.dart';
 
 class SpeechProfileWidget extends StatefulWidget {
   final VoidCallback goNext;
@@ -303,7 +303,7 @@ class _SpeechProfileWidgetState extends State<SpeechProfileWidget> with TickerPr
                         if (!provider.startedRecording) ...[
                           // Intro text
                           Text(
-                            'Omi needs to learn your goals and your voice. Answer questions with your voice. You\'ll be able to modify it later.',
+                            'FreeU needs to learn your goals and your voice. Answer questions with your voice. You\'ll be able to modify it later.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.6),

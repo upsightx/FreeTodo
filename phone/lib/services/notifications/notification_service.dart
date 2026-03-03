@@ -1,13 +1,13 @@
-// Platform-aware notification service with conditional implementation
+﻿// Platform-aware notification service with conditional implementation
 // FCM Implementation: Full Firebase Cloud Messaging support (iOS, Android, macOS, web, Linux)
 // Basic Implementation: Local notifications only (Windows)
 
 import 'dart:io' show Platform;
 
-import 'package:omi/env/lifetrace_env.dart';
-import 'package:omi/services/notifications/notification_interface.dart';
-import 'package:omi/services/notifications/notification_service_basic.dart' as basic;
-import 'package:omi/services/notifications/notification_service_fcm.dart' as fcm;
+import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/services/notifications/notification_interface.dart';
+import 'package:freeu/services/notifications/notification_service_basic.dart' as basic;
+import 'package:freeu/services/notifications/notification_service_fcm.dart' as fcm;
 
 /// Factory function to create the appropriate notification service based on platform capabilities
 NotificationInterface _createPlatformNotificationService() {

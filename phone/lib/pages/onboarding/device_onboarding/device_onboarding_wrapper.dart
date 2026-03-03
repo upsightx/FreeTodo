@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import 'package:omi/backend/http/api/users.dart';
-import 'package:omi/backend/preferences.dart';
-import 'package:omi/pages/home/page.dart';
-import 'package:omi/utils/analytics/mixpanel.dart';
-import 'package:omi/utils/other/temp.dart';
+import 'package:freeu/backend/http/api/users.dart';
+import 'package:freeu/backend/preferences.dart';
+import 'package:freeu/pages/home/page.dart';
+import 'package:freeu/utils/analytics/mixpanel.dart';
+import 'package:freeu/utils/other/temp.dart';
 import 'device_onboarding_page.dart';
 
 class DeviceOnboardingWrapper extends StatefulWidget {
