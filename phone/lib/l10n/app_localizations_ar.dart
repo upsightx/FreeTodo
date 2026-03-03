@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -3389,7 +3389,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nameMustBeAtLeast2Characters => 'يجب أن يكون الاسم على الأقل حرفين';
 
   @override
-  String get tellUsHowYouWouldLikeToBeAddressed => 'أخبرنا كيف تريد أن نخاطبك. هذا يساعد في تخصيص تجربة FreeU الخاصة بك.';
+  String get tellUsHowYouWouldLikeToBeAddressed =>
+      'أخبرنا كيف تريد أن نخاطبك. هذا يساعد في تخصيص تجربة FreeU الخاصة بك.';
 
   @override
   String charactersCount(int count) {

@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -3403,7 +3403,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get chooseYourLanguage => 'Wybierz swój język';
 
   @override
-  String get selectPreferredLanguageForBestExperience => 'Wybierz preferowany język dla najlepszego doświadczenia FreeU';
+  String get selectPreferredLanguageForBestExperience =>
+      'Wybierz preferowany język dla najlepszego doświadczenia FreeU';
 
   @override
   String get searchLanguages => 'Szukaj języków...';
@@ -3430,7 +3431,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get enableFeaturesForBestExperience => 'Włącz funkcje dla najlepszego doświadczenia FreeU na swoim urządzeniu.';
+  String get enableFeaturesForBestExperience =>
+      'Włącz funkcje dla najlepszego doświadczenia FreeU na swoim urządzeniu.';
 
   @override
   String get microphoneAccess => 'Dostęp do mikrofonu';

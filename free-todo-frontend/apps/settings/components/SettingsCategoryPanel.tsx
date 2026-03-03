@@ -9,6 +9,8 @@ export type SettingsCategoryId =
 	| "workspace"
 	| "automation"
 	| "ai"
+	| "sensing"
+	| "proactive"
 	| "developer"
 	| "help";
 

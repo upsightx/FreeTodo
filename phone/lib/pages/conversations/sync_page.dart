@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -693,7 +693,7 @@ class _SyncPageState extends State<SyncPage> {
 
       final controller = await WifiConnectionSheet.show(
         context,
-        devicename: 'FreeU',
+        deviceName: 'FreeU',
         onCancel: () {
           syncProvider.cancelSync();
         },

@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -6733,7 +6733,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get enableFastTransfer => '빠른 전송 활성화';
 
   @override
-  String get fastTransferDescription => '빠른 전송은 WiFi를 사용하여 ~5배 빠른 속도를 제공합니다. 전송 중 휴대폰이 일시적으로 FreeU 기기의 WiFi 네트워크에 연결됩니다.';
+  String get fastTransferDescription =>
+      '빠른 전송은 WiFi를 사용하여 ~5배 빠른 속도를 제공합니다. 전송 중 휴대폰이 일시적으로 FreeU 기기의 WiFi 네트워크에 연결됩니다.';
 
   @override
   String get internetAccessPausedDuringTransfer => '전송 중 인터넷 접속이 일시 중지됩니다';

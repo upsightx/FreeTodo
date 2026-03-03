@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -545,7 +545,8 @@ class AppLocalizationsLv extends AppLocalizations {
   String get deviceNotConnected => 'Ierīce nav savienota';
 
   @override
-  String get connectDeviceMessage => 'Savienojiet savu FreeU ierīci, lai piekļūtu\nierīces iestatījumiem un pielāgošanai';
+  String get connectDeviceMessage =>
+      'Savienojiet savu FreeU ierīci, lai piekļūtu\nierīces iestatījumiem un pielāgošanai';
 
   @override
   String get deviceInfoSection => 'Ierīces informācija';
@@ -758,7 +759,8 @@ class AppLocalizationsLv extends AppLocalizations {
   }
 
   @override
-  String get shareStatsMessage => 'Dalījums ar manu FreeU statistiku! (FreeU.me - jūsu vienmēr ieslēgtais AI asistents)';
+  String get shareStatsMessage =>
+      'Dalījums ar manu FreeU statistiku! (FreeU.me - jūsu vienmēr ieslēgtais AI asistents)';
 
   @override
   String get sharePeriodToday => 'Šodien FreeU ir:';
@@ -1459,7 +1461,8 @@ class AppLocalizationsLv extends AppLocalizations {
   String get bringYourOwn => 'Atnesiet savu';
 
   @override
-  String get payYourSttProvider => 'Brīvi izmantojiet FreeU. Jūs maksājat tikai savam STT pakalpojumu sniedzējam tieši.';
+  String get payYourSttProvider =>
+      'Brīvi izmantojiet FreeU. Jūs maksājat tikai savam STT pakalpojumu sniedzējam tieši.';
 
   @override
   String get freeMinutesMonth => '1200 bezmaksas minūtes/mēnesī iekļautas. Neierobežots ar ';

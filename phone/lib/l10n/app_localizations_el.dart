@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -124,7 +124,8 @@ class AppLocalizationsEl extends AppLocalizations {
   String get editPerson => 'Επεξεργασία Ατόμου';
 
   @override
-  String get createPersonHint => 'Δημιουργήστε ένα νέο άτομο και εκπαιδεύστε το FreeU να αναγνωρίζει και την ομιλία του!';
+  String get createPersonHint =>
+      'Δημιουργήστε ένα νέο άτομο και εκπαιδεύστε το FreeU να αναγνωρίζει και την ομιλία του!';
 
   @override
   String get speechProfile => 'Προφίλ Ομιλίας';
@@ -3593,7 +3594,8 @@ class AppLocalizationsEl extends AppLocalizations {
   String get triggersWhenDaySummaryGenerated => 'Ενεργοποιείται όταν δημιουργείται η περίληψη της ημέρας.';
 
   @override
-  String get tryLatestExperimentalFeatures => 'Δοκιμάστε τις πιο πρόσφατες πειραματικές λειτουργίες από την ομάδα FreeU.';
+  String get tryLatestExperimentalFeatures =>
+      'Δοκιμάστε τις πιο πρόσφατες πειραματικές λειτουργίες από την ομάδα FreeU.';
 
   @override
   String get transcriptionServiceDiagnosticStatus => 'Κατάσταση διαγνωστικών υπηρεσίας μεταγραφής';

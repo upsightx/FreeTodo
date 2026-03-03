@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -2852,7 +2852,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get makeMyAppPublic => 'ทำให้แอปของฉันเป็นสาธารณะ';
 
   @override
-  String get submitAppTermsAgreement => 'การส่งแอปนี้ ฉันยอมรับข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัวของ FreeU AI';
+  String get submitAppTermsAgreement =>
+      'การส่งแอปนี้ ฉันยอมรับข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัวของ FreeU AI';
 
   @override
   String get submitApp => 'ส่งแอป';

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'package:freeu/backend/schema/bt_device/bt_device.dart';
 import 'package:freeu/gen/assets.gen.dart';
@@ -89,7 +89,7 @@ class _DeviceAnimationWidgetState extends State<DeviceAnimationWidget> with Tick
     final double imageWidth = (MediaQuery.sizeOf(context).height <= 700 ? 130 : 160) * widget.sizeMultiplier;
 
     // Special handling for Omi device with connection indicator
-    if ((widget.deviceType == DeviceType.omi || widget.deviceName == 'Omi') && !widget.isConnected) {
+    if ((widget.deviceType == DeviceType.omi || widget.deviceName == 'Omi' || widget.deviceName == 'FreeU') && !widget.isConnected) {
       return Stack(
         alignment: Alignment.center,
         children: [

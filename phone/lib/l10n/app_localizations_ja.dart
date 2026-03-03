@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -4138,7 +4138,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get omiApiKeys => 'FreeU APIキー';
 
   @override
-  String get apiKeysDescription => 'APIキーは、アプリがFreeUサーバーと通信する際の認証に使用されます。アプリケーションがメモリを作成し、他のFreeUサービスに安全にアクセスできるようにします。';
+  String get apiKeysDescription =>
+      'APIキーは、アプリがFreeUサーバーと通信する際の認証に使用されます。アプリケーションがメモリを作成し、他のFreeUサービスに安全にアクセスできるようにします。';
 
   @override
   String get aboutOmiApiKeys => 'FreeU APIキーについて';

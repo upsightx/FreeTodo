@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -311,9 +311,9 @@ class _ConnectedDeviceState extends State<ConnectedDevice> {
               } else {
                 final deviceName = provider.pairedDevice?.name ?? 'DevKit1';
                 String url;
-                if (deviceName == 'FreeU DevKit 2') {
+                if (deviceName == 'FreeU DevKit 2' || deviceName == 'Omi DevKit 2') {
                   url = 'https://www.omi.me/pages/charging-devkit2';
-                } else if (deviceName == 'Omi') {
+                } else if (deviceName == 'Omi' || deviceName == 'FreeU') {
                   url = 'https://www.omi.me/pages/charging-omi';
                 } else {
                   url = 'https://www.omi.me/pages/charging';

@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:version/version.dart';
@@ -120,7 +120,7 @@ class DeviceUtils {
       if (upperModel.contains('FRIEND PENDANT')) {
         return Assets.images.friendPendant.path;
       }
-      if (upperModel.contains('FreeU DevKit 2') || upperModel.contains('FRIEND')) {
+      if (upperModel.contains('FREEU DEVKIT 2') || upperModel.contains('OMI DEVKIT 2') || upperModel.contains('FRIEND')) {
         return Assets.images.omiDevkitWithoutRope.path;
       }
       if (upperModel.contains('GLASS')) {
@@ -156,7 +156,7 @@ class DeviceUtils {
       if (upperName.startsWith('FRIEND_')) {
         return Assets.images.friendPendant.path;
       }
-      if (upperName.contains('FreeU DevKit') || upperName.contains('FreeU Dev') || upperName.contains('FRIEND')) {
+      if (upperName.contains('FREEU DEVKIT') || upperName.contains('FREEU DEV') || upperName.contains('OMI DEVKIT') || upperName.contains('OMI DEV') || upperName.contains('FRIEND')) {
         return Assets.images.omiDevkitWithoutRope.path;
       }
       if (upperName.contains('BEE')) {

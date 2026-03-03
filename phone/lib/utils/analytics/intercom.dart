@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:intercom_flutter/intercom_flutter.dart';
 
@@ -37,9 +37,9 @@ class IntercomManager {
     return PlatformService.executeIfSupportedAsync(
       _isIntercomEnabled,
       () async {
-        if (device == 'FreeU DevKit 2') {
+        if (device == 'FreeU DevKit 2' || device == 'Omi DevKit 2') {
           return await intercom.displayArticle('10003257-how-to-charge-devkit2');
-        } else if (device == 'Omi') {
+        } else if (device == 'Omi' || device == 'FreeU') {
           return await intercom.displayArticle('12123047-how-to-charge-omi');
         } else {
           return await intercom.displayArticle('9907475-how-to-charge-the-device');

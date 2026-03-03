@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -124,7 +124,8 @@ class AppLocalizationsHu extends AppLocalizations {
   String get editPerson => 'Személy szerkesztése';
 
   @override
-  String get createPersonHint => 'Hozz létre egy új személyt, és tanítsd meg az FreeU-t, hogy felismerje a beszédét is!';
+  String get createPersonHint =>
+      'Hozz létre egy új személyt, és tanítsd meg az FreeU-t, hogy felismerje a beszédét is!';
 
   @override
   String get speechProfile => 'Beszédprofil';

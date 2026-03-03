@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -759,7 +759,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get shareStatsMessage => 'FreeU istatistiklerimi paylaşıyorum! (FreeU.me - her zaman açık yapay zeka asistanınız)';
+  String get shareStatsMessage =>
+      'FreeU istatistiklerimi paylaşıyorum! (FreeU.me - her zaman açık yapay zeka asistanınız)';
 
   @override
   String get sharePeriodToday => 'Bugün, FreeU:';

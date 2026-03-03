@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -757,7 +757,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get shareStatsMessage => '¡Compartiendo mis estadísticas de FreeU! (FreeU.me - mi asistente IA siempre activo)';
+  String get shareStatsMessage =>
+      '¡Compartiendo mis estadísticas de FreeU! (FreeU.me - mi asistente IA siempre activo)';
 
   @override
   String get sharePeriodToday => 'Hoy FreeU:';
@@ -3385,7 +3386,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get chooseYourLanguage => 'Elige tu idioma';
 
   @override
-  String get selectPreferredLanguageForBestExperience => 'Seleccione su idioma preferido para la mejor experiencia FreeU';
+  String get selectPreferredLanguageForBestExperience =>
+      'Seleccione su idioma preferido para la mejor experiencia FreeU';
 
   @override
   String get searchLanguages => 'Buscar idiomas...';

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:ui';
 // trigger rebuild
 
@@ -143,7 +143,7 @@ Future _init() async {
   // Service manager
   await ServiceManager.init();
 
-  // Firebase 鈥?skip entirely in LifeTrace self-hosted mode
+  // Firebase — skip entirely in LifeTrace self-hosted mode
   if (!_kLifeTraceMode) {
     if (Firebase.apps.isEmpty) {
       final options = (PlatformService.isWindows || F.env == Environment.prod)
@@ -186,7 +186,7 @@ Future _init() async {
     debugPrint('LifeTrace mode: credentials pre-populated, API → ${Env.apiBaseUrl}');
   }
 
-  // TestFlight environment detection 鈥?must be after SharedPreferencesUtil.init()
+  // TestFlight environment detection — must be after SharedPreferencesUtil.init()
   if (!_kLifeTraceMode && F.env == Environment.prod) {
     final isTestFlight = await EnvironmentDetector.isTestFlight();
     if (isTestFlight) {

@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -1783,7 +1783,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get maybeLater => 'शायद बाद में';
 
   @override
-  String get speechProfileIntro => 'FreeU को आपके लक्ष्यों और आपकी आवाज़ सीखनी होगी। आप इसे बाद में संशोधित कर सकते हैं।';
+  String get speechProfileIntro =>
+      'FreeU को आपके लक्ष्यों और आपकी आवाज़ सीखनी होगी। आप इसे बाद में संशोधित कर सकते हैं।';
 
   @override
   String get getStarted => 'शुरू करें';
@@ -2631,7 +2632,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get reviewAndManageConversations => 'अपनी रिकॉर्ड की गई बातचीत की समीक्षा करें और प्रबंधित करें';
 
   @override
-  String get startCapturingConversations => 'उन्हें यहां देखने के लिए अपने FreeU डिवाइस से बातचीत कैप्चर करना शुरू करें।';
+  String get startCapturingConversations =>
+      'उन्हें यहां देखने के लिए अपने FreeU डिवाइस से बातचीत कैप्चर करना शुरू करें।';
 
   @override
   String get useMobileAppToCapture => 'ऑडियो कैप्चर करने के लिए अपने मोबाइल ऐप का उपयोग करें';

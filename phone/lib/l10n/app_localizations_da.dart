@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -6839,7 +6839,8 @@ class AppLocalizationsDa extends AppLocalizations {
   String get internetAccessPausedDuringTransfer => 'Internetadgang er sat på pause under overførsel';
 
   @override
-  String get chooseTransferMethodDescription => 'Vælg hvordan optagelser overføres fra din FreeU-enhed til din telefon.';
+  String get chooseTransferMethodDescription =>
+      'Vælg hvordan optagelser overføres fra din FreeU-enhed til din telefon.';
 
   @override
   String get wifiSpeed => 'WiFi-hastighed';

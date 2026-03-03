@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -1810,7 +1810,8 @@ class AppLocalizationsRo extends AppLocalizations {
   String get maybeLater => 'Poate Mai Târziu';
 
   @override
-  String get speechProfileIntro => 'FreeU trebuie să învețe obiectivele și vocea ta. Vei putea să o modifici mai târziu.';
+  String get speechProfileIntro =>
+      'FreeU trebuie să învețe obiectivele și vocea ta. Vei putea să o modifici mai târziu.';
 
   @override
   String get getStarted => 'Începe';
@@ -3414,7 +3415,8 @@ class AppLocalizationsRo extends AppLocalizations {
   String get chooseYourLanguage => 'Alegeți limba dvs.';
 
   @override
-  String get selectPreferredLanguageForBestExperience => 'Selectați limba preferată pentru cea mai bună experiență FreeU';
+  String get selectPreferredLanguageForBestExperience =>
+      'Selectați limba preferată pentru cea mai bună experiență FreeU';
 
   @override
   String get searchLanguages => 'Căutați limbi...';

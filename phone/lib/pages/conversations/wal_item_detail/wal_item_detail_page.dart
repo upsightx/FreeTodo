@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -585,7 +585,7 @@ class _WalItemDetailPageState extends State<WalItemDetailPage> {
 
         final sheetController = await WifiConnectionSheet.show(
           context,
-          devicename: 'FreeU',
+          deviceName: 'FreeU',
           onCancel: () {
             syncProvider.cancelSync();
           },

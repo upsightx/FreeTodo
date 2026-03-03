@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -5727,7 +5727,8 @@ class AppLocalizationsNl extends AppLocalizations {
       'Je dagelijkse score is gebaseerd op taakvoltooiing. Voltooi je taken om je score te verbeteren!';
 
   @override
-  String get notificationFrequencyDescription => 'Bepaal hoe vaak FreeU je proactieve meldingen en herinneringen stuurt.';
+  String get notificationFrequencyDescription =>
+      'Bepaal hoe vaak FreeU je proactieve meldingen en herinneringen stuurt.';
 
   @override
   String get sliderOff => 'Uit';

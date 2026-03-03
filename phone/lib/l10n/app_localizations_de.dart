@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -3452,7 +3452,8 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get enableFeaturesForBestExperience => 'Aktivieren Sie Funktionen für das beste FreeU-Erlebnis auf Ihrem Gerät.';
+  String get enableFeaturesForBestExperience =>
+      'Aktivieren Sie Funktionen für das beste FreeU-Erlebnis auf Ihrem Gerät.';
 
   @override
   String get microphoneAccess => 'Mikrofonzugriff';
@@ -3594,7 +3595,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get triggersWhenDaySummaryGenerated => 'Wird ausgelöst, wenn die Tageszusammenfassung generiert wird.';
 
   @override
-  String get tryLatestExperimentalFeatures => 'Probieren Sie die neuesten experimentellen Funktionen vom FreeU-Team aus.';
+  String get tryLatestExperimentalFeatures =>
+      'Probieren Sie die neuesten experimentellen Funktionen vom FreeU-Team aus.';
 
   @override
   String get transcriptionServiceDiagnosticStatus => 'Diagnosestatus des Transkriptionsdienstes';

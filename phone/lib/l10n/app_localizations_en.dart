@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -1798,7 +1798,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get maybeLater => 'Maybe Later';
 
   @override
-  String get speechProfileIntro => 'FreeU needs to learn your goals and your voice. You\'ll be able to modify it later.';
+  String get speechProfileIntro =>
+      'FreeU needs to learn your goals and your voice. You\'ll be able to modify it later.';
 
   @override
   String get getStarted => 'Get Started';
@@ -8134,7 +8135,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingTitleAppleWatch => 'Connect Apple Watch';
 
   @override
-  String get pairingDescAppleWatch => 'Install and open the FreeU app on your Apple Watch, then tap Connect in the app.';
+  String get pairingDescAppleWatch =>
+      'Install and open the FreeU app on your Apple Watch, then tap Connect in the app.';
 
   @override
   String get pairingTitleNeoOne => 'Put Neo One in Pairing Mode';

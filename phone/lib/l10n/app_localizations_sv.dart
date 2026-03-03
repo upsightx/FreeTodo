@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -4474,7 +4474,8 @@ class AppLocalizationsSv extends AppLocalizations {
   String get trainingDataProgram => 'Träningsdataprogram';
 
   @override
-  String get getOmiUnlimitedFree => 'Få FreeU Unlimited gratis genom att bidra med dina data för att träna AI-modeller.';
+  String get getOmiUnlimitedFree =>
+      'Få FreeU Unlimited gratis genom att bidra med dina data för att träna AI-modeller.';
 
   @override
   String get trainingDataBullets =>

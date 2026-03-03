@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, LifeBuoy, Settings, Sparkles, Wrench, Zap } from "lucide-react";
+import { BellRing, LayoutGrid, LifeBuoy, Radar, Settings, Sparkles, Wrench, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { PanelHeader } from "@/components/common/layout/PanelHeader";
@@ -41,6 +41,8 @@ const SETTINGS_CATEGORY_IDS: SettingsCategoryId[] = [
 	"ai",
 	"workspace",
 	"automation",
+	"sensing",
+	"proactive",
 	"developer",
 	"help",
 ];
@@ -78,6 +80,18 @@ export function SettingsPanel() {
 			label: tSettings("categoryAutomationTitle"),
 			description: tSettings("categoryAutomationDescription"),
 			icon: Zap,
+		},
+		{
+			id: "sensing",
+			label: tSettings("categorySensingTitle"),
+			description: tSettings("categorySensingDescription"),
+			icon: Radar,
+		},
+		{
+			id: "proactive",
+			label: tSettings("categoryProactiveTitle"),
+			description: tSettings("categoryProactiveDescription"),
+			icon: BellRing,
 		},
 		{
 			id: "developer",
@@ -147,7 +161,6 @@ export function SettingsPanel() {
 				return (
 					<>
 						<JournalSettingsSection />
-						<AutoTodoDetectionSection config={config} loading={loading} />
 						<AutomationTasksSection loading={loading} />
 					</>
 				);
@@ -158,24 +171,35 @@ export function SettingsPanel() {
 						<TavilyConfigSection config={config} loading={loading} />
 					</>
 				);
-	case "developer":
-		return (
-			<>
-				{/* <DifyConfigSection config={config} loading={loading} /> */}
-			<SensorNodesSection config={config} loading={loading} />
-			<SchedulerSection loading={loading} />
-			<RecorderConfigSection config={config} loading={loading} />
-					{isAudioPanelEnabled && (
-						<>
-							<AudioConfigSection config={config} loading={loading} />
-							<AudioAsrConfigSection config={config} loading={loading} />
-						</>
-					)}
-				<CrawlerConfigSection loading={loading} />
-				<CookiesConfigSection loading={loading} />
-				<KdlConfigSection loading={loading} />
-				</>
-			);
+			case "sensing":
+				return (
+					<>
+						<SensorNodesSection config={config} loading={loading} />
+					</>
+				);
+			case "proactive":
+				return (
+					<>
+						<AutoTodoDetectionSection config={config} loading={loading} />
+					</>
+				);
+			case "developer":
+				return (
+					<>
+						{/* <DifyConfigSection config={config} loading={loading} /> */}
+						<SchedulerSection loading={loading} />
+						<RecorderConfigSection config={config} loading={loading} />
+						{isAudioPanelEnabled && (
+							<>
+								<AudioConfigSection config={config} loading={loading} />
+								<AudioAsrConfigSection config={config} loading={loading} />
+							</>
+						)}
+						<CrawlerConfigSection loading={loading} />
+						<CookiesConfigSection loading={loading} />
+						<KdlConfigSection loading={loading} />
+					</>
+				);
 			case "help":
 				return (
 					<>

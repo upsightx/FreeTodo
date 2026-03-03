@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -2678,7 +2678,8 @@ class AppLocalizationsSk extends AppLocalizations {
   String get showAll => 'Zobraziť všetko →';
 
   @override
-  String get noTasksForToday => 'Žiadne úlohy na dnes.\\nSpýtajte sa FreeU na ďalšie úlohy alebo ich vytvorte manuálne.';
+  String get noTasksForToday =>
+      'Žiadne úlohy na dnes.\\nSpýtajte sa FreeU na ďalšie úlohy alebo ich vytvorte manuálne.';
 
   @override
   String get dailyScore => 'DENNÉ SKÓRE';

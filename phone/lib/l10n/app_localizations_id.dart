@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -2084,7 +2084,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get clearMemoryTitle => 'Hapus Memori FreeU';
 
   @override
-  String get clearMemoryMessage => 'Apakah Anda yakin ingin menghapus memori FreeU? Tindakan ini tidak dapat dibatalkan.';
+  String get clearMemoryMessage =>
+      'Apakah Anda yakin ingin menghapus memori FreeU? Tindakan ini tidak dapat dibatalkan.';
 
   @override
   String get clearMemoryButton => 'Hapus Memori';
@@ -5701,7 +5702,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get notificationFrequency => 'Frekuensi Notifikasi';
 
   @override
-  String get controlNotificationFrequency => 'Kontrol seberapa sering FreeU mengirimkan notifikasi proaktif kepada Anda.';
+  String get controlNotificationFrequency =>
+      'Kontrol seberapa sering FreeU mengirimkan notifikasi proaktif kepada Anda.';
 
   @override
   String get yourScore => 'Skor Anda';

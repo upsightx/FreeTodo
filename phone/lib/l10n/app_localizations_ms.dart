@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -2666,7 +2666,8 @@ class AppLocalizationsMs extends AppLocalizations {
   String get reviewAndManageConversations => 'Semak dan urus perbualan yang dirakam';
 
   @override
-  String get startCapturingConversations => 'Mula tangkap perbualan dengan peranti FreeU anda untuk melihatnya di sini.';
+  String get startCapturingConversations =>
+      'Mula tangkap perbualan dengan peranti FreeU anda untuk melihatnya di sini.';
 
   @override
   String get useMobileAppToCapture => 'Gunakan aplikasi mudah alih anda untuk merakam audio';
@@ -7140,7 +7141,8 @@ class AppLocalizationsMs extends AppLocalizations {
   String get personaFailedToCreate => 'Gagal mencipta persona';
 
   @override
-  String get personaConnectKnowledgeSource => 'Sila sambungkan sekurang-kurangnya satu sumber data (FreeU atau Twitter)';
+  String get personaConnectKnowledgeSource =>
+      'Sila sambungkan sekurang-kurangnya satu sumber data (FreeU atau Twitter)';
 
   @override
   String get personaUpdatedSuccessfully => 'Persona berjaya dikemas kini';

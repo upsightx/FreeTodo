@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -2655,7 +2655,8 @@ class AppLocalizationsFi extends AppLocalizations {
   String get reviewAndManageConversations => 'Tarkista ja hallitse tallennettuja keskustelujasi';
 
   @override
-  String get startCapturingConversations => 'Aloita keskustelujen tallentaminen FreeU-laitteellasi nähdäksesi ne täällä.';
+  String get startCapturingConversations =>
+      'Aloita keskustelujen tallentaminen FreeU-laitteellasi nähdäksesi ne täällä.';
 
   @override
   String get useMobileAppToCapture => 'Käytä mobiilisovellusta äänen tallentamiseen';
@@ -4555,7 +4556,8 @@ class AppLocalizationsFi extends AppLocalizations {
   String get youAreOnUnlimitedPlan => 'Sinulla on Rajoittamaton tilaus.';
 
   @override
-  String get yourOmiUnleashed => 'FreeU vapaana. Siirry rajoittamattomaan loputtomien mahdollisuuksien saavuttamiseksi.';
+  String get yourOmiUnleashed =>
+      'FreeU vapaana. Siirry rajoittamattomaan loputtomien mahdollisuuksien saavuttamiseksi.';
 
   @override
   String planEndedOn(String date) {

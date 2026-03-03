@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -2090,7 +2090,8 @@ class AppLocalizationsCa extends AppLocalizations {
   String get clearMemoryTitle => 'Esborrar la memòria d\'FreeU';
 
   @override
-  String get clearMemoryMessage => 'Esteu segur que voleu esborrar la memòria d\'FreeU? Aquesta acció no es pot desfer.';
+  String get clearMemoryMessage =>
+      'Esteu segur que voleu esborrar la memòria d\'FreeU? Aquesta acció no es pot desfer.';
 
   @override
   String get clearMemoryButton => 'Esborrar memòria';

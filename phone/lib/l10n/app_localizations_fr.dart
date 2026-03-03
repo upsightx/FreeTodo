@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -3595,7 +3595,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get triggersWhenDaySummaryGenerated => 'Se déclenche lors de la génération du résumé du jour.';
 
   @override
-  String get tryLatestExperimentalFeatures => 'Essayez les dernières fonctionnalités expérimentales de l\'équipe FreeU.';
+  String get tryLatestExperimentalFeatures =>
+      'Essayez les dernières fonctionnalités expérimentales de l\'équipe FreeU.';
 
   @override
   String get transcriptionServiceDiagnosticStatus => 'État de diagnostic du service de transcription';

@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -3403,7 +3403,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get chooseYourLanguage => 'Chọn ngôn ngữ của bạn';
 
   @override
-  String get selectPreferredLanguageForBestExperience => 'Chọn ngôn ngữ ưu tiên của bạn để có trải nghiệm FreeU tốt nhất';
+  String get selectPreferredLanguageForBestExperience =>
+      'Chọn ngôn ngữ ưu tiên của bạn để có trải nghiệm FreeU tốt nhất';
 
   @override
   String get searchLanguages => 'Tìm kiếm ngôn ngữ...';
