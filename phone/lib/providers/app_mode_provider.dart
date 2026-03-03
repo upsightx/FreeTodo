@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppModeProvider extends ChangeNotifier {
-  bool _useMockData = true;
+  bool _useMockData = false;
 
   bool get useMockData => _useMockData;
 

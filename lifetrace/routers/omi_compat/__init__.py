@@ -13,6 +13,7 @@ from lifetrace.routers.omi_compat.conversations import router as conversations_r
 from lifetrace.routers.omi_compat.listen import router as listen_router
 from lifetrace.routers.omi_compat.memories import router as memories_router
 from lifetrace.routers.omi_compat.stubs import router as stubs_router
+from lifetrace.routers.omi_compat.stubs_misc import router as stubs_misc_router
 from lifetrace.routers.omi_compat.users import router as users_router
 
 router = APIRouter()
@@ -23,3 +24,4 @@ router.include_router(conversations_router)
 router.include_router(memories_router)
 router.include_router(users_router)
 router.include_router(stubs_router)
+router.include_router(stubs_misc_router)

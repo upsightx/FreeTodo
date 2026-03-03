@@ -2,6 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:omi/backend/http/api/action_items.dart';
+import 'package:omi/backend/http/api/messages.dart';
+import 'package:omi/backend/schema/message.dart';
+import 'package:omi/backend/schema/schema.dart';
+
 enum MobileTaskPriority { high, normal }
 
 enum MobileTaskStatus { todo, doing, done, ignored }
@@ -40,55 +45,39 @@ class MobileChatMessage {
   final DateTime createdAt;
   final bool hasAction;
   final List<String> extractedTasks;
+
+  MobileChatMessage copyWith({
+    String? id,
+    String? text,
+    bool? isUser,
+    DateTime? createdAt,
+    bool? hasAction,
+    List<String>? extractedTasks,
+  }) {
+    return MobileChatMessage(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      isUser: isUser ?? this.isUser,
+      createdAt: createdAt ?? this.createdAt,
+      hasAction: hasAction ?? this.hasAction,
+      extractedTasks: extractedTasks ?? this.extractedTasks,
+    );
+  }
 }
 
 class MobileMockProvider extends ChangeNotifier {
-  final List<MobileMockTask> _tasks = <MobileMockTask>[
-    MobileMockTask(
-      id: 'task_1',
-      title: '给导师发送论文初稿',
-      source: '飞书消息 · 今天 10:30',
-      priority: MobileTaskPriority.high,
-      status: MobileTaskStatus.todo,
-      dueAt: DateTime.now().add(const Duration(hours: 3)),
-    ),
-    MobileMockTask(
-      id: 'task_2',
-      title: '准备明天项目评审材料',
-      source: 'AI 日程提醒',
-      priority: MobileTaskPriority.high,
-      status: MobileTaskStatus.doing,
-      dueAt: DateTime.now().add(const Duration(days: 1)),
-    ),
-    MobileMockTask(
-      id: 'task_3',
-      title: '约小李周末打球',
-      source: '微信消息 · 今天 11:00',
-      priority: MobileTaskPriority.normal,
-      status: MobileTaskStatus.todo,
-      dueAt: DateTime.now().add(const Duration(days: 2)),
-    ),
-    MobileMockTask(
-      id: 'task_4',
-      title: '回复客户报价邮件',
-      source: '邮件提取',
-      priority: MobileTaskPriority.normal,
-      status: MobileTaskStatus.done,
-      dueAt: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-  ];
+  final List<MobileMockTask> _tasks = <MobileMockTask>[];
+  final List<MobileChatMessage> _messages = <MobileChatMessage>[];
 
-  final List<MobileChatMessage> _messages = <MobileChatMessage>[
-    MobileChatMessage(
-      id: 'm0',
-      text: '你好，我可以帮你总结消息、生成待办、安排日程。',
-      isUser: false,
-      createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
-    ),
-  ];
+  bool _loading = false;
+
+  MobileMockProvider() {
+    unawaited(refreshAll());
+  }
 
   List<MobileMockTask> get tasks => _tasks;
   List<MobileChatMessage> get messages => _messages;
+  bool get isLoading => _loading;
 
   List<MobileMockTask> get todayTasks {
     final now = DateTime.now();
@@ -103,28 +92,72 @@ class MobileMockProvider extends ChangeNotifier {
     return _tasks.where((t) => t.dueAt.isBefore(end)).toList();
   }
 
-  void addTask({
+  Future<void> refreshAll() async {
+    _loading = true;
+    notifyListeners();
+    await Future.wait<void>([
+      refreshTasks(),
+      refreshMessages(),
+    ]);
+    _loading = false;
+    notifyListeners();
+  }
+
+  Future<void> refreshTasks() async {
+    final response = await getActionItems(limit: 200, offset: 0);
+    final list = response.actionItems.map(_mapActionItemToTask).toList();
+    _tasks
+      ..clear()
+      ..addAll(list);
+    notifyListeners();
+  }
+
+  Future<void> refreshMessages() async {
+    final serverMessages = await getMessagesServer();
+    _messages
+      ..clear()
+      ..addAll(
+        serverMessages.map(
+          (m) => MobileChatMessage(
+            id: m.id,
+            text: m.text,
+            isUser: m.sender == MessageSender.human,
+            createdAt: m.createdAt,
+          ),
+        ),
+      );
+    notifyListeners();
+  }
+
+  Future<void> addTask({
     required String title,
     required String source,
     MobileTaskPriority priority = MobileTaskPriority.normal,
     DateTime? dueAt,
-  }) {
-    if (title.trim().isEmpty) return;
-    _tasks.insert(
-      0,
-      MobileMockTask(
-        id: 'task_${DateTime.now().millisecondsSinceEpoch}',
-        title: title.trim(),
-        source: source,
-        priority: priority,
-        status: MobileTaskStatus.todo,
-        dueAt: dueAt ?? DateTime.now().add(const Duration(days: 1)),
-      ),
+  }) async {
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) return;
+
+    final created = await createActionItem(
+      description: trimmed,
+      dueAt: dueAt ?? DateTime.now().add(const Duration(days: 1)),
+      completed: false,
     );
+
+    if (created == null) {
+      return;
+    }
+
+    _tasks.insert(0, _mapActionItemToTask(created, sourceOverride: source, priorityOverride: priority));
     notifyListeners();
   }
 
-  void updateTask(MobileMockTask task, {String? title, DateTime? dueAt, MobileTaskPriority? priority}) {
+  Future<void> updateTask(
+    MobileMockTask task, {
+    String? title,
+    DateTime? dueAt,
+    MobileTaskPriority? priority,
+  }) async {
     if (title != null && title.trim().isNotEmpty) {
       task.title = title.trim();
     }
@@ -135,54 +168,73 @@ class MobileMockProvider extends ChangeNotifier {
       task.priority = priority;
     }
     notifyListeners();
+
+    try {
+      await updateActionItem(
+        task.id,
+        description: task.title,
+        dueAt: task.dueAt,
+        clearDueAt: false,
+      );
+    } catch (_) {}
   }
 
-  void cycleTaskStatus(MobileMockTask task) {
+  Future<void> cycleTaskStatus(MobileMockTask task) async {
     switch (task.status) {
       case MobileTaskStatus.todo:
-        task.status = MobileTaskStatus.doing;
       case MobileTaskStatus.doing:
+      case MobileTaskStatus.ignored:
         task.status = MobileTaskStatus.done;
       case MobileTaskStatus.done:
         task.status = MobileTaskStatus.todo;
-      case MobileTaskStatus.ignored:
-        task.status = MobileTaskStatus.todo;
     }
     notifyListeners();
+
+    final completed = task.status == MobileTaskStatus.done;
+    try {
+      await toggleActionItemCompletion(task.id, completed);
+    } catch (_) {}
   }
 
-  void ignoreTask(MobileMockTask task) {
+  Future<void> ignoreTask(MobileMockTask task) async {
     task.status = MobileTaskStatus.ignored;
     notifyListeners();
   }
 
-  void reorderTasksByIds(List<String> orderedIds) {
-    final Map<String, MobileMockTask> map = {for (final t in _tasks) t.id: t};
-    final List<MobileMockTask> reordered = <MobileMockTask>[];
+  Future<void> reorderTasksByIds(List<String> orderedIds) async {
+    final map = {for (final t in _tasks) t.id: t};
+    final reordered = <MobileMockTask>[];
     for (final id in orderedIds) {
       final task = map[id];
-      if (task != null) {
-        reordered.add(task);
-      }
+      if (task != null) reordered.add(task);
     }
-    for (final t in _tasks) {
-      if (!orderedIds.contains(t.id)) {
-        reordered.add(t);
+    for (final task in _tasks) {
+      if (!orderedIds.contains(task.id)) {
+        reordered.add(task);
       }
     }
     _tasks
       ..clear()
       ..addAll(reordered);
     notifyListeners();
+
+    final updates = <Map<String, dynamic>>[];
+    for (var i = 0; i < _tasks.length; i++) {
+      updates.add({'id': _tasks[i].id, 'sort_order': (i + 1) * 1000});
+    }
+    try {
+      await batchUpdateActionItems(updates);
+    } catch (_) {}
   }
 
   void addTaskFromText(String text, {String source = 'AI 识别'}) {
-    addTask(title: text, source: source, priority: MobileTaskPriority.high);
+    unawaited(addTask(title: text, source: source, priority: MobileTaskPriority.high));
   }
 
   Future<void> sendChatMessage(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
+
     _messages.add(
       MobileChatMessage(
         id: 'u_${DateTime.now().microsecondsSinceEpoch}',
@@ -193,41 +245,71 @@ class MobileMockProvider extends ChangeNotifier {
     );
     notifyListeners();
 
-    await Future<void>.delayed(const Duration(milliseconds: 550));
-
-    String reply = '我已记录你的请求。';
-    bool hasAction = false;
-    List<String> extractedTasks = const <String>[];
-    if (trimmed.contains('截图') || trimmed.contains('聊天') || trimmed.contains('跟进')) {
-      reply = '我从内容里识别到 3 条可跟进行动，建议一键加入待办。';
-      hasAction = true;
-      extractedTasks = <String>[
-        '给王总确认下周深圳出差时间',
-        '跟进设计稿评审并汇总反馈',
-        '安排项目评审会前的材料检查',
-      ];
-    } else if (trimmed.contains('会议')) {
-      reply = '会议相关重点已提取：材料准备、与会人确认、会后回执。';
-      hasAction = true;
-      extractedTasks = <String>[
-        '整理会议材料清单',
-        '确认评审参会人',
-        '会后发送结论回执',
-      ];
-    } else if (trimmed.contains('今天')) {
-      reply = '你今天还有 2 项高优先级待办，建议先处理“论文初稿”。';
-    }
-
+    var aiText = '';
+    var aiMessageId = 'a_${DateTime.now().microsecondsSinceEpoch}';
+    final aiPlaceholderId = 'a_stream_${DateTime.now().microsecondsSinceEpoch}';
     _messages.add(
       MobileChatMessage(
-        id: 'a_${DateTime.now().microsecondsSinceEpoch}',
-        text: reply,
+        id: aiPlaceholderId,
+        text: '...',
         isUser: false,
         createdAt: DateTime.now(),
-        hasAction: hasAction,
-        extractedTasks: extractedTasks,
       ),
     );
     notifyListeners();
+
+    final aiIndex = _messages.length - 1;
+
+    try {
+      await for (final chunk in sendMessageStreamServer(trimmed)) {
+        if (chunk.type == MessageChunkType.data || chunk.type == MessageChunkType.think) {
+          aiText += chunk.text;
+          _messages[aiIndex] = _messages[aiIndex].copyWith(text: aiText.isEmpty ? '...' : aiText);
+          notifyListeners();
+          continue;
+        }
+        if (chunk.type == MessageChunkType.done && chunk.message != null) {
+          aiMessageId = chunk.message!.id;
+          aiText = chunk.message!.text;
+          _messages[aiIndex] = _messages[aiIndex].copyWith(id: aiMessageId, text: aiText);
+          notifyListeners();
+          unawaited(refreshMessages());
+          return;
+        }
+        if (chunk.type == MessageChunkType.error) {
+          aiText = chunk.text;
+          _messages[aiIndex] = _messages[aiIndex].copyWith(text: aiText);
+          notifyListeners();
+          break;
+        }
+      }
+    } catch (_) {
+      aiText = '请求失败，请检查中心节点连接。';
+    }
+
+    if (aiText.trim().isEmpty) {
+      aiText = '请求失败，请稍后重试。';
+    }
+
+    _messages[aiIndex] = _messages[aiIndex].copyWith(id: aiMessageId, text: aiText);
+    notifyListeners();
+    unawaited(refreshMessages());
+  }
+
+  MobileMockTask _mapActionItemToTask(
+    ActionItemWithMetadata item, {
+    String? sourceOverride,
+    MobileTaskPriority? priorityOverride,
+  }) {
+    final due = item.dueAt ?? DateTime.now().add(const Duration(days: 1));
+    final isHigh = due.isBefore(DateTime.now().add(const Duration(days: 1)));
+    return MobileMockTask(
+      id: item.id,
+      title: item.description,
+      source: sourceOverride ?? '中心节点同步',
+      priority: priorityOverride ?? (isHigh ? MobileTaskPriority.high : MobileTaskPriority.normal),
+      status: item.completed ? MobileTaskStatus.done : MobileTaskStatus.todo,
+      dueAt: due,
+    );
   }
 }

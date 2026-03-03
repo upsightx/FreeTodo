@@ -6,11 +6,111 @@ encounter 404s for features not yet implemented in LifeTrace.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+import base64
+import json
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse, Response, StreamingResponse
+
+from lifetrace.core.dependencies import get_chat_service, get_rag_service, get_todo_service
 from lifetrace.routers.omi_compat.auth import verify_token
+from lifetrace.schemas.todo import TodoCreate, TodoStatus, TodoUpdate
+
+if TYPE_CHECKING:
+    from lifetrace.services.chat_service import ChatService
+    from lifetrace.services.todo_service import TodoService
 
 router = APIRouter(tags=["omi-stubs"])
+
+
+def _iso(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+
+def _todo_to_action_item(todo: dict[str, Any]) -> dict[str, Any]:
+    due_at = todo.get("due") or todo.get("deadline") or todo.get("start_time")
+    return {
+        "id": str(todo["id"]),
+        "description": todo.get("name") or todo.get("summary") or "",
+        "completed": todo.get("status") == "completed",
+        "created_at": _iso(todo.get("created_at")),
+        "updated_at": _iso(todo.get("updated_at")),
+        "due_at": _iso(due_at),
+        "completed_at": _iso(todo.get("completed_at")),
+        "conversation_id": None,
+        "is_locked": False,
+        "exported": False,
+        "export_date": None,
+        "export_platform": None,
+        "sort_order": int(todo.get("order") or 0),
+        "indent_level": 0,
+    }
+
+
+def _omi_session_id(uid: str, app_id: str | None) -> str:
+    app = (app_id or "omi").strip() or "omi"
+    return f"omi-mobile:{uid}:{app}"
+
+
+def _resolve_omi_chat_session_id(uid: str, app_id: str | None, chat_service: ChatService) -> str:
+    """Resolve a chat session for OMI mobile.
+
+    - If `app_id` is explicitly provided, keep app-scoped session behavior.
+    - Otherwise, prefer the latest non-omi-mobile event chat so web/app can share one thread.
+    - Fallback to omi-mobile default session when nothing exists yet.
+    """
+    normalized_app = (app_id or "").strip()
+    if normalized_app and normalized_app not in {"null", "no_selected"}:
+        return _omi_session_id(uid, normalized_app)
+
+    summaries = chat_service.get_chat_summaries(chat_type="event", limit=20)
+    mobile_prefix = f"omi-mobile:{uid}:"
+    for summary in summaries:
+        session_id = str(summary.get("session_id") or "").strip()
+        if session_id and not session_id.startswith(mobile_prefix):
+            return session_id
+
+    if summaries:
+        session_id = str(summaries[0].get("session_id") or "").strip()
+        if session_id:
+            return session_id
+
+    return _omi_session_id(uid, None)
+
+
+def _chat_msg_to_omi(msg: dict[str, Any]) -> dict[str, Any]:
+    role = (msg.get("role") or "").lower()
+    sender = "human" if role == "user" else "ai"
+    return {
+        "id": str(msg.get("id", "")),
+        "created_at": _iso(msg.get("created_at")) or _iso(datetime.now(UTC)),
+        "text": msg.get("content", ""),
+        "sender": sender,
+        "type": "text",
+        "plugin_id": None,
+        "from_integration": False,
+        "files": [],
+        "files_id": [],
+        "memories": [],
+        "ask_for_nps": True,
+        "rating": None,
+        "chart_data": None,
+    }
+
+
+def _encode_done_line(message: dict[str, Any]) -> str:
+    payload = base64.b64encode(json.dumps(message, ensure_ascii=False).encode("utf-8")).decode(
+        "ascii"
+    )
+    return f"done: {payload}\n\n"
+
+
+def _encode_data_line(text: str) -> str:
+    return f"data: {text.replace(chr(10), '__CRLF__')}\n\n"
 
 
 # -- Apps / plugins --------------------------------------------------------
@@ -174,27 +274,169 @@ async def check_username(username: str = "", uid: str = Depends(verify_token)):
 # -- Chat / messages -------------------------------------------------------
 
 
+def _resolve_chat_session_id(
+    uid: str,
+    app_id: str | None,
+    conversation_id: str | None,
+    session_id: str | None,
+    chat_service: ChatService,
+) -> str:
+    direct = (session_id or conversation_id or "").strip()
+    if direct:
+        return direct
+    return _resolve_omi_chat_session_id(uid, app_id, chat_service)
+
+
 @router.get("/v2/messages")
-async def list_messages(uid: str = Depends(verify_token)):
-    return []
+async def list_messages(
+    app_id: str | None = None,
+    conversation_id: str | None = None,
+    session_id: str | None = None,
+    uid: str = Depends(verify_token),
+    chat_service: ChatService = Depends(get_chat_service),
+):
+    resolved_session_id = _resolve_chat_session_id(
+        uid=uid,
+        app_id=app_id,
+        conversation_id=conversation_id,
+        session_id=session_id,
+        chat_service=chat_service,
+    )
+    messages = chat_service.get_messages(resolved_session_id)
+    return JSONResponse(
+        content=[_chat_msg_to_omi(m) for m in messages],
+        headers={"X-Session-Id": resolved_session_id},
+    )
 
 
 @router.post("/v2/messages")
-async def send_message(request: Request, uid: str = Depends(verify_token)):
+async def send_message(
+    request: Request,
+    app_id: str | None = None,
+    conversation_id: str | None = None,
+    session_id: str | None = None,
+    uid: str = Depends(verify_token),
+    chat_service: ChatService = Depends(get_chat_service),
+):
     body = await request.json()
-    text = body.get("text", "")
-    return {
-        "id": "stub",
-        "text": f"LifeTrace chat not yet integrated. You said: {text}",
-        "sender": "ai",
-        "type": "text",
-        "created_at": "2026-01-01T00:00:00Z",
-    }
+    text = str(body.get("text", "")).strip()
+    if not text:
+        return StreamingResponse(
+            iter(["error: empty message\n\n"]),
+            media_type="text/plain; charset=utf-8",
+        )
+
+    resolved_session_id = _resolve_chat_session_id(
+        uid=uid,
+        app_id=app_id,
+        conversation_id=conversation_id,
+        session_id=session_id,
+        chat_service=chat_service,
+    )
+    chat_service.ensure_chat_exists(resolved_session_id, chat_type="event")
+    chat_service.add_message(session_id=resolved_session_id, role="user", content=text)
+
+    rag_service = get_rag_service()
+
+    def _stream():
+        answer_chunks: list[str] = []
+        try:
+            for chunk in rag_service.stream_query(text):
+                piece = str(chunk or "")
+                if not piece:
+                    continue
+                answer_chunks.append(piece)
+                yield _encode_data_line(piece)
+        except Exception as exc:
+            yield f"error: {exc!s}\n\n"
+            return
+
+        answer = "".join(answer_chunks).strip()
+        if not answer:
+            answer = "暂时无法生成回复，请稍后重试。"
+
+        persisted = chat_service.add_message(
+            session_id=resolved_session_id, role="assistant", content=answer
+        )
+        assistant = _chat_msg_to_omi(
+            {
+                "id": (persisted or {}).get(
+                    "id", f"assistant-{int(datetime.now(UTC).timestamp() * 1000)}"
+                ),
+                "role": "assistant",
+                "content": answer,
+                "created_at": (persisted or {}).get("created_at", datetime.now(UTC)),
+            }
+        )
+        yield _encode_done_line(assistant)
+
+    return StreamingResponse(
+        _stream(),
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "X-Session-Id": resolved_session_id,
+        },
+    )
 
 
 @router.get("/v2/initial-message")
+@router.post("/v2/initial-message")
 async def initial_message(uid: str = Depends(verify_token)):
-    return {"text": ""}
+    now = datetime.now(UTC)
+    return {
+        "id": f"initial-{int(now.timestamp() * 1000)}",
+        "created_at": _iso(now),
+        "text": "你好，我已经连接到你的 LifeTrace 中心节点。",
+        "sender": "ai",
+        "type": "text",
+        "plugin_id": None,
+        "from_integration": False,
+        "files": [],
+        "files_id": [],
+        "memories": [],
+        "ask_for_nps": False,
+        "rating": None,
+        "chart_data": None,
+    }
+
+
+@router.delete("/v2/messages")
+async def clear_messages(
+    app_id: str | None = None,
+    conversation_id: str | None = None,
+    session_id: str | None = None,
+    uid: str = Depends(verify_token),
+    chat_service: ChatService = Depends(get_chat_service),
+):
+    resolved_session_id = _resolve_chat_session_id(
+        uid=uid,
+        app_id=app_id,
+        conversation_id=conversation_id,
+        session_id=session_id,
+        chat_service=chat_service,
+    )
+    chat_service.delete_chat(resolved_session_id)
+    now = datetime.now(UTC)
+    return JSONResponse(
+        content={
+            "id": f"cleared-{int(now.timestamp() * 1000)}",
+            "created_at": _iso(now),
+            "text": "",
+            "sender": "ai",
+            "type": "text",
+            "plugin_id": app_id,
+            "from_integration": False,
+            "files": [],
+            "files_id": [],
+            "memories": [],
+            "ask_for_nps": False,
+            "rating": None,
+            "chart_data": None,
+        },
+        headers={"X-Session-Id": resolved_session_id},
+    )
 
 
 @router.post("/v2/voice-messages")
@@ -221,505 +463,157 @@ async def transcribe_voice(uid: str = Depends(verify_token)):
 
 
 @router.get("/v1/action-items")
-async def list_action_items(limit: int = 25, offset: int = 0, uid: str = Depends(verify_token)):
-    return []
+async def list_action_items(
+    request: Request,
+    limit: int = 25,
+    offset: int = 0,
+    completed: bool | None = None,
+    uid: str = Depends(verify_token),
+    service: TodoService = Depends(get_todo_service),
+):
+    status: str | None = None
+    if completed is True:
+        status = "completed"
+    elif completed is False:
+        status = "active"
+
+    _ = request.query_params.get("conversation_id")
+    _ = request.query_params.get("start_date")
+    _ = request.query_params.get("end_date")
+    payload = service.list_todos(limit=limit, offset=offset, status=status)
+    todos = [t.model_dump() if hasattr(t, "model_dump") else t for t in payload.get("todos", [])]
+    total = int(payload.get("total", len(todos)))
+    return {
+        "action_items": [_todo_to_action_item(todo) for todo in todos],
+        "has_more": offset + len(todos) < total,
+    }
+
+
+@router.get("/v1/action-items/{item_id}")
+async def get_action_item(
+    item_id: int, uid: str = Depends(verify_token), service: TodoService = Depends(get_todo_service)
+):
+    try:
+        todo = service.get_todo(item_id)
+    except Exception:
+        return JSONResponse(status_code=404, content={"detail": "action item not found"})
+    data = todo.model_dump() if hasattr(todo, "model_dump") else dict(todo)
+    return _todo_to_action_item(data)
 
 
 @router.post("/v1/action-items")
-async def create_action_item_global(request: Request, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
+async def create_action_item_global(
+    request: Request,
+    uid: str = Depends(verify_token),
+    service: TodoService = Depends(get_todo_service),
+):
+    body = await request.json()
+    description = str(body.get("description") or "").strip()
+    if not description:
+        return JSONResponse(status_code=400, content={"detail": "description is required"})
+
+    due_raw = body.get("due_at")
+    due = (
+        datetime.fromisoformat(due_raw.replace("Z", "+00:00"))
+        if isinstance(due_raw, str) and due_raw
+        else None
+    )
+    is_completed = bool(body.get("completed", False))
+    status = TodoStatus.COMPLETED if is_completed else TodoStatus.ACTIVE
+
+    todo_payload = TodoCreate.model_validate(
+        {
+            "name": description,
+            "description": description,
+            "deadline": due,
+            "due": due,
+            "status": status,
+            "uid": f"omi-{uid}-{int(datetime.now(UTC).timestamp() * 1000)}",
+        }
+    )
+    todo = service.create_todo(todo_payload)
+    data = todo.model_dump() if hasattr(todo, "model_dump") else dict(todo)
+    return _todo_to_action_item(data)
 
 
 @router.patch("/v1/action-items/{item_id}")
 async def patch_action_item_global(
-    item_id: str, request: Request, uid: str = Depends(verify_token)
+    item_id: int,
+    request: Request,
+    uid: str = Depends(verify_token),
+    service: TodoService = Depends(get_todo_service),
 ):
+    body = await request.json()
+    kwargs: dict[str, Any] = {}
+    if "description" in body:
+        value = (body.get("description") or "").strip()
+        kwargs["name"] = value
+        kwargs["description"] = value
+    if "completed" in body:
+        completed = bool(body.get("completed"))
+        kwargs["status"] = TodoStatus.COMPLETED if completed else TodoStatus.ACTIVE
+    if "due_at" in body:
+        due_raw = body.get("due_at")
+        if due_raw is None:
+            kwargs["due"] = None
+            kwargs["deadline"] = None
+            kwargs["start_time"] = None
+        elif isinstance(due_raw, str) and due_raw:
+            due = datetime.fromisoformat(due_raw.replace("Z", "+00:00"))
+            kwargs["due"] = due
+            kwargs["deadline"] = due
+            kwargs["start_time"] = due
+    if "sort_order" in body:
+        kwargs["order"] = int(body.get("sort_order") or 0)
+
+    todo = service.update_todo(item_id, TodoUpdate.model_validate(kwargs))
+    data = todo.model_dump() if hasattr(todo, "model_dump") else dict(todo)
+    return _todo_to_action_item(data)
+
+
+@router.patch("/v1/action-items/{item_id}/completed")
+async def patch_action_item_completed(
+    item_id: int,
+    completed: bool,
+    uid: str = Depends(verify_token),
+    service: TodoService = Depends(get_todo_service),
+):
+    status = TodoStatus.COMPLETED if completed else TodoStatus.ACTIVE
+    todo = service.update_todo(item_id, TodoUpdate.model_validate({"status": status}))
+    data = todo.model_dump() if hasattr(todo, "model_dump") else dict(todo)
+    return _todo_to_action_item(data)
+
+
+@router.patch("/v1/action-items/batch")
+async def patch_action_items_batch(
+    request: Request,
+    uid: str = Depends(verify_token),
+    service: TodoService = Depends(get_todo_service),
+):
+    body = await request.json()
+    items = body.get("items") if isinstance(body, dict) else None
+    if not isinstance(items, list):
+        return JSONResponse(status_code=400, content={"detail": "items must be a list"})
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        item_id = item.get("id")
+        if item_id is None:
+            continue
+        kwargs: dict[str, Any] = {}
+        if "sort_order" in item:
+            kwargs["order"] = int(item.get("sort_order") or 0)
+        if kwargs:
+            service.update_todo(int(item_id), TodoUpdate.model_validate(kwargs))
     return {"status": "ok"}
 
 
 @router.delete("/v1/action-items/{item_id}")
-async def delete_action_item_global(item_id: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-# -- Goals -----------------------------------------------------------------
-
-
-@router.get("/v1/goals/all")
-async def list_goals(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/goals")
-async def get_goals(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/goals")
-async def create_goal(request: Request, uid: str = Depends(verify_token)):
-    return {"id": "", "status": "created"}
-
-
-@router.get("/v1/goals/{goal_id}")
-async def get_goal(goal_id: str, uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.delete("/v1/goals/{goal_id}")
-async def delete_goal(goal_id: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/goals/{goal_id}/progress")
-async def update_goal_progress(goal_id: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.get("/v1/goals/{goal_id}/history")
-async def goal_history(goal_id: str, days: int = 7, uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/goals/suggest")
-async def suggest_goals(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/goals/advice")
-async def goals_advice(uid: str = Depends(verify_token)):
-    return {"advice": ""}
-
-
-@router.post("/v1/goals/{goal_id}/advice")
-async def goal_advice(goal_id: str, uid: str = Depends(verify_token)):
-    return {"advice": ""}
-
-
-# -- Folders ---------------------------------------------------------------
-
-
-@router.get("/v1/folders")
-async def list_folders(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/folders")
-async def create_folder(request: Request, uid: str = Depends(verify_token)):
-    return {"id": "", "name": ""}
-
-
-@router.get("/v1/folders/{folder_id}")
-async def get_folder(folder_id: str, uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.put("/v1/folders/{folder_id}")
-async def update_folder(folder_id: str, request: Request, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.delete("/v1/folders/{folder_id}")
-async def delete_folder(folder_id: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/conversations/{cid}/folder")
-async def move_to_folder(cid: str, request: Request, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/folders/{folder_id}/conversations/bulk-move")
-async def bulk_move_to_folder(folder_id: str, request: Request, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/folders/reorder")
-async def reorder_folders(request: Request, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-# -- Knowledge graph / Calendar / Integrations -----------------------------
-
-
-@router.get("/v1/knowledge-graph/{path:path}")
-async def kg_stub(path: str, uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/knowledge-graph/{path:path}")
-async def kg_post_stub(path: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.get("/v1/calendar/meetings")
-async def list_meetings(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/integrations/{app_key}")
-async def get_integration(app_key: str, uid: str = Depends(verify_token)):
-    return {"enabled": False}
-
-
-@router.get("/v1/task-integrations")
-async def list_task_integrations(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/task-integrations/default")
-async def get_default_task_integration(uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.post("/v1/task-integrations/default")
-async def set_default_task_integration(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.get("/v1/task-integrations/{app_key}")
-async def get_task_integration(app_key: str, uid: str = Depends(verify_token)):
-    return {"enabled": False}
-
-
-# -- People detail / CRUD -------------------------------------------------
-
-
-@router.get("/v1/users/people/{person_id}")
-async def get_person(
-    person_id: str, include_speech_samples: bool = False, uid: str = Depends(verify_token)
+async def delete_action_item_global(
+    item_id: int,
+    uid: str = Depends(verify_token),
+    service: TodoService = Depends(get_todo_service),
 ):
-    return {"id": person_id, "name": ""}
-
-
-@router.patch("/v1/users/people/{person_id}/name")
-async def rename_person(person_id: str, value: str = "", uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.delete("/v1/users/people/{person_id}")
-async def delete_person(person_id: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.delete("/v1/users/people/{person_id}/speech-samples/{sample_index}")
-async def delete_speech_sample(person_id: str, sample_index: int, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.delete("/v1/users/delete-account")
-async def delete_account(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-# -- Developer webhooks ----------------------------------------------------
-
-
-@router.get("/v1/users/developer/webhook/{webhook_type}")
-async def get_webhook(webhook_type: str, uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.post("/v1/users/developer/webhook/{webhook_type}")
-async def set_webhook(webhook_type: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/users/developer/webhook/{webhook_type}/disable")
-async def disable_webhook(webhook_type: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/users/developer/webhook/{webhook_type}/enable")
-async def enable_webhook(webhook_type: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-# -- Daily summaries detail ------------------------------------------------
-
-
-@router.get("/v1/users/daily-summaries/{summary_id}")
-async def get_daily_summary(summary_id: str, uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.post("/v1/users/daily-summaries/{summary_id}")
-async def regenerate_daily_summary(summary_id: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/users/daily-summary-settings/test")
-async def test_daily_summary(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-# -- User profile / migration ---------------------------------------------
-
-
-@router.get("/v1/users/profile")
-async def get_user_profile(uid: str = Depends(verify_token)):
-    return {"uid": uid, "data_protection_level": "standard"}
-
-
-@router.get("/v1/users/migration/requests")
-async def list_migration_requests(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/users/migration/requests")
-async def create_migration_request(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.delete("/v1/users/migration/requests")
-async def cancel_migration_request(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/users/migration/batch-requests")
-async def batch_migration(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/users/migration/requests/data-protection-level/finalize")
-async def finalize_migration(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-# -- Payments / Stripe / PayPal -------------------------------------------
-
-
-@router.post("/v1/payments/checkout-session")
-async def checkout_session(uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.get("/v1/payments/subscription")
-async def get_payment_sub(uid: str = Depends(verify_token)):
-    return {"plan": "unlimited", "status": "active"}
-
-
-@router.post("/v1/payments/upgrade-subscription")
-async def upgrade_sub(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.get("/v1/payments/available-plans")
-async def available_plans(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/payments/customer-portal")
-async def customer_portal(uid: str = Depends(verify_token)):
-    return {"url": ""}
-
-
-@router.get("/v1/stripe/connect-accounts")
-async def stripe_connect(uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.get("/v1/stripe/onboarded")
-async def stripe_onboarded(uid: str = Depends(verify_token)):
-    return {"onboarded": False}
-
-
-@router.get("/v1/stripe/supported-countries")
-async def stripe_countries(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/paypal/payment-details")
-async def paypal_details(uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.post("/v1/paypal/payment-details")
-async def save_paypal_details(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.get("/v1/payment-methods/status")
-async def payment_methods_status(uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.post("/v1/payment-methods/default")
-async def set_default_payment(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-# -- Personas --------------------------------------------------------------
-
-
-@router.get("/v1/personas")
-async def list_personas(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/personas")
-async def create_persona(request: Request, uid: str = Depends(verify_token)):
-    return {"id": "", "status": "created"}
-
-
-@router.put("/v1/personas/{persona_id}")
-async def update_persona(persona_id: str, request: Request, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.get("/v1/personas/twitter/profile")
-async def twitter_profile(handle: str = "", uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.get("/v1/personas/twitter/verify-ownership")
-async def verify_twitter(username: str = "", handle: str = "", uid: str = Depends(verify_token)):
-    return {"verified": False}
-
-
-@router.get("/v1/personas/twitter/initial-message")
-async def twitter_initial(username: str = "", uid: str = Depends(verify_token)):
-    return {"message": ""}
-
-
-# -- Conversations CRUD (supplemental) ------------------------------------
-
-
-@router.patch("/v1/conversations/{cid}/title")
-async def patch_title(cid: str, title: str = "", uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.get("/v1/conversations/{cid}/photos")
-async def get_photos(cid: str, uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/conversations/{cid}/recording")
-async def get_recording(cid: str, uid: str = Depends(verify_token)):
-    return {"url": None}
-
-
-@router.post("/v1/conversations/{cid}/segments/assign-bulk")
-async def assign_segments(cid: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.patch("/v1/conversations/{cid}/visibility")
-async def patch_visibility(cid: str, value: str = "", uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.patch("/v1/conversations/{cid}/starred")
-async def patch_starred(cid: str, starred: bool = False, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/conversations/{cid}/reprocess")
-async def reprocess(cid: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/conversations/{cid}/test-prompt")
-async def test_prompt(cid: str, request: Request, uid: str = Depends(verify_token)):
-    return {"result": ""}
-
-
-@router.post("/v1/conversations/merge")
-async def merge_conversations(request: Request, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.patch("/v1/conversations/{cid}/action-items/{idx}")
-async def patch_action_item(cid: str, idx: int, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.post("/v1/conversations/{cid}/action-items")
-async def create_action_item(cid: str, request: Request, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-# -- Announcements ---------------------------------------------------------
-
-
-@router.get("/v1/announcements/changelogs")
-async def changelogs(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/announcements/pending")
-async def pending_announcements(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/announcements/{announcement_id}/dismiss")
-async def dismiss_announcement(announcement_id: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-# -- Misc (import, MCP, dev, wrapped, sdcard, sync, joan) -----------------
-
-
-@router.get("/v1/import/jobs")
-async def list_import_jobs(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/import/jobs/{job_id}")
-async def get_import_job(job_id: str, uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.post("/v1/import/limitless")
-async def import_limitless(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.get("/v1/import/limitless/conversations")
-async def limitless_conversations(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.get("/v1/mcp/{path:path}")
-async def mcp_get_stub(path: str, uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/mcp/{path:path}")
-async def mcp_post_stub(path: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.get("/v1/dev/{path:path}")
-async def dev_get_stub(path: str, uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/dev/{path:path}")
-async def dev_post_stub(path: str, uid: str = Depends(verify_token)):
-    return {"status": "ok"}
-
-
-@router.get("/v1/wrapped/{path:path}")
-async def wrapped_stub(path: str, uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.post("/v1/wrapped/{path:path}")
-async def wrapped_post_stub(path: str, uid: str = Depends(verify_token)):
-    return {}
-
-
-@router.post("/sdcard_memory")
-async def sdcard_memory(uid: str = Depends(verify_token)):
-    return []
-
-
-@router.post("/v1/sync-local-files")
-async def sync_local_files(uid: str = Depends(verify_token)):
-    return {"synced": 0}
-
-
-@router.get("/v1/joan/{conversation_id}/followup-question")
-async def followup_question(conversation_id: str, uid: str = Depends(verify_token)):
-    return {"question": ""}
+    service.delete_todo(item_id)
+    return Response(status_code=204)

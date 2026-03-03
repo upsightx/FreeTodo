@@ -17,6 +17,15 @@ class MockChatTabPage extends StatefulWidget {
 
 class _MockChatTabPageState extends State<MockChatTabPage> with AutomaticKeepAliveClientMixin {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<MobileMockProvider>().refreshMessages();
+    });
+  }
+
+  @override
   bool get wantKeepAlive => true;
 
   final ScrollController _scrollController = ScrollController();

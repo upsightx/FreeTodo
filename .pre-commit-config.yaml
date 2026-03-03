@@ -43,10 +43,10 @@ repos:
       - id: bandit
         name: Bandit security scan
         # Avoid uv venv sync races in concurrent hooks (Windows file-lock issues).
-        entry: uv run --no-sync bandit -c bandit.yaml -r lifetrace scripts
+        entry: uv run --no-sync bandit -c bandit.yaml
         language: system
         files: ^(lifetrace|scripts)/.*\.py$
-        pass_filenames: false
+        pass_filenames: true
         require_serial: true
 
       - id: pyright
@@ -54,7 +54,7 @@ repos:
         entry: uv run --no-sync python -m pyright --project pyrightconfig.json
         language: system
         files: ^(lifetrace|scripts)/.*\.(py|pyi)$
-        pass_filenames: false
+        pass_filenames: true
         require_serial: true
 
       - id: pytest-quick

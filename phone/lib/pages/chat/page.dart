@@ -38,11 +38,13 @@ import 'package:omi/widgets/bottom_nav_bar.dart';
 class ChatPage extends StatefulWidget {
   final bool isPivotBottom;
   final String? autoMessage;
+  final bool embeddedInHomeTab;
 
   const ChatPage({
     super.key,
     this.isPivotBottom = false,
     this.autoMessage,
+    this.embeddedInHomeTab = false,
   });
 
   @override
@@ -190,7 +192,7 @@ class ChatPageState extends State<ChatPage> with AutomaticKeepAliveClientMixin {
         return Scaffold(
           key: scaffoldKey,
           backgroundColor: Theme.of(context).colorScheme.primary,
-          appBar: _buildAppBar(context, provider),
+          appBar: widget.embeddedInHomeTab ? null : _buildAppBar(context, provider),
           endDrawer: _buildChatAppsEndDrawer(context),
           onEndDrawerChanged: (isOpened) {
             if (isOpened) {
@@ -669,7 +671,7 @@ class ChatPageState extends State<ChatPage> with AutomaticKeepAliveClientMixin {
                   }),
                 ),
                 SizedBox(height: textFieldFocusNode.hasFocus ? 12 : 0),
-                if (widget.isPivotBottom && !textFieldFocusNode.hasFocus)
+                if (widget.isPivotBottom && !widget.embeddedInHomeTab && !textFieldFocusNode.hasFocus)
                   BottomNavBar(
                     showCenterButton: false,
                     onTabTap: (index, isRepeat) {

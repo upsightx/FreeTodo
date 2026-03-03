@@ -1,12 +1,11 @@
-import 'package:collection/collection.dart';
+﻿import 'package:collection/collection.dart';
 import 'package:uuid/uuid.dart';
 
 enum MessageSender { ai, human }
 
 enum MessageType {
   text('text'),
-  daySummary('day_summary'),
-  ;
+  daySummary('day_summary');
 
   final String value;
 
@@ -24,7 +23,10 @@ class MessageConversationStructured {
   MessageConversationStructured(this.title, this.emoji);
 
   static MessageConversationStructured fromJson(Map<String, dynamic> json) {
-    return MessageConversationStructured(json['title'], json['emoji']);
+    return MessageConversationStructured(
+      (json['title'] ?? '').toString(),
+      (json['emoji'] ?? '').toString(),
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -44,9 +46,11 @@ class MessageConversation {
 
   static MessageConversation fromJson(Map<String, dynamic> json) {
     return MessageConversation(
-      json['id'],
-      DateTime.parse(json['created_at']).toLocal(),
-      MessageConversationStructured.fromJson(json['structured']),
+      (json['id'] ?? '').toString(),
+      DateTime.tryParse((json['created_at'] ?? '').toString())?.toLocal() ?? DateTime.now(),
+      MessageConversationStructured.fromJson(json['structured'] is Map<String, dynamic>
+          ? json['structured'] as Map<String, dynamic>
+          : <String, dynamic>{}),
     );
   }
 
@@ -72,18 +76,18 @@ class MessageFile {
 
   static MessageFile fromJson(Map<String, dynamic> json) {
     return MessageFile(
-      json['openai_file_id'],
-      json['thumbnail'],
-      json['name'],
-      json['mime_type'],
-      json['id'],
-      DateTime.parse(json['created_at']).toLocal(),
-      json['thumb_name'],
+      (json['openai_file_id'] ?? '').toString(),
+      json['thumbnail']?.toString(),
+      (json['name'] ?? '').toString(),
+      (json['mime_type'] ?? '').toString(),
+      (json['id'] ?? '').toString(),
+      DateTime.tryParse((json['created_at'] ?? '').toString())?.toLocal() ?? DateTime.now(),
+      json['thumb_name']?.toString(),
     );
   }
 
   static List<MessageFile> fromJsonList(List<dynamic> json) {
-    return json.map((e) => MessageFile.fromJson(e)).toList();
+    return json.whereType<Map<String, dynamic>>().map(MessageFile.fromJson).toList();
   }
 
   Map<String, dynamic> toJson() {
@@ -101,9 +105,8 @@ class MessageFile {
   String mimeTypeToFileType() {
     if (mimeType.contains('image')) {
       return 'image';
-    } else {
-      return 'file';
     }
+    return 'file';
   }
 }
 
@@ -115,8 +118,8 @@ class ChartDataPoint {
 
   static ChartDataPoint fromJson(Map<String, dynamic> json) {
     return ChartDataPoint(
-      json['label'] ?? '',
-      (json['value'] as num).toDouble(),
+      (json['label'] ?? '').toString(),
+      ((json['value'] as num?) ?? 0).toDouble(),
     );
   }
 
@@ -134,9 +137,12 @@ class ChartDataset {
 
   static ChartDataset fromJson(Map<String, dynamic> json) {
     return ChartDataset(
-      json['label'] ?? 'Data',
-      ((json['data_points'] ?? []) as List).map((p) => ChartDataPoint.fromJson(p)).toList(),
-      color: json['color'],
+      (json['label'] ?? 'Data').toString(),
+      ((json['data_points'] ?? const <dynamic>[]) as List)
+          .whereType<Map<String, dynamic>>()
+          .map(ChartDataPoint.fromJson)
+          .toList(),
+      color: json['color']?.toString(),
     );
   }
 
@@ -150,7 +156,7 @@ class ChartDataset {
 }
 
 class ChartData {
-  String chartType; // 'line' or 'bar'
+  String chartType;
   String title;
   String? xLabel;
   String? yLabel;
@@ -161,11 +167,14 @@ class ChartData {
   static ChartData? fromJson(Map<String, dynamic>? json) {
     if (json == null) return null;
     return ChartData(
-      json['chart_type'] ?? 'line',
-      json['title'] ?? '',
-      ((json['datasets'] ?? []) as List).map((d) => ChartDataset.fromJson(d)).toList(),
-      xLabel: json['x_label'],
-      yLabel: json['y_label'],
+      (json['chart_type'] ?? 'line').toString(),
+      (json['title'] ?? '').toString(),
+      ((json['datasets'] ?? const <dynamic>[]) as List)
+          .whereType<Map<String, dynamic>>()
+          .map(ChartDataset.fromJson)
+          .toList(),
+      xLabel: json['x_label']?.toString(),
+      yLabel: json['y_label']?.toString(),
     );
   }
 
@@ -195,8 +204,6 @@ class ServerMessage {
 
   List<MessageConversation> memories;
   bool askForNps;
-
-  /// User rating for this message: 1 = thumbs up, -1 = thumbs down, null = no rating
   int? rating;
 
   List<String> thinkings = [];
@@ -219,20 +226,31 @@ class ServerMessage {
   });
 
   static ServerMessage fromJson(Map<String, dynamic> json) {
+    final senderRaw = (json['sender'] ?? '').toString().toLowerCase();
+    final sender = senderRaw == 'human' || senderRaw == 'user' ? MessageSender.human : MessageSender.ai;
+
     return ServerMessage(
-      json['id'],
-      DateTime.parse(json['created_at']).toLocal(),
-      json['text'] ?? "",
-      MessageSender.values.firstWhere((e) => e.toString().split('.').last == json['sender']),
-      MessageType.valuesFromString(json['type']),
-      json['plugin_id'],
-      json['from_integration'] ?? false,
-      ((json['files'] ?? []) as List<dynamic>).map((m) => MessageFile.fromJson(m)).toList(),
-      (json['files_id'] ?? []).map((m) => m.toString()).toList(),
-      ((json['memories'] ?? []) as List<dynamic>).map((m) => MessageConversation.fromJson(m)).toList(),
-      askForNps: json['ask_for_nps'] ?? true,
-      rating: json['rating'],
-      chartData: json['chart_data'] != null ? ChartData.fromJson(json['chart_data']) : null,
+      (json['id'] ?? '').toString(),
+      DateTime.tryParse((json['created_at'] ?? '').toString())?.toLocal() ?? DateTime.now(),
+      (json['text'] ?? '').toString(),
+      sender,
+      MessageType.valuesFromString((json['type'] ?? 'text').toString()),
+      json['plugin_id']?.toString(),
+      json['from_integration'] == true,
+      ((json['files'] ?? const <dynamic>[]) as List)
+          .whereType<Map<String, dynamic>>()
+          .map(MessageFile.fromJson)
+          .toList(),
+      ((json['files_id'] ?? const <dynamic>[]) as List).map((m) => m.toString()).toList(),
+      ((json['memories'] ?? const <dynamic>[]) as List)
+          .whereType<Map<String, dynamic>>()
+          .map(MessageConversation.fromJson)
+          .toList(),
+      askForNps: json['ask_for_nps'] != false,
+      rating: json['rating'] is int ? json['rating'] as int : int.tryParse((json['rating'] ?? '').toString()),
+      chartData: json['chart_data'] is Map<String, dynamic>
+          ? ChartData.fromJson(json['chart_data'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -242,7 +260,7 @@ class ServerMessage {
       'created_at': createdAt.toUtc().toIso8601String(),
       'text': text,
       'sender': sender.toString().split('.').last,
-      'type': type.toString().split('.').last,
+      'type': type.value,
       'plugin_id': appId,
       'from_integration': fromIntegration,
       'memories': memories.map((m) => m.toJson()).toList(),
@@ -254,10 +272,7 @@ class ServerMessage {
   }
 
   bool areFilesOfSameType() {
-    if (files.isEmpty) {
-      return true;
-    }
-
+    if (files.isEmpty) return true;
     final firstType = files.first.mimeTypeToFileType();
     return files.every((element) => element.mimeTypeToFileType() == firstType);
   }
@@ -281,7 +296,7 @@ class ServerMessage {
     return ServerMessage(
       const Uuid().v4(),
       DateTime.now(),
-      'Looks like we are having issues with the server. Please try again later.',
+      '服务暂时不可用，请稍后重试。',
       MessageSender.ai,
       MessageType.text,
       null,
@@ -300,8 +315,7 @@ enum MessageChunkType {
   data('data'),
   done('done'),
   error('error'),
-  message('message'),
-  ;
+  message('message');
 
   final String value;
 
@@ -324,7 +338,7 @@ class ServerMessageChunk {
   static ServerMessageChunk failedMessage() {
     return ServerMessageChunk(
       const Uuid().v4(),
-      'Looks like we are having issues with the server. Please try again later.',
+      '服务暂时不可用，请稍后重试。',
       MessageChunkType.error,
     );
   }

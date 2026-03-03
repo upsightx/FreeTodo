@@ -31,8 +31,12 @@ if "%CPOLAR_BACKEND_SUFFIX%"=="" set "CPOLAR_BACKEND_SUFFIX=%CPOLAR_DOMAIN_SUFFI
 if "%CPOLAR_FRONTEND_SUFFIX%"=="" set "CPOLAR_FRONTEND_SUFFIX=%CPOLAR_DOMAIN_SUFFIX%"
 
 REM Ports
-set "BACKEND_PORT=8001"
-set "FRONTEND_PORT=3001"
+if "%BACKEND_PORT%"=="" set "BACKEND_PORT=8001"
+if "%FRONTEND_PORT%"=="" set "FRONTEND_PORT=3001"
+set "BACKEND_PORT_PREFERRED=%BACKEND_PORT%"
+set "FRONTEND_PORT_PREFERRED=%FRONTEND_PORT%"
+call :find_free_port "%BACKEND_PORT%" BACKEND_PORT
+call :find_free_port "%FRONTEND_PORT%" FRONTEND_PORT
 
 REM ================================================================
 REM  Derive public URLs
@@ -59,6 +63,8 @@ echo Backend local:   http://0.0.0.0:%BACKEND_PORT%
 echo Backend public:  %BACKEND_PUBLIC_URL%
 echo Frontend local:  http://0.0.0.0:%FRONTEND_PORT%
 echo Frontend public: %FRONTEND_PUBLIC_URL%
+if not "%BACKEND_PORT%"=="%BACKEND_PORT_PREFERRED%" echo Note: backend preferred port %BACKEND_PORT_PREFERRED% busy, switched to %BACKEND_PORT%
+if not "%FRONTEND_PORT%"=="%FRONTEND_PORT_PREFERRED%" echo Note: frontend preferred port %FRONTEND_PORT_PREFERRED% busy, switched to %FRONTEND_PORT%
 echo.
 
 REM ================================================================
@@ -81,7 +87,7 @@ REM ================================================================
 REM  3. Start backend (center mode)
 REM ================================================================
 echo [3/6] Starting LifeTrace Server (center mode)...
-start "LifeTrace Center Backend" cmd /k "pushd %REPO_ROOT% && uv run python -m lifetrace.server --role center"
+start "LifeTrace Center Backend" cmd /k "pushd %REPO_ROOT% && uv run python -m lifetrace.server --role center --port %BACKEND_PORT%"
 echo Waiting for backend (5s)...
 timeout /t 5 /nobreak >nul
 
@@ -149,3 +155,13 @@ echo Tip: close each window to stop its service.
 echo.
 pause
 endlocal
+goto :eof
+
+:find_free_port
+set "START_PORT=%~1"
+set "OUT_VAR=%~2"
+set "FOUND_PORT="
+for /f "usebackq delims=" %%P in (`powershell -NoProfile -Command "$p=[int]%START_PORT%; while($true){ try{ $l=[System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback,$p); $l.Start(); $l.Stop(); Write-Output $p; break } catch { $p++ } }"`) do set "FOUND_PORT=%%P"
+if "%FOUND_PORT%"=="" set "FOUND_PORT=%START_PORT%"
+set "%OUT_VAR%=%FOUND_PORT%"
+exit /b 0

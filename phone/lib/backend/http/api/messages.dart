@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 
 import 'package:omi/backend/http/shared.dart';
@@ -7,99 +7,207 @@ import 'package:omi/env/env.dart';
 import 'package:omi/utils/logger.dart';
 import 'package:omi/utils/other/string_utils.dart';
 
+String? _lastSessionId;
+
+String? getCurrentMessageSessionId() => _lastSessionId;
+
+void clearCurrentMessageSessionId() {
+  _lastSessionId = null;
+}
+
+void _updateSessionIdFromHeaders(Map<String, String> headers) {
+  final sid = headers['x-session-id'] ?? headers['X-Session-Id'];
+  if (sid != null && sid.trim().isNotEmpty) {
+    _lastSessionId = sid.trim();
+  }
+}
+
 Future<List<ServerMessage>> getMessagesServer({
   String? appId,
+  String? conversationId,
+  String? sessionId,
   bool dropdownSelected = false,
 }) async {
   if (appId == 'no_selected') appId = null;
-  // TODO: Add pagination
-  var response = await makeApiCall(
-    url: '${Env.apiBaseUrl}v2/messages?app_id=${appId ?? ''}&dropdown_selected=$dropdownSelected',
+  final usePinnedSession = (appId == null || appId.isEmpty) && (conversationId == null || conversationId.isEmpty);
+  final effectiveSessionId =
+      (sessionId == null || sessionId.isEmpty) ? (usePinnedSession ? _lastSessionId : null) : sessionId;
+  final qConversationId = conversationId == null ? '' : '&conversation_id=$conversationId';
+  final qSessionId = effectiveSessionId == null ? '' : '&session_id=$effectiveSessionId';
+  final response = await makeApiCall(
+    url:
+        '${Env.apiBaseUrl}v2/messages?app_id=${appId ?? ''}&dropdown_selected=$dropdownSelected$qConversationId$qSessionId',
     headers: {},
     method: 'GET',
     body: '',
   );
-  if (response == null) return [];
-  if (response.statusCode == 200) {
-    var body = utf8.decode(response.bodyBytes);
-    var decodedBody = jsonDecode(body) as List<dynamic>;
-    if (decodedBody.isEmpty) {
-      return [];
-    }
-    var messages = decodedBody.map((conversation) => ServerMessage.fromJson(conversation)).toList();
-    Logger.debug('getMessages length: ${messages.length}');
-    // Debug: Check if any messages have ratings
-    var ratedMessages = messages.where((m) => m.rating != null).toList();
-    if (ratedMessages.isNotEmpty) {
-      Logger.debug('📊 Messages with ratings: ${ratedMessages.length}');
-      for (var m in ratedMessages) {
-        Logger.debug('  - Message ${m.id}: rating=${m.rating}');
-      }
-    }
-    return messages;
-  }
-  return [];
+  if (response == null || response.statusCode != 200) return [];
+
+  _updateSessionIdFromHeaders(response.headers);
+
+  final body = utf8.decode(response.bodyBytes);
+  final decoded = jsonDecode(body);
+  final rawList = decoded is List<dynamic>
+      ? decoded
+      : (decoded is Map<String, dynamic>
+          ? (decoded['messages'] as List<dynamic>? ?? const <dynamic>[])
+          : const <dynamic>[]);
+  if (rawList.isEmpty) return [];
+
+  final messages = rawList
+      .whereType<Map<String, dynamic>>()
+      .map((conversation) => ServerMessage.fromJson(conversation))
+      .toList();
+  Logger.debug('getMessages length: ${messages.length}, session=$_lastSessionId');
+  return messages;
 }
 
-Future<List<ServerMessage>> clearChatServer({String? appId}) async {
+Future<List<ServerMessage>> clearChatServer({String? appId, String? conversationId, String? sessionId}) async {
   if (appId == 'no_selected') appId = null;
-  var response = await makeApiCall(
-    url: '${Env.apiBaseUrl}v2/messages?app_id=${appId ?? ''}',
+  final usePinnedSession = (appId == null || appId.isEmpty) && (conversationId == null || conversationId.isEmpty);
+  final effectiveSessionId =
+      (sessionId == null || sessionId.isEmpty) ? (usePinnedSession ? _lastSessionId : null) : sessionId;
+  final qConversationId = conversationId == null ? '' : '&conversation_id=$conversationId';
+  final qSessionId = effectiveSessionId == null ? '' : '&session_id=$effectiveSessionId';
+  final response = await makeApiCall(
+    url: '${Env.apiBaseUrl}v2/messages?app_id=${appId ?? ''}$qConversationId$qSessionId',
     headers: {},
     method: 'DELETE',
     body: '',
   );
   if (response == null) throw Exception('Failed to delete chat');
   if (response.statusCode == 200) {
+    _updateSessionIdFromHeaders(response.headers);
     return [ServerMessage.fromJson(jsonDecode(response.body))];
-  } else {
-    throw Exception('Failed to delete chat');
   }
+  throw Exception('Failed to delete chat');
 }
 
 ServerMessageChunk? parseMessageChunk(String line, String messageId) {
-  if (line.startsWith('think: ')) {
-    return ServerMessageChunk(messageId, line.substring(7).replaceAll("__CRLF__", "\n"), MessageChunkType.think);
+  final normalized = line.trim();
+  if (normalized.isEmpty) return null;
+
+  if (normalized.startsWith('think: ')) {
+    return ServerMessageChunk(
+      messageId,
+      normalized.substring(7).replaceAll('__CRLF__', '\n'),
+      MessageChunkType.think,
+    );
   }
 
-  if (line.startsWith('data: ')) {
-    return ServerMessageChunk(messageId, line.substring(6).replaceAll("__CRLF__", "\n"), MessageChunkType.data);
+  if (normalized.startsWith('data: ')) {
+    return ServerMessageChunk(
+      messageId,
+      normalized.substring(6).replaceAll('__CRLF__', '\n'),
+      MessageChunkType.data,
+    );
   }
 
-  if (line.startsWith('done: ')) {
-    var text = decodeBase64(line.substring(6));
-    return ServerMessageChunk(messageId, text, MessageChunkType.done,
-        message: ServerMessage.fromJson(json.decode(text)));
+  if (normalized.startsWith('done: ')) {
+    final text = decodeBase64(normalized.substring(6));
+    return ServerMessageChunk(
+      messageId,
+      text,
+      MessageChunkType.done,
+      message: ServerMessage.fromJson(json.decode(text)),
+    );
   }
 
-  if (line.startsWith('message: ')) {
-    var text = decodeBase64(line.substring(9));
-    return ServerMessageChunk(messageId, text, MessageChunkType.message,
-        message: ServerMessage.fromJson(json.decode(text)));
+  if (normalized.startsWith('message: ')) {
+    final text = decodeBase64(normalized.substring(9));
+    return ServerMessageChunk(
+      messageId,
+      text,
+      MessageChunkType.message,
+      message: ServerMessage.fromJson(json.decode(text)),
+    );
+  }
+
+  if (normalized.startsWith('error: ')) {
+    return ServerMessageChunk(messageId, normalized.substring(7), MessageChunkType.error);
   }
 
   return null;
 }
 
-Stream<ServerMessageChunk> sendMessageStreamServer(String text, {String? appId, List<String>? filesId}) async* {
+Stream<ServerMessageChunk> sendMessageStreamServer(
+  String text, {
+  String? appId,
+  String? conversationId,
+  String? sessionId,
+  List<String>? filesId,
+}) async* {
+  final usePinnedSession = (appId == null || appId.isEmpty) && (conversationId == null || conversationId.isEmpty);
+  final effectiveSessionId =
+      (sessionId == null || sessionId.isEmpty) ? (usePinnedSession ? _lastSessionId : null) : sessionId;
+
   var url = '${Env.apiBaseUrl}v2/messages?app_id=$appId';
   if (appId == null || appId.isEmpty || appId == 'null' || appId == 'no_selected') {
     url = '${Env.apiBaseUrl}v2/messages';
   }
+  if (conversationId != null && conversationId.isNotEmpty) {
+    url += (url.contains('?') ? '&' : '?') + 'conversation_id=$conversationId';
+  }
+  if (effectiveSessionId != null && effectiveSessionId.isNotEmpty) {
+    url += (url.contains('?') ? '&' : '?') + 'session_id=$effectiveSessionId';
+  }
 
-  var messageId = "1000"; // Default new message
+  const messageId = '1000';
+  var receivedAnyChunk = false;
 
-  await for (var line in makeStreamingApiCall(
+  await for (final line in makeStreamingApiCall(
     url: url,
     body: jsonEncode({'text': text, 'file_ids': filesId}),
   )) {
-    var messageChunk = parseMessageChunk(line, messageId);
+    final messageChunk = parseMessageChunk(line, messageId);
     if (messageChunk != null) {
+      receivedAnyChunk = true;
       yield messageChunk;
-    } else {
-      yield ServerMessageChunk.failedMessage();
-      return;
     }
+  }
+
+  if (receivedAnyChunk) return;
+
+  // Fallback: some tunnels/proxies may break streaming; retry as normal POST.
+  final response = await makeApiCall(
+    url: url,
+    headers: {},
+    method: 'POST',
+    body: jsonEncode({'text': text, 'file_ids': filesId}),
+  );
+  if (response == null) {
+    yield ServerMessageChunk.failedMessage();
+    return;
+  }
+
+  _updateSessionIdFromHeaders(response.headers);
+
+  if (response.statusCode != 200) {
+    yield ServerMessageChunk(
+      messageId,
+      '聊天请求失败（HTTP ${response.statusCode}）',
+      MessageChunkType.error,
+    );
+    return;
+  }
+
+  final body = utf8.decode(response.bodyBytes);
+  final parts = body.split('\n\n');
+  var parsed = false;
+  for (final part in parts) {
+    final chunk = parseMessageChunk(part, messageId);
+    if (chunk != null) {
+      parsed = true;
+      yield chunk;
+    }
+  }
+
+  if (!parsed) {
+    yield ServerMessageChunk(
+      messageId,
+      body.trim().isEmpty ? '聊天请求失败，请稍后重试。' : body,
+      MessageChunkType.error,
+    );
   }
 }
 
@@ -113,26 +221,22 @@ Future<ServerMessage> getInitialAppMessage(String? appId) {
     if (response == null) throw Exception('Failed to send message');
     if (response.statusCode == 200) {
       return ServerMessage.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to send message');
     }
+    throw Exception('Failed to send message');
   });
 }
 
 Stream<ServerMessageChunk> sendVoiceMessageStreamServer(List<File> files, {String? language}) async* {
-  var messageId = "1000"; // Default new message
+  const messageId = '1000';
 
-  await for (var line in makeMultipartStreamingApiCall(
+  await for (final line in makeMultipartStreamingApiCall(
     url: '${Env.apiBaseUrl}v2/voice-messages',
     files: files,
     fields: language != null ? {'language': language} : {},
   )) {
-    var messageChunk = parseMessageChunk(line, messageId);
+    final messageChunk = parseMessageChunk(line, messageId);
     if (messageChunk != null) {
       yield messageChunk;
-    } else {
-      yield ServerMessageChunk.failedMessage();
-      return;
     }
   }
 }
@@ -144,7 +248,7 @@ Future<List<MessageFile>?> uploadFilesServer(List<File> files, {String? appId}) 
   }
 
   try {
-    var response = await makeMultipartApiCall(
+    final response = await makeMultipartApiCall(
       url: url,
       files: files,
     );
@@ -152,10 +256,9 @@ Future<List<MessageFile>?> uploadFilesServer(List<File> files, {String? appId}) 
     if (response.statusCode == 200) {
       Logger.debug('uploadFileServer response body: ${jsonDecode(response.body)}');
       return MessageFile.fromJsonList(jsonDecode(response.body));
-    } else {
-      Logger.debug('Failed to upload file. Status code: ${response.statusCode} ${response.body}');
-      throw Exception('Failed to upload file. Status code: ${response.statusCode}');
     }
+    Logger.debug('Failed to upload file. Status code: ${response.statusCode} ${response.body}');
+    throw Exception('Failed to upload file. Status code: ${response.statusCode}');
   } catch (e) {
     Logger.debug('An error occurred uploadFileServer: $e');
     throw Exception('An error occurred uploadFileServer: $e');
@@ -163,7 +266,7 @@ Future<List<MessageFile>?> uploadFilesServer(List<File> files, {String? appId}) 
 }
 
 Future reportMessageServer(String messageId) async {
-  var response = await makeApiCall(
+  final response = await makeApiCall(
     url: '${Env.apiBaseUrl}v2/messages/$messageId/report',
     headers: {},
     method: 'POST',
@@ -177,7 +280,7 @@ Future reportMessageServer(String messageId) async {
 
 Future<String> transcribeVoiceMessage(File audioFile, {String? language}) async {
   try {
-    var response = await makeMultipartApiCall(
+    final response = await makeMultipartApiCall(
       url: '${Env.apiBaseUrl}v2/voice-message/transcribe',
       files: [audioFile],
       fields: language != null ? {'language': language} : {},
@@ -186,10 +289,10 @@ Future<String> transcribeVoiceMessage(File audioFile, {String? language}) async 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return data['transcript'] ?? '';
-    } else {
-      Logger.debug('Failed to transcribe voice message: ${response.statusCode} ${response.body}');
-      throw Exception('Failed to transcribe voice message');
     }
+
+    Logger.debug('Failed to transcribe voice message: ${response.statusCode} ${response.body}');
+    throw Exception('Failed to transcribe voice message');
   } catch (e) {
     Logger.debug('Error transcribing voice message: $e');
     throw Exception('Error transcribing voice message: $e');

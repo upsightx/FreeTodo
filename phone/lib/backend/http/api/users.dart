@@ -535,6 +535,9 @@ Future<List<DailySummary>> getDailySummaries({int limit = 30, int offset = 0}) a
 
   try {
     final data = jsonDecode(response.body);
+    if (data is! Map<String, dynamic>) {
+      return [];
+    }
     final summaries = (data['summaries'] as List<dynamic>?)?.map((e) => DailySummary.fromJson(e)).toList() ?? [];
     return summaries;
   } catch (e) {
@@ -605,6 +608,22 @@ Future<Map<String, dynamic>?> getUserOnboardingState() async {
   if (response == null) return null;
   if (response.statusCode == 200) {
     return jsonDecode(response.body);
+  }
+  return null;
+}
+
+/// Lightweight center-node connectivity probe used by mobile UI.
+/// Returns user payload when /v1/users/me is reachable and authorized.
+Future<Map<String, dynamic>?> probeCenterNodeConnection() async {
+  var response = await makeApiCall(
+    url: '${Env.apiBaseUrl}v1/users/me',
+    headers: {},
+    method: 'GET',
+    body: '',
+  );
+  if (response == null) return null;
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
   return null;
 }

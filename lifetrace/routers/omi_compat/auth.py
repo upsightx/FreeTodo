@@ -12,11 +12,12 @@ from lifetrace.util.settings import settings
 
 router = APIRouter(tags=["omi-auth"])
 
-_DEFAULT_TOKEN = "lifetrace-omi-compat-2026"
-
 
 def _get_omi_token() -> str:
-    return str(settings.get("omi_compat.token", _DEFAULT_TOKEN))
+    configured = str(settings.get("omi_compat.token", "")).strip()
+    if configured:
+        return configured
+    raise HTTPException(status_code=500, detail="omi_compat.token is not configured")
 
 
 def _get_single_uid() -> str:

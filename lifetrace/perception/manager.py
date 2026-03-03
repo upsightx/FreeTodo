@@ -449,8 +449,8 @@ class PerceptionStreamManager:
             mgr = try_get_memory_manager()
             if mgr is not None and mgr.deduper is not None:
                 return mgr.deduper
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Unable to resolve memory deduper: %s", exc)
         return None
 
 

@@ -9,14 +9,13 @@ The profile is stored as ``profile_L4/user_profile.md``.
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
+from lifetrace.util.logging_config import get_logger
 from lifetrace.util.time_utils import get_local_now, local_today_str, local_yesterday_str
 
-from lifetrace.util.logging_config import get_logger
-
 if TYPE_CHECKING:
+    from datetime import datetime
     from pathlib import Path
 
     from lifetrace.llm.llm_client import LLMClient
@@ -87,7 +86,7 @@ class ProfileBuilder:
         self._stats = {"checks": 0, "updates": 0, "skipped": 0, "errors": 0}
 
     def get_stats(self) -> dict:
-        stats = dict(self._stats)
+        stats: dict[str, int | str | None] = dict(self._stats)
         stats["last_update"] = self._last_update.isoformat() if self._last_update else None
         return stats
 

@@ -3,16 +3,22 @@ OCR引擎封装模块
 基于 RapidOCR (ONNX Runtime) 的轻量级OCR实现
 """
 
+import platform
 import re
 import time
+from typing import Protocol
 
 import numpy as np
 
 from lifetrace.util.logging_config import get_logger
 
 from .models import BBox, OcrLine, OcrRawResult
+from .ocr_engine_winrt import WINOCR_AVAILABLE, WinRtOcrEngine
 
 logger = get_logger()
+
+ELAPSE_COMPONENTS = 3
+
 
 try:
     from rapidocr_onnxruntime import RapidOCR
@@ -133,35 +139,7 @@ class OcrEngine:
 
         latency_ms = (time.time() - start_time) * 1000
 
-        # 解析 elapse 时间
-        det_time_ms = 0.0
-        rec_time_ms = 0.0
-        cls_time_ms = 0.0
-
-        if elapse:
-            # elapse 格式随 RapidOCR 版本不同而不同：
-            # - v1.4.x: list[float] = [det_time, cls_time, rec_time] (秒)
-            # - 旧版本: str 或 dict
-            if isinstance(elapse, (list, tuple)) and len(elapse) >= 3:
-                det_time_ms = float(elapse[0]) * 1000
-                cls_time_ms = float(elapse[1]) * 1000
-                rec_time_ms = float(elapse[2]) * 1000
-            elif isinstance(elapse, str):
-                # 解析字符串格式（兼容旧版本）
-                det_match = re.search(r"det[:\s]+(\d+\.?\d*)s?", elapse)
-                rec_match = re.search(r"rec[:\s]+(\d+\.?\d*)s?", elapse)
-                cls_match = re.search(r"cls[:\s]+(\d+\.?\d*)s?", elapse)
-
-                if det_match:
-                    det_time_ms = float(det_match.group(1)) * 1000
-                if rec_match:
-                    rec_time_ms = float(rec_match.group(1)) * 1000
-                if cls_match:
-                    cls_time_ms = float(cls_match.group(1)) * 1000
-            elif isinstance(elapse, dict):
-                det_time_ms = elapse.get("det", 0) * 1000
-                rec_time_ms = elapse.get("rec", 0) * 1000
-                cls_time_ms = elapse.get("cls", 0) * 1000
+        det_time_ms, rec_time_ms, cls_time_ms = self._parse_elapse(elapse)
 
         # 解析结果
         lines = []
@@ -201,6 +179,37 @@ class OcrEngine:
             device="cpu",
         )
 
+    @staticmethod
+    def _parse_elapse(elapse: object) -> tuple[float, float, float]:
+        det_time_ms = 0.0
+        rec_time_ms = 0.0
+        cls_time_ms = 0.0
+        if not elapse:
+            return det_time_ms, rec_time_ms, cls_time_ms
+
+        # elapse 格式随 RapidOCR 版本不同而不同：
+        # - v1.4.x: [det_time, cls_time, rec_time] (秒)
+        # - 旧版本: str 或 dict
+        if isinstance(elapse, list | tuple) and len(elapse) >= ELAPSE_COMPONENTS:
+            det_time_ms = float(elapse[0]) * 1000
+            cls_time_ms = float(elapse[1]) * 1000
+            rec_time_ms = float(elapse[2]) * 1000
+        elif isinstance(elapse, str):
+            det_match = re.search(r"det[:\s]+(\d+\.?\d*)s?", elapse)
+            rec_match = re.search(r"rec[:\s]+(\d+\.?\d*)s?", elapse)
+            cls_match = re.search(r"cls[:\s]+(\d+\.?\d*)s?", elapse)
+            if det_match:
+                det_time_ms = float(det_match.group(1)) * 1000
+            if rec_match:
+                rec_time_ms = float(rec_match.group(1)) * 1000
+            if cls_match:
+                cls_time_ms = float(cls_match.group(1)) * 1000
+        elif isinstance(elapse, dict):
+            det_time_ms = float(elapse.get("det", 0)) * 1000
+            rec_time_ms = float(elapse.get("rec", 0)) * 1000
+            cls_time_ms = float(elapse.get("cls", 0)) * 1000
+        return det_time_ms, rec_time_ms, cls_time_ms
+
     def ocr_simple(self, image: np.ndarray) -> list[tuple[str, float]]:
         """
         简化版OCR，只返回文本和置信度
@@ -216,7 +225,13 @@ class OcrEngine:
 
 
 # 单例实例（支持多后端）
-_engine_state: dict[str, OcrEngine | None] = {"instance": None}
+class OcrBackend(Protocol):
+    def ocr(self, image: np.ndarray) -> OcrRawResult: ...
+
+    def ocr_simple(self, image: np.ndarray) -> list[tuple[str, float]]: ...
+
+
+_engine_state: dict[str, OcrBackend | None] = {"instance": None}
 
 
 def get_ocr_engine(
@@ -227,7 +242,7 @@ def get_ocr_engine(
     resize_max_side: int = 0,
     use_cls: bool = False,
     winrt_lang: str = "zh-Hans-CN",
-) -> OcrEngine:
+) -> OcrBackend:
     """
     获取 OCR 引擎单例
 
@@ -251,8 +266,6 @@ def get_ocr_engine(
     chosen_backend = _resolve_backend(backend)
 
     if chosen_backend == "winrt":
-        from .ocr_engine_winrt import WinRtOcrEngine
-
         instance = WinRtOcrEngine(
             lang=winrt_lang,
             resize_max_side=resize_max_side,
@@ -286,8 +299,6 @@ def _resolve_backend(backend: str) -> str:
         return "rapidocr"
 
     if backend == "winrt":
-        from .ocr_engine_winrt import WINOCR_AVAILABLE
-
         if WINOCR_AVAILABLE:
             return "winrt"
         logger.warning("WinRT OCR requested but not available, falling back to RapidOCR")
@@ -295,13 +306,8 @@ def _resolve_backend(backend: str) -> str:
 
     # auto: Windows 上优先 WinRT
     if backend == "auto":
-        import platform
-
-        if platform.system() == "Windows":
-            from .ocr_engine_winrt import WINOCR_AVAILABLE
-
-            if WINOCR_AVAILABLE:
-                return "winrt"
+        if platform.system() == "Windows" and WINOCR_AVAILABLE:
+            return "winrt"
         return "rapidocr"
 
     logger.warning(f"Unknown OCR backend '{backend}', falling back to RapidOCR")

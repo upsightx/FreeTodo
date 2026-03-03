@@ -7,7 +7,9 @@ runs without 404s in LifeTrace self-hosted mode.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+import json
+
+from fastapi import APIRouter, Depends, Request
 
 from lifetrace.routers.omi_compat.auth import verify_token
 from lifetrace.util.logging_config import get_logger
@@ -15,6 +17,7 @@ from lifetrace.util.logging_config import get_logger
 logger = get_logger()
 
 router = APIRouter(tags=["omi-users"])
+_language_pref: dict[str, str] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -71,6 +74,7 @@ async def get_onboarding(uid: str = Depends(verify_token)):
 
 
 @router.post("/v1/users/onboarding")
+@router.patch("/v1/users/onboarding")
 async def update_onboarding(uid: str = Depends(verify_token)):
     return {"completed": True}
 
@@ -82,12 +86,29 @@ async def update_onboarding(uid: str = Depends(verify_token)):
 
 @router.get("/v1/users/language")
 async def get_language(uid: str = Depends(verify_token)):
-    return {"language": "zh"}
+    return {"language": _language_pref.get(uid, "zh-CN")}
 
 
 @router.post("/v1/users/language")
-async def set_language(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
+@router.patch("/v1/users/language")
+async def set_language(request: Request, uid: str = Depends(verify_token)):
+    language = "zh-CN"
+    try:
+        body = await request.json()
+        raw = body.get("language") if isinstance(body, dict) else None
+        text = str(raw or "").strip()
+        if text:
+            language = text
+    except json.JSONDecodeError:
+        logger.warning("[omi-users] set_language received non-JSON payload")
+
+    # Normalize common Simplified Chinese aliases to zh-CN.
+    normalized = language
+    if normalized in {"zh", "zh-Hans", "zh_CN", "zh-cn"}:
+        normalized = "zh-CN"
+
+    _language_pref[uid] = normalized
+    return {"status": "ok", "language": normalized}
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +122,7 @@ async def get_transcription_prefs(uid: str = Depends(verify_token)):
 
 
 @router.post("/v1/users/transcription-preferences")
+@router.patch("/v1/users/transcription-preferences")
 async def set_transcription_prefs(uid: str = Depends(verify_token)):
     return {"status": "ok"}
 
@@ -112,7 +134,7 @@ async def store_recording_perm(uid: str = Depends(verify_token)):
 
 @router.get("/v1/users/store-recording-permission")
 async def get_recording_perm(uid: str = Depends(verify_token)):
-    return {"value": True}
+    return {"store_recording_permission": True}
 
 
 _cloud_sync_enabled: dict[str, bool] = {}
@@ -203,12 +225,13 @@ async def save_fcm_token(uid: str = Depends(verify_token)):
 
 @router.get("/v1/users/mentor-notification-settings")
 async def get_mentor_notif(uid: str = Depends(verify_token)):
-    return {"enabled": False}
+    return {"frequency": 0}
 
 
 @router.post("/v1/users/mentor-notification-settings")
+@router.patch("/v1/users/mentor-notification-settings")
 async def set_mentor_notif(uid: str = Depends(verify_token)):
-    return {"status": "ok"}
+    return {"status": "ok", "frequency": 0}
 
 
 # ---------------------------------------------------------------------------
@@ -218,10 +241,11 @@ async def set_mentor_notif(uid: str = Depends(verify_token)):
 
 @router.get("/v1/users/daily-summary-settings")
 async def get_daily_summary_settings(uid: str = Depends(verify_token)):
-    return {"enabled": False, "time": "21:00"}
+    return {"enabled": False, "hour": 21}
 
 
 @router.post("/v1/users/daily-summary-settings")
+@router.patch("/v1/users/daily-summary-settings")
 async def set_daily_summary_settings(uid: str = Depends(verify_token)):
     return {"status": "ok"}
 
@@ -232,7 +256,7 @@ async def list_daily_summaries(
     offset: int = 0,
     uid: str = Depends(verify_token),
 ):
-    return []
+    return {"summaries": [], "has_more": False}
 
 
 # ---------------------------------------------------------------------------
@@ -246,6 +270,7 @@ async def update_geolocation(uid: str = Depends(verify_token)):
 
 
 @router.post("/v1/users/geolocation")
+@router.patch("/v1/users/geolocation")
 async def update_geolocation_v1(uid: str = Depends(verify_token)):
     return {"status": "ok"}
 

@@ -6,6 +6,7 @@
 import os
 from contextlib import contextmanager
 from pathlib import Path
+from uuid import uuid4
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
@@ -62,6 +63,7 @@ class DatabaseBase:
 
             # 运行 Alembic 迁移，补齐已有数据库的新增列/索引
             self._run_migrations()
+            self._ensure_legacy_schema_compatibility()
 
             # 性能优化：添加关键索引
             self._create_performance_indexes()
@@ -93,6 +95,131 @@ class DatabaseBase:
         except Exception as exc:
             logger.error(f"数据库迁移失败: {exc}")
             raise
+
+    def _ensure_legacy_schema_compatibility(self) -> None:  # noqa: C901, PLR0912
+        """Repair known schema drift in legacy SQLite databases."""
+        if self.engine is None:
+            return
+
+        with self.engine.connect() as conn:
+            tables = {
+                row[0]
+                for row in conn.execute(
+                    text("SELECT name FROM sqlite_master WHERE type='table'")
+                ).fetchall()
+            }
+            if "todos" not in tables:
+                return
+
+            todo_columns = {
+                row[1] for row in conn.execute(text("PRAGMA table_info(todos)")).fetchall()
+            }
+            # Keep this list additive and SQLite-safe. We intentionally avoid
+            # constraints in ALTER TABLE ADD COLUMN for maximum compatibility.
+            compat_columns: dict[str, str] = {
+                "description": "ALTER TABLE todos ADD COLUMN description TEXT",
+                "deadline": "ALTER TABLE todos ADD COLUMN deadline DATETIME",
+                "start_time": "ALTER TABLE todos ADD COLUMN start_time DATETIME",
+                "end_time": "ALTER TABLE todos ADD COLUMN end_time DATETIME",
+                "time_zone": "ALTER TABLE todos ADD COLUMN time_zone VARCHAR(64)",
+                "uid": "ALTER TABLE todos ADD COLUMN uid VARCHAR(64)",
+                "summary": "ALTER TABLE todos ADD COLUMN summary VARCHAR(200)",
+                "user_notes": "ALTER TABLE todos ADD COLUMN user_notes TEXT",
+                "parent_todo_id": "ALTER TABLE todos ADD COLUMN parent_todo_id INTEGER",
+                "item_type": "ALTER TABLE todos ADD COLUMN item_type VARCHAR(10)",
+                "location": "ALTER TABLE todos ADD COLUMN location VARCHAR(200)",
+                "categories": "ALTER TABLE todos ADD COLUMN categories TEXT",
+                "classification": "ALTER TABLE todos ADD COLUMN classification VARCHAR(20)",
+                "dtstart": "ALTER TABLE todos ADD COLUMN dtstart DATETIME",
+                "dtend": "ALTER TABLE todos ADD COLUMN dtend DATETIME",
+                "due": "ALTER TABLE todos ADD COLUMN due DATETIME",
+                "duration": "ALTER TABLE todos ADD COLUMN duration VARCHAR(64)",
+                "tzid": "ALTER TABLE todos ADD COLUMN tzid VARCHAR(64)",
+                "is_all_day": "ALTER TABLE todos ADD COLUMN is_all_day BOOLEAN",
+                "dtstamp": "ALTER TABLE todos ADD COLUMN dtstamp DATETIME",
+                "created": "ALTER TABLE todos ADD COLUMN created DATETIME",
+                "last_modified": "ALTER TABLE todos ADD COLUMN last_modified DATETIME",
+                "sequence": "ALTER TABLE todos ADD COLUMN sequence INTEGER",
+                "rdate": "ALTER TABLE todos ADD COLUMN rdate TEXT",
+                "exdate": "ALTER TABLE todos ADD COLUMN exdate TEXT",
+                "recurrence_id": "ALTER TABLE todos ADD COLUMN recurrence_id DATETIME",
+                "related_to_uid": "ALTER TABLE todos ADD COLUMN related_to_uid VARCHAR(64)",
+                "related_to_reltype": "ALTER TABLE todos ADD COLUMN related_to_reltype VARCHAR(20)",
+                "ical_status": "ALTER TABLE todos ADD COLUMN ical_status VARCHAR(20)",
+                "reminder_offsets": "ALTER TABLE todos ADD COLUMN reminder_offsets TEXT",
+                "status": "ALTER TABLE todos ADD COLUMN status VARCHAR(20)",
+                "priority": "ALTER TABLE todos ADD COLUMN priority VARCHAR(20)",
+                "completed_at": "ALTER TABLE todos ADD COLUMN completed_at DATETIME",
+                "percent_complete": "ALTER TABLE todos ADD COLUMN percent_complete INTEGER",
+                "rrule": "ALTER TABLE todos ADD COLUMN rrule VARCHAR(500)",
+                "order": 'ALTER TABLE todos ADD COLUMN "order" INTEGER',
+                "related_activities": "ALTER TABLE todos ADD COLUMN related_activities TEXT",
+            }
+
+            added_columns: list[str] = []
+            for col, ddl in compat_columns.items():
+                if col in todo_columns:
+                    continue
+                logger.warning(
+                    f"Detected legacy todos schema without {col}, applying compatibility fix"
+                )
+                conn.execute(text(ddl))
+                added_columns.append(col)
+
+            repaired_uid_rows = 0
+            if "uid" in added_columns:
+                todo_ids = conn.execute(
+                    text("SELECT id FROM todos WHERE uid IS NULL OR uid = ''")
+                ).fetchall()
+                repaired_uid_rows = len(todo_ids)
+                for (todo_id,) in todo_ids:
+                    conn.execute(
+                        text("UPDATE todos SET uid = :uid WHERE id = :id"),
+                        {"uid": str(uuid4()), "id": todo_id},
+                    )
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_todos_uid ON todos(uid)"))
+
+            # Backfill summary for legacy rows.
+            if "summary" in added_columns:
+                conn.execute(
+                    text(
+                        "UPDATE todos SET summary = name WHERE summary IS NULL AND name IS NOT NULL"
+                    )
+                )
+
+            # Reasonable defaults for new numeric/boolean columns.
+            if "sequence" in added_columns:
+                conn.execute(text("UPDATE todos SET sequence = 0 WHERE sequence IS NULL"))
+            if "percent_complete" in added_columns:
+                conn.execute(
+                    text("UPDATE todos SET percent_complete = 0 WHERE percent_complete IS NULL")
+                )
+            if "is_all_day" in added_columns:
+                conn.execute(text("UPDATE todos SET is_all_day = 0 WHERE is_all_day IS NULL"))
+            if "item_type" in added_columns:
+                conn.execute(
+                    text(
+                        "UPDATE todos SET item_type = 'VTODO' WHERE item_type IS NULL OR item_type = ''"
+                    )
+                )
+            if "status" in added_columns:
+                conn.execute(
+                    text("UPDATE todos SET status = 'active' WHERE status IS NULL OR status = ''")
+                )
+            if "priority" in added_columns:
+                conn.execute(
+                    text(
+                        "UPDATE todos SET priority = 'none' WHERE priority IS NULL OR priority = ''"
+                    )
+                )
+            if "order" in added_columns:
+                conn.execute(text('UPDATE todos SET "order" = 0 WHERE "order" IS NULL'))
+
+            if added_columns:
+                conn.commit()
+                logger.info(
+                    f"Legacy todos schema repaired: added={added_columns}, repaired_uid_rows={repaired_uid_rows}"
+                )
 
     def _create_performance_indexes(self):
         """创建性能优化索引"""

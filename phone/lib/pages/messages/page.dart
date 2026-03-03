@@ -3,8 +3,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 import 'package:omi/backend/http/api/notifications.dart';
+import 'package:omi/providers/action_items_provider.dart';
 import 'package:omi/providers/home_provider.dart';
-import 'package:omi/providers/mobile_mock_provider.dart';
 import 'package:omi/providers/notification_center_provider.dart';
 import 'package:omi/ui/mobile/mobile_tokens.dart';
 import 'package:omi/widgets/mobile_bottom_sheet.dart';
@@ -109,13 +109,17 @@ class _MessagesPageState extends State<MessagesPage> with AutomaticKeepAliveClie
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已加入稍后处理')));
   }
 
-  void _convertToTaskAndJump(AppNotification n) {
-    context.read<MobileMockProvider>().addTask(
-          title: n.title,
-          source: n.source?.isNotEmpty == true ? '${n.source} · 来自消息' : '消息转待办',
-          priority: MobileTaskPriority.high,
+  Future<void> _convertToTaskAndJump(AppNotification n) async {
+    final created = await context.read<ActionItemsProvider>().createActionItem(
+          description: n.title,
           dueAt: DateTime.now().add(const Duration(hours: 8)),
+          completed: false,
         );
+    if (!mounted) return;
+    if (created == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('转待办失败，请检查中心节点连接')));
+      return;
+    }
     context.read<HomeProvider>().setIndex(1);
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已转为待办，已跳转')));
   }

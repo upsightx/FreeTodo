@@ -233,30 +233,23 @@ Stream<String> makeStreamingApiCall({
       return;
     }
 
-    var buffers = <String>[];
+    var pending = '';
     await for (var data in streamedResponse.stream.transform(utf8.decoder)) {
-      var lines = data.split('\n\n');
-      for (var line in lines.where((line) => line.isNotEmpty)) {
-        // Handle package splitting by 1024 bytes in dart
-        if (line.length >= 1024) {
-          buffers.add(line);
-          continue;
+      pending += data;
+      int splitIndex = pending.indexOf('\n\n');
+      while (splitIndex >= 0) {
+        final event = pending.substring(0, splitIndex).trim();
+        pending = pending.substring(splitIndex + 2);
+        if (event.isNotEmpty) {
+          yield event;
         }
-
-        // Merge packages if needed
-        if (buffers.isNotEmpty) {
-          buffers.add(line);
-          line = buffers.join();
-          buffers.clear();
-        }
-
-        yield line;
+        splitIndex = pending.indexOf('\n\n');
       }
     }
 
-    // Flush remaining buffers
-    if (buffers.isNotEmpty) {
-      yield buffers.join();
+    final tail = pending.trim();
+    if (tail.isNotEmpty) {
+      yield tail;
     }
   } catch (e, stackTrace) {
     Logger.error('Streaming request error: $e');
@@ -292,30 +285,23 @@ Stream<String> makeMultipartStreamingApiCall({
       return;
     }
 
-    var buffers = <String>[];
+    var pending = '';
     await for (var data in response.stream.transform(utf8.decoder)) {
-      var lines = data.split('\n\n');
-      for (var line in lines.where((line) => line.isNotEmpty)) {
-        // Handle package splitting by 1024 bytes in dart
-        if (line.length >= 1024) {
-          buffers.add(line);
-          continue;
+      pending += data;
+      int splitIndex = pending.indexOf('\n\n');
+      while (splitIndex >= 0) {
+        final event = pending.substring(0, splitIndex).trim();
+        pending = pending.substring(splitIndex + 2);
+        if (event.isNotEmpty) {
+          yield event;
         }
-
-        // Merge packages if needed
-        if (buffers.isNotEmpty) {
-          buffers.add(line);
-          line = buffers.join();
-          buffers.clear();
-        }
-
-        yield line;
+        splitIndex = pending.indexOf('\n\n');
       }
     }
 
-    // Flush remaining buffers
-    if (buffers.isNotEmpty) {
-      yield buffers.join();
+    final tail = pending.trim();
+    if (tail.isNotEmpty) {
+      yield tail;
     }
   } catch (e, stackTrace) {
     Logger.error('Multipart streaming request error: $e');
