@@ -19,6 +19,7 @@ import 'package:omi/backend/preferences.dart';
 import 'package:omi/backend/schema/app.dart';
 import 'package:omi/backend/schema/bt_device/bt_device.dart';
 import 'package:omi/backend/schema/message.dart';
+import 'package:omi/env/env.dart';
 import 'package:omi/providers/app_provider.dart';
 import 'package:omi/main.dart';
 import 'package:omi/services/agent_chat_service.dart';
@@ -37,6 +38,9 @@ class MessageProvider extends ChangeNotifier {
       _askAIChannel = const MethodChannel('com.omi/ask_ai');
       _askAIChannel.setMethodCallHandler(_handleAskAIMethodCall);
     }
+    _apiBaseUrlSub = Env.onApiBaseUrlChanged.listen((_) async {
+      await _refreshAfterApiBaseUrlChange();
+    });
   }
 
   AppProvider? appProvider;
@@ -46,6 +50,7 @@ class MessageProvider extends ChangeNotifier {
   final AgentChatService _agentChatService = AgentChatService();
   Timer? _vmKeepaliveTimer;
   static const _keepaliveInterval = Duration(minutes: 5);
+  StreamSubscription<String>? _apiBaseUrlSub;
 
   bool isLoadingMessages = false;
   bool hasCachedMessages = false;
@@ -394,6 +399,15 @@ class MessageProvider extends ChangeNotifier {
   void removeLocalMessage(String id) {
     messages.removeWhere((m) => m.id == id);
     notifyListeners();
+  }
+
+  Future<void> _refreshAfterApiBaseUrlChange() async {
+    try {
+      await Future.wait<void>([
+        refreshMessages(),
+        fetchChatApps(),
+      ]);
+    } catch (_) {}
   }
 
   Future refreshMessages({bool dropdownSelected = false}) async {
@@ -962,5 +976,12 @@ class MessageProvider extends ChangeNotifier {
           details: 'Method ${call.method} not implemented.',
         );
     }
+  }
+
+  @override
+  void dispose() {
+    _apiBaseUrlSub?.cancel();
+    stopVmKeepalive();
+    super.dispose();
   }
 }

@@ -31,6 +31,7 @@ class _MockChatTabPageState extends State<MockChatTabPage> with AutomaticKeepAli
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
   bool _sending = false;
+  int _lastMessageCount = 0;
 
   @override
   void dispose() {
@@ -74,19 +75,20 @@ class _MockChatTabPageState extends State<MockChatTabPage> with AutomaticKeepAli
     super.build(context);
     return Consumer<MobileMockProvider>(
       builder: (context, mock, child) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
-            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-          }
-        });
+        if (mock.messages.length != _lastMessageCount) {
+          _lastMessageCount = mock.messages.length;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _autoScrollIfNeeded();
+          });
+        }
 
         return Container(
           decoration: const BoxDecoration(gradient: MobileTokens.appBackground),
           child: Column(
             children: [
-              const MobilePageHeader(
+              MobilePageHeader(
                 title: '对话',
-                subtitle: '快捷提问、截图分析、语音输入',
+                subtitle: _syncText(mock),
                 padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
               ),
               Padding(
@@ -105,29 +107,34 @@ class _MockChatTabPageState extends State<MockChatTabPage> with AutomaticKeepAli
                 ),
               ),
               Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                  itemCount: mock.messages.length,
-                  itemBuilder: (context, index) {
-                    final m = mock.messages[index];
-                    return TweenAnimationBuilder<double>(
-                      key: ValueKey('chat_${m.id}'),
-                      duration: Duration(milliseconds: 180 + (index * 24).clamp(0, 220)),
-                      curve: Curves.easeOutCubic,
-                      tween: Tween<double>(begin: 0, end: 1),
-                      builder: (context, value, child) {
-                        return Opacity(
-                          opacity: value,
-                          child: Transform.translate(
-                            offset: Offset(0, 12 * (1 - value)),
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: _bubble(m),
-                    );
-                  },
+                child: RefreshIndicator(
+                  color: MobileTokens.accent,
+                  onRefresh: () => context.read<MobileMockProvider>().refreshMessages(),
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    itemCount: mock.messages.length,
+                    itemBuilder: (context, index) {
+                      final m = mock.messages[index];
+                      return TweenAnimationBuilder<double>(
+                        key: ValueKey('chat_${m.id}'),
+                        duration: Duration(milliseconds: 180 + (index * 24).clamp(0, 220)),
+                        curve: Curves.easeOutCubic,
+                        tween: Tween<double>(begin: 0, end: 1),
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 12 * (1 - value)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: _bubble(m),
+                      );
+                    },
+                  ),
                 ),
               ),
               _composer(),
@@ -136,6 +143,28 @@ class _MockChatTabPageState extends State<MockChatTabPage> with AutomaticKeepAli
         );
       },
     );
+  }
+
+  void _autoScrollIfNeeded() {
+    if (!_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    final distanceToBottom = pos.maxScrollExtent - pos.pixels;
+    if (distanceToBottom > 180) return;
+    _scrollController.animateTo(
+      pos.maxScrollExtent,
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+    );
+  }
+
+  String _syncText(MobileMockProvider mock) {
+    if (mock.syncingMessages) return '同步中...';
+    final ts = mock.lastMessagesSyncAt;
+    if (ts == null) return '等待同步';
+    final diff = DateTime.now().difference(ts);
+    if (diff.inSeconds < 10) return '刚同步';
+    if (diff.inMinutes < 1) return '${diff.inSeconds}s 前同步';
+    return '${diff.inMinutes}m 前同步';
   }
 
   Widget _bubble(MobileChatMessage message) {

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:omi/backend/http/api/action_items.dart' as api;
 import 'package:omi/backend/preferences.dart';
 import 'package:omi/backend/schema/schema.dart';
+import 'package:omi/env/env.dart';
 import 'package:omi/services/notifications/action_item_notification_handler.dart';
 import 'package:omi/utils/logger.dart';
 
@@ -34,6 +35,7 @@ class ActionItemsProvider extends ChangeNotifier {
   final Map<String, int> _pendingIndentUpdates = {};
   Timer? _sortDebounce;
   Timer? _indentDebounce;
+  StreamSubscription<String>? _apiBaseUrlSub;
 
   // Multi-selection state
   bool _isSelectionMode = false;
@@ -105,6 +107,9 @@ class ActionItemsProvider extends ChangeNotifier {
   }
 
   ActionItemsProvider() {
+    _apiBaseUrlSub = Env.onApiBaseUrlChanged.listen((_) async {
+      await forceRefreshActionItems();
+    });
     _preload();
   }
 
@@ -570,6 +575,7 @@ class ActionItemsProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _apiBaseUrlSub?.cancel();
     _refreshDebounceTimer?.cancel();
     _sortDebounce?.cancel();
     _indentDebounce?.cancel();

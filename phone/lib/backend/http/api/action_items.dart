@@ -9,6 +9,7 @@ Future<ActionItemsResponse> getActionItems({
   int limit = 50,
   int offset = 0,
   bool? completed,
+  String? status,
   String? conversationId,
   DateTime? startDate,
   DateTime? endDate,
@@ -17,6 +18,9 @@ Future<ActionItemsResponse> getActionItems({
 
   if (completed != null) {
     url += '&completed=$completed';
+  }
+  if (status != null && status.isNotEmpty) {
+    url += '&status=$status';
   }
   if (conversationId != null) {
     url += '&conversation_id=$conversationId';
@@ -97,6 +101,7 @@ Future<ActionItemWithMetadata?> updateActionItem(
   String actionItemId, {
   String? description,
   bool? completed,
+  String? status,
   DateTime? dueAt,
   bool clearDueAt = false, // Flag to explicitly clear due date
   bool? exported,
@@ -112,6 +117,9 @@ Future<ActionItemWithMetadata?> updateActionItem(
   }
   if (completed != null) {
     requestBody['completed'] = completed;
+  }
+  if (status != null && status.isNotEmpty) {
+    requestBody['status'] = status;
   }
   // Handle dueAt - send ISO string if set, or null to clear deadline
   if (clearDueAt) {

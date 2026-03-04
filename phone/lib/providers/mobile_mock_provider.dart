@@ -6,6 +6,7 @@ import 'package:omi/backend/http/api/action_items.dart';
 import 'package:omi/backend/http/api/messages.dart';
 import 'package:omi/backend/schema/message.dart';
 import 'package:omi/backend/schema/schema.dart';
+import 'package:omi/env/env.dart';
 
 enum MobileTaskPriority { high, normal }
 
@@ -68,16 +69,28 @@ class MobileChatMessage {
 class MobileMockProvider extends ChangeNotifier {
   final List<MobileMockTask> _tasks = <MobileMockTask>[];
   final List<MobileChatMessage> _messages = <MobileChatMessage>[];
+  StreamSubscription<String>? _apiBaseUrlSub;
 
   bool _loading = false;
+  bool _syncingTasks = false;
+  bool _syncingMessages = false;
+  DateTime? _lastTasksSyncAt;
+  DateTime? _lastMessagesSyncAt;
 
   MobileMockProvider() {
+    _apiBaseUrlSub = Env.onApiBaseUrlChanged.listen((_) {
+      unawaited(refreshAll());
+    });
     unawaited(refreshAll());
   }
 
   List<MobileMockTask> get tasks => _tasks;
   List<MobileChatMessage> get messages => _messages;
   bool get isLoading => _loading;
+  bool get syncingTasks => _syncingTasks;
+  bool get syncingMessages => _syncingMessages;
+  DateTime? get lastTasksSyncAt => _lastTasksSyncAt;
+  DateTime? get lastMessagesSyncAt => _lastMessagesSyncAt;
 
   List<MobileMockTask> get todayTasks {
     final now = DateTime.now();
@@ -104,29 +117,43 @@ class MobileMockProvider extends ChangeNotifier {
   }
 
   Future<void> refreshTasks() async {
-    final response = await getActionItems(limit: 200, offset: 0);
-    final list = response.actionItems.map(_mapActionItemToTask).toList();
-    _tasks
-      ..clear()
-      ..addAll(list);
+    _syncingTasks = true;
     notifyListeners();
+    try {
+      final response = await getActionItems(limit: 200, offset: 0);
+      final list = response.actionItems.map(_mapActionItemToTask).toList();
+      _tasks
+        ..clear()
+        ..addAll(list);
+      _lastTasksSyncAt = DateTime.now();
+    } finally {
+      _syncingTasks = false;
+      notifyListeners();
+    }
   }
 
   Future<void> refreshMessages() async {
-    final serverMessages = await getMessagesServer();
-    _messages
-      ..clear()
-      ..addAll(
-        serverMessages.map(
-          (m) => MobileChatMessage(
-            id: m.id,
-            text: m.text,
-            isUser: m.sender == MessageSender.human,
-            createdAt: m.createdAt,
-          ),
-        ),
-      );
+    _syncingMessages = true;
     notifyListeners();
+    try {
+      final serverMessages = await getMessagesServer();
+      _messages
+        ..clear()
+        ..addAll(
+          serverMessages.map(
+            (m) => MobileChatMessage(
+              id: m.id,
+              text: m.text,
+              isUser: m.sender == MessageSender.human,
+              createdAt: m.createdAt,
+            ),
+          ),
+        );
+      _lastMessagesSyncAt = DateTime.now();
+    } finally {
+      _syncingMessages = false;
+      notifyListeners();
+    }
   }
 
   Future<void> addTask({
@@ -177,6 +204,7 @@ class MobileMockProvider extends ChangeNotifier {
         clearDueAt: false,
       );
     } catch (_) {}
+    unawaited(refreshTasks());
   }
 
   Future<void> cycleTaskStatus(MobileMockTask task) async {
@@ -194,11 +222,20 @@ class MobileMockProvider extends ChangeNotifier {
     try {
       await toggleActionItemCompletion(task.id, completed);
     } catch (_) {}
+    unawaited(refreshTasks());
   }
 
   Future<void> ignoreTask(MobileMockTask task) async {
     task.status = MobileTaskStatus.ignored;
     notifyListeners();
+    try {
+      await updateActionItem(
+        task.id,
+        status: 'canceled',
+        completed: false,
+      );
+    } catch (_) {}
+    unawaited(refreshTasks());
   }
 
   Future<void> reorderTasksByIds(List<String> orderedIds) async {
@@ -225,6 +262,7 @@ class MobileMockProvider extends ChangeNotifier {
     try {
       await batchUpdateActionItems(updates);
     } catch (_) {}
+    unawaited(refreshTasks());
   }
 
   void addTaskFromText(String text, {String source = 'AI 识别'}) {
@@ -303,13 +341,25 @@ class MobileMockProvider extends ChangeNotifier {
   }) {
     final due = item.dueAt ?? DateTime.now().add(const Duration(days: 1));
     final isHigh = due.isBefore(DateTime.now().add(const Duration(days: 1)));
+    final normalizedStatus = (item.status ?? '').toLowerCase();
+    final taskStatus = switch (normalizedStatus) {
+      'canceled' => MobileTaskStatus.ignored,
+      'completed' => MobileTaskStatus.done,
+      _ => (item.completed ? MobileTaskStatus.done : MobileTaskStatus.todo),
+    };
     return MobileMockTask(
       id: item.id,
       title: item.description,
       source: sourceOverride ?? '中心节点同步',
       priority: priorityOverride ?? (isHigh ? MobileTaskPriority.high : MobileTaskPriority.normal),
-      status: item.completed ? MobileTaskStatus.done : MobileTaskStatus.todo,
+      status: taskStatus,
       dueAt: due,
     );
+  }
+
+  @override
+  void dispose() {
+    _apiBaseUrlSub?.cancel();
+    super.dispose();
   }
 }

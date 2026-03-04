@@ -46,6 +46,7 @@ import 'package:omi/providers/device_provider.dart';
 import 'package:omi/providers/announcement_provider.dart';
 import 'package:omi/providers/home_provider.dart';
 import 'package:omi/providers/message_provider.dart';
+import 'package:omi/providers/mobile_mock_provider.dart';
 import 'package:omi/providers/notification_center_provider.dart';
 import 'package:omi/providers/sync_provider.dart';
 import 'package:omi/services/announcement_service.dart';
@@ -134,6 +135,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
   final FreemiumSwitchHandler _freemiumHandler = FreemiumSwitchHandler();
 
   CaptureProvider? _captureProvider;
+  final Map<int, DateTime> _tabLastRefreshAt = <int, DateTime>{};
+  Timer? _tabAutoRefreshTimer;
 
   void _initiateApps() {
     context.read<AppProvider>().getApps();
@@ -192,6 +195,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
       if (mounted && SharedPreferencesUtil().claudeAgentEnabled) {
         ensureAgentVm();
         Provider.of<MessageProvider>(context, listen: false).startVmKeepalive();
+      }
+      if (mounted) {
+        final selected = Provider.of<HomeProvider>(context, listen: false).selectedIndex;
+        unawaited(_refreshTabData(selected, force: true));
       }
     } else if (state == AppLifecycleState.hidden) {
       event = 'App is hidden';
@@ -272,6 +279,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
 
     // Home controller
     context.read<HomeProvider>().selectedIndex = homePageIdx;
+    unawaited(_refreshTabData(homePageIdx, force: true));
+    _tabAutoRefreshTimer = Timer.periodic(const Duration(seconds: 25), (_) {
+      if (!mounted) return;
+      final selected = context.read<HomeProvider>().selectedIndex;
+      unawaited(_refreshTabData(selected));
+    });
     WidgetsBinding.instance.addObserver(this);
 
     // Pre-warm agent VM and WebSocket so session is ready by the time the user opens chat
@@ -457,6 +470,32 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
 
     // After init
     FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
+  }
+
+  Future<void> _refreshTabData(int index, {bool force = false}) async {
+    final now = DateTime.now();
+    final last = _tabLastRefreshAt[index];
+    if (!force && last != null && now.difference(last).inSeconds < 20) {
+      return;
+    }
+    _tabLastRefreshAt[index] = now;
+
+    try {
+      if (!mounted) return;
+      switch (index) {
+        case 0:
+          await context.read<NotificationCenterProvider>().refresh(force: true);
+          break;
+        case 1:
+          await context.read<MobileMockProvider>().refreshTasks();
+          break;
+        case 2:
+          await context.read<MobileMockProvider>().refreshMessages();
+          break;
+        default:
+          break;
+      }
+    } catch (_) {}
   }
 
   void _checkForAnnouncements() {
@@ -665,6 +704,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                         _scrollToTop(index);
                       } else {
                         home.setIndex(index);
+                        unawaited(_refreshTabData(index));
                       }
                     },
                   );
@@ -1058,6 +1098,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _tabAutoRefreshTimer?.cancel();
     // Stop VM keepalive timer
     try {
       Provider.of<MessageProvider>(context, listen: false).stopVmKeepalive();

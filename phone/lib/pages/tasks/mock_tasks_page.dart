@@ -71,85 +71,90 @@ class _MockTasksPageState extends State<MockTasksPage> with AutomaticKeepAliveCl
           decoration: const BoxDecoration(gradient: MobileTokens.appBackground),
           child: Stack(
             children: [
-              ListView(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                children: [
-                  const MobilePageHeader(
-                    title: '待办',
-                    subtitle: 'AI 提取 + 手动添加，支持优先级与截止时间管理',
-                    padding: EdgeInsets.fromLTRB(4, 0, 4, 8),
-                  ),
-                  Row(
-                    children: [
-                      _scopeChip('today', '今日'),
-                      const SizedBox(width: 6),
-                      _scopeChip('week', '本周'),
-                      const SizedBox(width: 6),
-                      _scopeChip('all', '全部'),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _summaryCard(
-                          title: '进行中',
-                          value: '${mock.tasks.where((t) => t.status == MobileTaskStatus.doing).length}',
-                          icon: FontAwesomeIcons.bolt,
-                        ),
+              RefreshIndicator(
+                color: MobileTokens.accent,
+                onRefresh: () => context.read<MobileMockProvider>().refreshTasks(),
+                child: ListView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  children: [
+                      MobilePageHeader(
+                        title: '待办',
+                        subtitle: _syncText(mock),
+                        padding: EdgeInsets.fromLTRB(4, 0, 4, 8),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _summaryCard(
-                          title: '待处理',
-                          value: '${mock.tasks.where((t) => t.status == MobileTaskStatus.todo).length}',
-                          icon: FontAwesomeIcons.clock,
-                        ),
+                      Row(
+                        children: [
+                          _scopeChip('today', '今日'),
+                          const SizedBox(width: 6),
+                          _scopeChip('week', '本周'),
+                          const SizedBox(width: 6),
+                          _scopeChip('all', '全部'),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _summaryCard(
-                          title: '已完成',
-                          value: '${mock.tasks.where((t) => t.status == MobileTaskStatus.done).length}',
-                          icon: FontAwesomeIcons.circleCheck,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    child: _scope == 'all'
-                        ? Column(
-                            key: const ValueKey<String>('scope_all'),
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _sectionTitle('全部任务（可拖拽排序，左右滑动操作）'),
-                              _reorderableAllList(mock),
-                            ],
-                          )
-                        : Column(
-                            key: ValueKey<String>('scope_$_scope'),
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _sectionTitle('高优先级'),
-                              ...high.map(_taskTile),
-                              if (high.isEmpty) _emptyLine('暂无高优先级任务'),
-                              const SizedBox(height: 14),
-                              _sectionTitle('普通'),
-                              ...normal.map(_taskTile),
-                              if (normal.isEmpty) _emptyLine('暂无普通任务'),
-                              const SizedBox(height: 14),
-                              _sectionTitle('已完成'),
-                              ...done.map(_taskTile),
-                              if (done.isEmpty) _emptyLine('暂无已完成任务'),
-                            ],
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _summaryCard(
+                              title: '进行中',
+                              value: '${mock.tasks.where((t) => t.status == MobileTaskStatus.doing).length}',
+                              icon: FontAwesomeIcons.bolt,
+                            ),
                           ),
-                  ),
-                ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _summaryCard(
+                              title: '待处理',
+                              value: '${mock.tasks.where((t) => t.status == MobileTaskStatus.todo).length}',
+                              icon: FontAwesomeIcons.clock,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _summaryCard(
+                              title: '已完成',
+                              value: '${mock.tasks.where((t) => t.status == MobileTaskStatus.done).length}',
+                              icon: FontAwesomeIcons.circleCheck,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        child: _scope == 'all'
+                            ? Column(
+                                key: const ValueKey<String>('scope_all'),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _sectionTitle('全部任务（可拖拽排序，左右滑动操作）'),
+                                  _reorderableAllList(mock),
+                                ],
+                              )
+                            : Column(
+                                key: ValueKey<String>('scope_$_scope'),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _sectionTitle('高优先级'),
+                                  ...high.map(_taskTile),
+                                  if (high.isEmpty) _emptyLine('暂无高优先级任务'),
+                                  const SizedBox(height: 14),
+                                  _sectionTitle('普通'),
+                                  ...normal.map(_taskTile),
+                                  if (normal.isEmpty) _emptyLine('暂无普通任务'),
+                                  const SizedBox(height: 14),
+                                  _sectionTitle('已完成'),
+                                  ...done.map(_taskTile),
+                                  if (done.isEmpty) _emptyLine('暂无已完成任务'),
+                                ],
+                              ),
+                      ),
+                  ],
+                ),
               ),
               Positioned(
                 right: 18,
@@ -823,5 +828,15 @@ class _MockTasksPageState extends State<MockTasksPage> with AutomaticKeepAliveCl
         borderSide: const BorderSide(color: MobileTokens.accent),
       ),
     );
+  }
+
+  String _syncText(MobileMockProvider mock) {
+    if (mock.syncingTasks) return '同步中...';
+    final ts = mock.lastTasksSyncAt;
+    if (ts == null) return '等待同步';
+    final diff = DateTime.now().difference(ts);
+    if (diff.inSeconds < 10) return '刚同步';
+    if (diff.inMinutes < 1) return '${diff.inSeconds}s 前同步';
+    return '${diff.inMinutes}m 前同步';
   }
 }

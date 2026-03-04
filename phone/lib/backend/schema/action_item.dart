@@ -2,6 +2,7 @@ class ActionItemWithMetadata {
   final String id;
   final String description;
   final bool completed;
+  final String? status;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? dueAt;
@@ -18,6 +19,7 @@ class ActionItemWithMetadata {
     required this.id,
     required this.description,
     required this.completed,
+    this.status,
     this.createdAt,
     this.updatedAt,
     this.dueAt,
@@ -47,6 +49,7 @@ class ActionItemWithMetadata {
       id: (json['id'] ?? '').toString(),
       description: (json['description'] ?? json['name'] ?? json['summary'] ?? '').toString(),
       completed: json['completed'] ?? false,
+      status: json['status']?.toString(),
       createdAt: _parseDate(json['created_at']),
       updatedAt: _parseDate(json['updated_at']),
       dueAt: _parseDate(json['due_at']),
@@ -66,6 +69,7 @@ class ActionItemWithMetadata {
       'id': id,
       'description': description,
       'completed': completed,
+      'status': status,
       'created_at': createdAt?.toUtc().toIso8601String(),
       'updated_at': updatedAt?.toUtc().toIso8601String(),
       'due_at': dueAt?.toUtc().toIso8601String(),
@@ -84,6 +88,7 @@ class ActionItemWithMetadata {
     String? id,
     String? description,
     bool? completed,
+    String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? dueAt,
@@ -100,6 +105,7 @@ class ActionItemWithMetadata {
       id: id ?? this.id,
       description: description ?? this.description,
       completed: completed ?? this.completed,
+      status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       dueAt: dueAt ?? this.dueAt,
