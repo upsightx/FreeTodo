@@ -22,6 +22,7 @@ import {
 	Network,
 	Radio,
 	Settings,
+	UserCircle,
 } from "lucide-react";
 
 export type PanelPosition = "panelA" | "panelB" | "panelC";
@@ -41,7 +42,8 @@ export type PanelFeature =
 	| "audio"
 	| "perceptionStream"
 	| "todoIntent"
-	| "preview";
+	| "preview"
+	| "userProfile";
 
 /**
  * 开发中的面板功能列表
@@ -56,6 +58,7 @@ export const DEV_IN_PROGRESS_FEATURES: PanelFeature[] = [
 	"audio",
 	"perceptionStream",
 	"todoIntent",
+	"userProfile",
 ];
 
 /**
@@ -78,6 +81,7 @@ export const ALL_PANEL_FEATURES: PanelFeature[] = [
 	"perceptionStream",
 	"todoIntent",
 	"preview",
+	"userProfile",
 ];
 
 /**
@@ -100,4 +104,5 @@ export const FEATURE_ICON_MAP: Record<PanelFeature, LucideIcon> = {
 	perceptionStream: Radio,
 	todoIntent: BrainCircuit,
 	preview: Eye,
+	userProfile: UserCircle,
 };

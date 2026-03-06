@@ -74,6 +74,8 @@
 		"todoIntentPlaceholder": "实时展示 Gate 与待办提取结果",
 		"previewLabel": "预览",
 		"previewPlaceholder": "占位：打开文件后显示预览",
+		"userProfileLabel": "用户画像",
+		"userProfilePlaceholder": "展示基于行为分析生成的用户画像",
 		"backendUnavailableBadge": "后端不可用",
 		"backendUnavailableTooltip": "后端模块未启用或缺少依赖。",
 		"backendUnavailableTitle": "功能不可用",
@@ -402,6 +404,7 @@
 		"perceptionStream": "感知流",
 		"todoIntent": "意图识别",
 		"preview": "预览",
+		"userProfile": "用户画像",
 		"unassigned": "未分配"
 	},
 	"panelMenu": {
@@ -1034,6 +1037,18 @@
 		"activity": "活动",
 		"aggregateFailed": "聚合事件失败，请稍后重试",
 		"extractFailed": "提取待办失败，请稍后重试"
+	},
+	"userProfile": {
+		"refresh": "更新画像",
+		"consolidate": "精炼",
+		"loadError": "加载用户画像失败，请检查后端服务是否正常运行。",
+		"retry": "重试",
+		"emptyTitle": "暂无用户画像",
+		"emptyDescription": "系统会根据你的日常行为和记录自动构建用户画像，你也可以手动触发生成。",
+		"generateNow": "立即生成",
+		"lastUpdated": "最后更新：{time}",
+		"charCount": "{count} 字",
+		"bloatWarning": "画像过长，点击精炼为简洁版本"
 	},
 	"achievements": {
 		"title": "成就系统",
