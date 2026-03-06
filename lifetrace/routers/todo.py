@@ -51,10 +51,18 @@ async def list_todos(
     limit: int = Query(200, ge=1, le=2000, description="返回数量限制"),
     offset: int = Query(0, ge=0, description="偏移量"),
     status: str | None = Query(None, description="状态筛选：active/completed/canceled"),
+    page: int | None = Query(None, ge=1, description="页码（从1开始）"),
+    page_size: int | None = Query(None, ge=1, le=200, description="每页数量（最大200）"),
     service: TodoService = Depends(get_todo_service),
 ):
     """获取待办列表"""
-    return service.list_todos(limit, offset, status)
+    if page is not None and page_size is not None:
+        actual_limit = page_size
+        actual_offset = (page - 1) * page_size
+    else:
+        actual_limit = limit
+        actual_offset = offset
+    return service.list_todos(actual_limit, actual_offset, status)
 
 
 @router.get("/{todo_id}", response_model=TodoResponse)
