@@ -187,6 +187,17 @@ const panelRegistry: Record<PanelFeature, PanelPlugin> = {
 				default: mod.TodoIntentPanel,
 			})),
 	},
+	userProfile: {
+		id: "userProfile",
+		labelKey: "userProfileLabel",
+		placeholderKey: "userProfilePlaceholder",
+		icon: FEATURE_ICON_MAP.userProfile,
+		backendModules: ["memory"],
+		loader: () =>
+			import("@/apps/user-profile/UserProfilePanel").then((mod) => ({
+				default: mod.UserProfilePanel,
+			})),
+	},
 };
 
 const lazyPanelCache = new Map<PanelFeature, LazyExoticComponent<ComponentType>>();

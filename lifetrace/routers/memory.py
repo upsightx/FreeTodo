@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from lifetrace.util.time_utils import local_today_str
-
 from fastapi import APIRouter, HTTPException, Query
 
 from lifetrace.memory.manager import try_get_memory_manager
+from lifetrace.util.time_utils import local_today_str
 
 router = APIRouter(prefix="/api/memory", tags=["memory"])
 
@@ -154,6 +153,22 @@ async def trigger_profile_update():
         )
     updated = await mgr.profile_builder.update()
     return {"updated": updated, "stats": mgr.profile_builder.get_stats()}
+
+
+@router.post("/profile/consolidate")
+async def trigger_profile_consolidate():
+    """Force-consolidate the user profile to reduce bloat."""
+    mgr = _require_manager()
+    if mgr.profile_builder is None:
+        raise HTTPException(
+            status_code=503, detail="ProfileBuilder not available (LLM not configured)"
+        )
+    changed = await mgr.profile_builder.consolidate()
+    return {
+        "consolidated": changed,
+        "stats": mgr.profile_builder.get_stats(),
+        "content": mgr.reader.get_user_profile(),
+    }
 
 
 @router.get("/profile-stats")

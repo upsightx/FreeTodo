@@ -74,6 +74,8 @@
 		"todoIntentPlaceholder": "Real-time gate and extraction preview",
 		"previewLabel": "Preview",
 		"previewPlaceholder": "Placeholder: open a file to preview",
+		"userProfileLabel": "User Profile",
+		"userProfilePlaceholder": "Display the behavior-based user profile",
 		"backendUnavailableBadge": "Backend unavailable",
 		"backendUnavailableTooltip": "Backend module is disabled or missing dependencies.",
 		"backendUnavailableTitle": "Feature unavailable",
@@ -402,6 +404,7 @@
 		"perceptionStream": "Perception Stream",
 		"todoIntent": "Todo Intent",
 		"preview": "Preview",
+		"userProfile": "User Profile",
 		"unassigned": "Unassigned"
 	},
 	"panelMenu": {
@@ -1034,6 +1037,18 @@
 		"activity": "Activity",
 		"aggregateFailed": "Failed to aggregate events, please try again later",
 		"extractFailed": "Failed to extract todos, please try again later"
+	},
+	"userProfile": {
+		"refresh": "Refresh",
+		"consolidate": "Consolidate",
+		"loadError": "Failed to load user profile. Please check if the backend service is running.",
+		"retry": "Retry",
+		"emptyTitle": "No Profile Yet",
+		"emptyDescription": "The system will automatically build your profile based on daily behavior and records. You can also trigger it manually.",
+		"generateNow": "Generate Now",
+		"lastUpdated": "Last updated: {time}",
+		"charCount": "{count} chars",
+		"bloatWarning": "Profile is too long — click to consolidate"
 	},
 	"achievements": {
 		"title": "Achievement System",
