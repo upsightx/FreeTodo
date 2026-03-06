@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:freeu/env/dev_env.dart';
 
 abstract class Env {
@@ -6,13 +8,26 @@ abstract class Env {
   static String? _wsBaseUrlOverride;
   static String? _agentProxyWsUrlOverride;
   static bool isTestFlight = false;
+  static final StreamController<String> _apiBaseUrlChangedController = StreamController<String>.broadcast();
 
   static void init([EnvFields? instance]) {
     _instance = instance ?? DevEnv() as EnvFields;
   }
 
+  static Stream<String> get onApiBaseUrlChanged => _apiBaseUrlChangedController.stream;
+
   static void overrideApiBaseUrl(String url) {
-    _apiBaseUrlOverride = url;
+    var normalized = url.trim();
+    if (normalized.isEmpty) {
+      _apiBaseUrlOverride = null;
+      _apiBaseUrlChangedController.add(_instance.apiBaseUrl ?? '');
+      return;
+    }
+    if (!normalized.endsWith('/')) {
+      normalized = '$normalized/';
+    }
+    _apiBaseUrlOverride = normalized;
+    _apiBaseUrlChangedController.add(normalized);
   }
 
   /// Override the base URL used for WebSocket connections (e.g. TCP tunnel).

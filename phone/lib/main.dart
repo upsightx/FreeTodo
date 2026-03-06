@@ -55,7 +55,7 @@ import 'package:freeu/providers/locale_provider.dart';
 import 'package:freeu/providers/mcp_provider.dart';
 import 'package:freeu/providers/memories_provider.dart';
 import 'package:freeu/providers/message_provider.dart';
-import 'package:freeu/providers/mobile_mock_provider.dart';
+import 'package:freeu/providers/mobile_data_provider.dart';
 import 'package:freeu/providers/notification_center_provider.dart';
 import 'package:freeu/providers/onboarding_provider.dart';
 import 'package:freeu/providers/people_provider.dart';
@@ -417,7 +417,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return provider;
           },
         ),
-        ChangeNotifierProvider(create: (context) => MobileMockProvider()),
+        ChangeNotifierProvider(create: (context) => MobileDataProvider()),
       ],
       builder: (context, child) {
         return WithForegroundTask(

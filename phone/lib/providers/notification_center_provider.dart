@@ -1,6 +1,9 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 
 import 'package:freeu/backend/http/api/notifications.dart';
+import 'package:freeu/env/env.dart';
 
 class NotificationCenterProvider extends ChangeNotifier {
   List<AppNotification> _notifications = <AppNotification>[];
@@ -8,11 +11,19 @@ class NotificationCenterProvider extends ChangeNotifier {
   bool _loading = false;
   bool _useMockData = false;
   DateTime? _lastLoadedAt;
+  StreamSubscription<String>? _apiBaseUrlSub;
+
+  NotificationCenterProvider() {
+    _apiBaseUrlSub = Env.onApiBaseUrlChanged.listen((_) async {
+      await refresh(force: true);
+    });
+  }
 
   List<AppNotification> get notifications => _notifications;
   Set<String> get laterIds => _laterIds;
   bool get loading => _loading;
   bool get useMockData => _useMockData;
+  DateTime? get lastLoadedAt => _lastLoadedAt;
   int get pendingCount => _notifications.where((n) => !_laterIds.contains(n.id)).length;
 
   Future<void> setUseMockData(bool value) async {
@@ -101,5 +112,11 @@ class NotificationCenterProvider extends ChangeNotifier {
         aiSuggestion: '建议先发确认邮件，再补正式报价单。',
       ),
     ];
+  }
+
+  @override
+  void dispose() {
+    _apiBaseUrlSub?.cancel();
+    super.dispose();
   }
 }

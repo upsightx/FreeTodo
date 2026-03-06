@@ -33,10 +33,12 @@ def _iso(value: datetime | None) -> str | None:
 
 def _todo_to_action_item(todo: dict[str, Any]) -> dict[str, Any]:
     due_at = todo.get("due") or todo.get("deadline") or todo.get("start_time")
+    status = str(todo.get("status") or "active").lower()
     return {
         "id": str(todo["id"]),
         "description": todo.get("name") or todo.get("summary") or "",
-        "completed": todo.get("status") == "completed",
+        "completed": status == "completed",
+        "status": status,
         "created_at": _iso(todo.get("created_at")),
         "updated_at": _iso(todo.get("updated_at")),
         "due_at": _iso(due_at),
@@ -468,11 +470,13 @@ async def list_action_items(
     limit: int = 25,
     offset: int = 0,
     completed: bool | None = None,
+    status: str | None = None,
     uid: str = Depends(verify_token),
     service: TodoService = Depends(get_todo_service),
 ):
-    status: str | None = None
-    if completed is True:
+    if status:
+        status = status.strip().lower()
+    elif completed is True:
         status = "completed"
     elif completed is False:
         status = "active"
@@ -519,7 +523,14 @@ async def create_action_item_global(
         else None
     )
     is_completed = bool(body.get("completed", False))
-    status = TodoStatus.COMPLETED if is_completed else TodoStatus.ACTIVE
+    raw_status = str(body.get("status") or "").strip().lower()
+    if raw_status:
+        try:
+            status = TodoStatus(raw_status)
+        except ValueError:
+            return JSONResponse(status_code=400, content={"detail": "invalid status"})
+    else:
+        status = TodoStatus.COMPLETED if is_completed else TodoStatus.ACTIVE
 
     todo_payload = TodoCreate.model_validate(
         {
@@ -549,7 +560,14 @@ async def patch_action_item_global(
         value = (body.get("description") or "").strip()
         kwargs["name"] = value
         kwargs["description"] = value
-    if "completed" in body:
+    if "status" in body:
+        raw_status = str(body.get("status") or "").strip().lower()
+        if raw_status:
+            try:
+                kwargs["status"] = TodoStatus(raw_status)
+            except ValueError:
+                return JSONResponse(status_code=400, content={"detail": "invalid status"})
+    elif "completed" in body:
         completed = bool(body.get("completed"))
         kwargs["status"] = TodoStatus.COMPLETED if completed else TodoStatus.ACTIVE
     if "due_at" in body:

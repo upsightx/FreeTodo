@@ -92,6 +92,7 @@ class _MessagesPageState extends State<MessagesPage> with AutomaticKeepAliveClie
     final ok = await context.read<NotificationCenterProvider>().acceptOrIgnore(n.id);
     if (!mounted) return;
     if (ok) {
+      await context.read<NotificationCenterProvider>().refresh(force: true);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已采纳建议')));
     }
   }
@@ -100,6 +101,7 @@ class _MessagesPageState extends State<MessagesPage> with AutomaticKeepAliveClie
     final ok = await context.read<NotificationCenterProvider>().acceptOrIgnore(n.id);
     if (!mounted) return;
     if (ok) {
+      await context.read<NotificationCenterProvider>().refresh(force: true);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已忽略该消息')));
     }
   }
@@ -120,6 +122,8 @@ class _MessagesPageState extends State<MessagesPage> with AutomaticKeepAliveClie
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('转待办失败，请检查中心节点连接')));
       return;
     }
+    await context.read<NotificationCenterProvider>().refresh(force: true);
+    await context.read<ActionItemsProvider>().forceRefreshActionItems();
     context.read<HomeProvider>().setIndex(1);
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已转为待办，已跳转')));
   }
@@ -146,9 +150,18 @@ class _MessagesPageState extends State<MessagesPage> with AutomaticKeepAliveClie
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: MobileTokens.border),
                   ),
-                  child: Text(
-                    '${list.length} 条',
-                    style: const TextStyle(color: MobileTokens.textSecondary, fontSize: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${list.length} 条',
+                        style: const TextStyle(color: MobileTokens.textSecondary, fontSize: 12),
+                      ),
+                      Text(
+                        _syncText(center),
+                        style: const TextStyle(color: MobileTokens.textSecondary, fontSize: 11),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -566,5 +579,15 @@ class _MessagesPageState extends State<MessagesPage> with AutomaticKeepAliveClie
         ],
       ),
     );
+  }
+
+  String _syncText(NotificationCenterProvider center) {
+    if (center.loading) return '同步中...';
+    final ts = center.lastLoadedAt;
+    if (ts == null) return '等待同步';
+    final diff = DateTime.now().difference(ts);
+    if (diff.inSeconds < 10) return '刚同步';
+    if (diff.inMinutes < 1) return '${diff.inSeconds}s 前';
+    return '${diff.inMinutes}m 前';
   }
 }

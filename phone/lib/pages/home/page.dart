@@ -21,8 +21,7 @@ import 'package:freeu/backend/schema/geolocation.dart';
 import 'package:freeu/main.dart';
 import 'package:freeu/pages/apps/app_detail/app_detail.dart';
 import 'package:freeu/pages/apps/page.dart';
-import 'package:freeu/pages/chat/mock_chat_tab_page.dart';
-import 'package:freeu/pages/chat/page.dart';
+import 'package:freeu/pages/chat/chat_tab_page.dart';
 import 'package:freeu/pages/conversation_capturing/page.dart';
 import 'package:freeu/pages/conversation_detail/page.dart';
 import 'package:freeu/pages/conversations/conversations_page.dart';
@@ -31,7 +30,7 @@ import 'package:freeu/pages/conversations/widgets/merge_action_bar.dart';
 import 'package:freeu/pages/memories/page.dart';
 import 'package:freeu/pages/messages/page.dart';
 import 'package:freeu/pages/my/page.dart';
-import 'package:freeu/pages/tasks/mock_tasks_page.dart';
+import 'package:freeu/pages/tasks/tasks_page.dart';
 import 'package:freeu/pages/settings/daily_summary_detail_page.dart';
 import 'package:freeu/pages/settings/data_privacy_page.dart';
 import 'package:freeu/pages/settings/settings_drawer.dart';
@@ -46,6 +45,7 @@ import 'package:freeu/providers/device_provider.dart';
 import 'package:freeu/providers/announcement_provider.dart';
 import 'package:freeu/providers/home_provider.dart';
 import 'package:freeu/providers/message_provider.dart';
+import 'package:freeu/providers/mobile_data_provider.dart';
 import 'package:freeu/providers/notification_center_provider.dart';
 import 'package:freeu/providers/sync_provider.dart';
 import 'package:freeu/services/announcement_service.dart';
@@ -125,8 +125,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
   StreamSubscription? _notificationStreamSubscription;
 
   final GlobalKey<State<MessagesPage>> _messagesPageKey = GlobalKey<State<MessagesPage>>();
-  final GlobalKey<State<MockTasksPage>> _tasksPageKey = GlobalKey<State<MockTasksPage>>();
-  final GlobalKey<State<MockChatTabPage>> _chatPageKey = GlobalKey<State<MockChatTabPage>>();
+  final GlobalKey<State<TasksPage>> _tasksPageKey = GlobalKey<State<TasksPage>>();
+  final GlobalKey<State<ChatTabPage>> _chatPageKey = GlobalKey<State<ChatTabPage>>();
   final GlobalKey<State<MyPage>> _myPageKey = GlobalKey<State<MyPage>>();
   late final List<Widget> _pages;
 
@@ -134,6 +134,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
   final FreemiumSwitchHandler _freemiumHandler = FreemiumSwitchHandler();
 
   CaptureProvider? _captureProvider;
+  final Map<int, DateTime> _tabLastRefreshAt = <int, DateTime>{};
+  Timer? _tabAutoRefreshTimer;
 
   void _initiateApps() {
     context.read<AppProvider>().getApps();
@@ -193,6 +195,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
         ensureAgentVm();
         Provider.of<MessageProvider>(context, listen: false).startVmKeepalive();
       }
+      if (mounted) {
+        final selected = Provider.of<HomeProvider>(context, listen: false).selectedIndex;
+        unawaited(_refreshTabData(selected, force: true));
+      }
     } else if (state == AppLifecycleState.hidden) {
       event = 'App is hidden';
     } else if (state == AppLifecycleState.detached) {
@@ -228,8 +234,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
   void initState() {
     _pages = [
       MessagesPage(key: _messagesPageKey),
-      MockTasksPage(key: _tasksPageKey),
-      MockChatTabPage(key: _chatPageKey),
+      TasksPage(key: _tasksPageKey),
+      ChatTabPage(key: _chatPageKey),
       MyPage(key: _myPageKey),
     ];
     SharedPreferencesUtil().onboardingCompleted = true;
@@ -272,6 +278,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
 
     // Home controller
     context.read<HomeProvider>().selectedIndex = homePageIdx;
+    unawaited(_refreshTabData(homePageIdx, force: true));
+    _tabAutoRefreshTimer = Timer.periodic(const Duration(seconds: 25), (_) {
+      if (!mounted) return;
+      final selected = context.read<HomeProvider>().selectedIndex;
+      unawaited(_refreshTabData(selected));
+    });
     WidgetsBinding.instance.addObserver(this);
 
     // Pre-warm agent VM and WebSocket so session is ready by the time the user opens chat
@@ -344,22 +356,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
               await Provider.of<MessageProvider>(context, listen: false).refreshMessages();
             }
           }
-          // Navigate to chat page directly since it's no longer in the tab bar
-          // If there's an auto-message (e.g., from daily reflection notification), send it
-          final autoMessageToSend = widget.autoMessage;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ChatPage(
-                    isPivotBottom: false,
-                    autoMessage: autoMessageToSend,
-                  ),
-                ),
-              );
-            }
-          });
+          // Chat is part of home tabs. Keep user in-tab and only prefetch data.
           break;
         case "settings":
           // Use context from the current widget instead of navigator key for bottom sheet
@@ -444,7 +441,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
           });
           break;
         case "action-items":
-          // Tab index already set to 1 (ActionItemsPage) above
+          // Tab index already set to 1 (tasks tab) above
           break;
         default:
       }
@@ -457,6 +454,32 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
 
     // After init
     FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
+  }
+
+  Future<void> _refreshTabData(int index, {bool force = false}) async {
+    final now = DateTime.now();
+    final last = _tabLastRefreshAt[index];
+    if (!force && last != null && now.difference(last).inSeconds < 20) {
+      return;
+    }
+    _tabLastRefreshAt[index] = now;
+
+    try {
+      if (!mounted) return;
+      switch (index) {
+        case 0:
+          await context.read<NotificationCenterProvider>().refresh(force: true);
+          break;
+        case 1:
+          await context.read<MobileDataProvider>().refreshTasks();
+          break;
+        case 2:
+          await context.read<MobileDataProvider>().refreshMessages();
+          break;
+        default:
+          break;
+      }
+    } catch (_) {}
   }
 
   void _checkForAnnouncements() {
@@ -665,6 +688,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                         _scrollToTop(index);
                       } else {
                         home.setIndex(index);
+                        unawaited(_refreshTabData(index));
                       }
                     },
                   );
@@ -1058,6 +1082,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _tabAutoRefreshTimer?.cancel();
     // Stop VM keepalive timer
     try {
       Provider.of<MessageProvider>(context, listen: false).stopVmKeepalive();
