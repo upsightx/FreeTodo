@@ -68,6 +68,12 @@ class TodoService:
         if data.description is not None:
             data.description = html.escape(data.description)
 
+        # Validate time range
+        st = data.start_time or data.dtstart
+        et = data.end_time or data.dtend
+        if st and et and st >= et:
+            raise HTTPException(status_code=422, detail="start_time must be before end_time")
+
         dtstart = data.dtstart or data.start_time or data.deadline or data.due
         dtend = data.dtend or data.end_time
         due = data.due or data.deadline
@@ -150,6 +156,12 @@ class TodoService:
             data.name = html.escape(data.name)
         if data.description is not None:
             data.description = html.escape(data.description)
+
+        # Validate time range
+        st = getattr(data, "start_time", None) or getattr(data, "dtstart", None)
+        et = getattr(data, "end_time", None) or getattr(data, "dtend", None)
+        if st and et and st >= et:
+            raise HTTPException(status_code=422, detail="start_time must be before end_time")
 
         # 检查是否存在
         if not self.repository.get_by_id(todo_id):
