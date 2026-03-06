@@ -1,8 +1,9 @@
-﻿import 'package:freeu/env/dev_env.dart';
+import 'package:freeu/env/dev_env.dart';
 
 abstract class Env {
   static late final EnvFields _instance;
   static String? _apiBaseUrlOverride;
+  static String? _wsBaseUrlOverride;
   static String? _agentProxyWsUrlOverride;
   static bool isTestFlight = false;
 
@@ -13,6 +14,16 @@ abstract class Env {
   static void overrideApiBaseUrl(String url) {
     _apiBaseUrlOverride = url;
   }
+
+  /// Override the base URL used for WebSocket connections (e.g. TCP tunnel).
+  /// When not set, WebSocket URLs are derived from [apiBaseUrl].
+  static void overrideWsBaseUrl(String url) {
+    _wsBaseUrlOverride = url;
+  }
+
+  /// The base URL for WebSocket connections.
+  /// Falls back to [apiBaseUrl] if no separate override is set.
+  static String? get wsBaseUrl => _wsBaseUrlOverride ?? apiBaseUrl;
 
   static void overrideAgentProxyWsUrl(String url) {
     _agentProxyWsUrlOverride = url;

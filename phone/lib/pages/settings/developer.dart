@@ -9,15 +9,12 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:freeu/backend/http/shared.dart';
 import 'package:freeu/backend/http/api/knowledge_graph_api.dart';
 import 'package:freeu/backend/http/api/users.dart';
 import 'package:freeu/backend/preferences.dart';
 import 'package:freeu/env/env.dart';
-import 'package:freeu/env/lifetrace_env.dart';
 import 'package:freeu/models/stt_provider.dart';
 import 'package:freeu/pages/persona/persona_profile.dart';
-import 'package:freeu/pages/settings/center_node_test_page.dart';
 import 'package:freeu/pages/settings/conversation_timeout_dialog.dart';
 import 'package:freeu/pages/settings/import_history_page.dart';
 import 'package:freeu/pages/settings/transcription_settings_page.dart';
@@ -40,131 +37,12 @@ class DeveloperSettingsPage extends StatefulWidget {
 }
 
 class _DeveloperSettingsPageState extends State<DeveloperSettingsPage> {
-  final TextEditingController _centerApiUrlController = TextEditingController();
-  bool _centerApiTouched = false;
-  bool _centerApiPinging = false;
-  bool? _centerApiPingOk;
-  String _centerApiPingResult = '';
-
   @override
   void initState() {
-    final saved = SharedPreferencesUtil().lifetraceApiBaseUrl.trim();
-    _centerApiUrlController.text = saved.isNotEmpty ? saved : (Env.apiBaseUrl ?? '');
-    _centerApiUrlController.addListener(() {
-      if (!_centerApiTouched) {
-        setState(() {
-          _centerApiTouched = true;
-        });
-      }
-    });
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       context.read<McpProvider>().fetchKeys();
     });
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    _centerApiUrlController.dispose();
-    super.dispose();
-  }
-
-  String _normalizeApiBaseUrl(String input) {
-    var url = input.trim();
-    if (url.isEmpty) return '';
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://$url';
-    }
-    if (!url.endsWith('/')) {
-      url = '$url/';
-    }
-    return url;
-  }
-
-  Future<void> _saveCenterApiUrl() async {
-    final normalized = _normalizeApiBaseUrl(_centerApiUrlController.text);
-    if (normalized.isEmpty) {
-      AppSnackbar.showSnackbarError('请输入后端地址');
-      return;
-    }
-    Uri? parsed;
-    try {
-      parsed = Uri.parse(normalized);
-    } catch (_) {
-      parsed = null;
-    }
-    if (parsed == null || !(parsed.isScheme('http') || parsed.isScheme('https')) || parsed.host.isEmpty) {
-      AppSnackbar.showSnackbarError('地址格式不正确，请输入 http(s)://host[:port]/');
-      return;
-    }
-
-    await SharedPreferencesUtil().saveString('lifetraceApiBaseUrl', normalized);
-    Env.overrideApiBaseUrl(normalized);
-    if (mounted) {
-      setState(() {
-        _centerApiTouched = false;
-      });
-    }
-    AppSnackbar.showSnackbarSuccess('中心节点地址已更新');
-  }
-
-  Future<void> _resetCenterApiUrl() async {
-    final defaultUrl = const LifeTraceEnv().apiBaseUrl ?? '';
-    await SharedPreferencesUtil().saveString('lifetraceApiBaseUrl', '');
-    if (defaultUrl.isNotEmpty) {
-      Env.overrideApiBaseUrl(defaultUrl);
-      _centerApiUrlController.text = defaultUrl;
-    }
-    if (mounted) {
-      setState(() {
-        _centerApiTouched = false;
-      });
-    }
-    AppSnackbar.showSnackbarSuccess('已恢复默认中心节点地址');
-  }
-
-  Future<void> _pingCenterApi() async {
-    final normalized = _normalizeApiBaseUrl(_centerApiUrlController.text);
-    if (normalized.isEmpty) {
-      AppSnackbar.showSnackbarError('请先输入后端地址');
-      return;
-    }
-
-    if (mounted) {
-      setState(() {
-        _centerApiPinging = true;
-        _centerApiPingResult = '';
-        _centerApiPingOk = null;
-      });
-    }
-
-    final sw = Stopwatch()..start();
-    final response = await makeApiCall(
-      url: '${normalized}v1/users/me',
-      headers: {'Authorization': 'Bearer ${LifeTraceEnv.lifetraceToken}'},
-      method: 'GET',
-      body: '',
-      timeout: const Duration(seconds: 10),
-      retries: 0,
-    );
-    sw.stop();
-
-    final elapsed = sw.elapsedMilliseconds;
-    if (!mounted) return;
-
-    setState(() {
-      _centerApiPinging = false;
-      if (response == null) {
-        _centerApiPingOk = false;
-        _centerApiPingResult = 'Ping 失败：无响应（${elapsed}ms）';
-        return;
-      }
-      final ok = response.statusCode == 200;
-      _centerApiPingOk = ok;
-      _centerApiPingResult = ok
-          ? 'Ping 成功：HTTP 200（${elapsed}ms）'
-          : 'Ping 失败：HTTP ${response.statusCode}（${elapsed}ms）';
-    });
   }
 
   Widget _buildSectionContainer({required List<Widget> children}) {
@@ -515,136 +393,6 @@ class _DeveloperSettingsPageState extends State<DeveloperSettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (LifeTraceEnv.enabled) ...[
-                    _buildSectionHeader(
-                      '中心节点连接',
-                      subtitle: '在 App 内配置后端地址，无需每次改代码',
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1C1C1E),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildTextField(
-                            controller: _centerApiUrlController,
-                            label: 'Backend API Base URL',
-                            hint: 'https://tybbackend.cpolar.cn/',
-                            keyboardType: TextInputType.url,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            '当前生效: ${Env.apiBaseUrl ?? ''}',
-                            style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: _centerApiTouched ? Colors.orangeAccent : const Color(0xFF22C55E),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _centerApiTouched ? '地址已修改，尚未保存' : '地址已保存',
-                                style: TextStyle(
-                                  color: _centerApiTouched ? Colors.orangeAccent : const Color(0xFF79E5A0),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: _resetCenterApiUrl,
-                                      style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(color: Color(0xFF3A3A3C)),
-                                        foregroundColor: Colors.white70,
-                                      ),
-                                      child: const Text('恢复默认'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: _centerApiPinging ? null : _pingCenterApi,
-                                      style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(color: Color(0xFF3A3A3C)),
-                                        foregroundColor: Colors.white70,
-                                      ),
-                                      child: _centerApiPinging
-                                          ? const SizedBox(
-                                              width: 14,
-                                              height: 14,
-                                              child: CircularProgressIndicator(strokeWidth: 2),
-                                            )
-                                          : const Text('实时 Ping'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () async {
-                                        await Navigator.of(context).push(
-                                          MaterialPageRoute(builder: (_) => const CenterNodeTestPage()),
-                                        );
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(color: Color(0xFF3A3A3C)),
-                                        foregroundColor: Colors.white70,
-                                      ),
-                                      child: const Text('连接测试'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: ElevatedButton(
-                                      onPressed: _centerApiTouched ? _saveCenterApiUrl : null,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF22C55E),
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      child: const Text('保存地址'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          if (_centerApiPingResult.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            Text(
-                              _centerApiPingResult,
-                              style: TextStyle(
-                                color: _centerApiPingOk == true ? const Color(0xFF79E5A0) : Colors.orangeAccent,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-
                   // Persona Section
                   GestureDetector(
                     onTap: () {

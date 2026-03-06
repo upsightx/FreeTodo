@@ -5,12 +5,6 @@
 /// changed here directly or overridden at runtime via developer settings.
 import 'env.dart';
 
-class LifeTraceServerPreset {
-  final String name;
-  final String url;
-  const LifeTraceServerPreset(this.name, this.url);
-}
-
 class LifeTraceEnv implements EnvFields {
   const LifeTraceEnv();
 
@@ -27,14 +21,8 @@ class LifeTraceEnv implements EnvFields {
   /// When true the app skips Firebase Auth and uses the static token above.
   static bool enabled = false;
 
-  /// Pre-configured server endpoints.
-  /// Users can switch between these in Settings or enter a custom URL.
-  static const List<LifeTraceServerPreset> serverPresets = [
-    LifeTraceServerPreset('TCP 隧道', 'http://2.tcp.cpolar.cn:12691/'),
-    LifeTraceServerPreset('HTTP 隧道', 'https://tybbackend.cpolar.cn/'),
-    LifeTraceServerPreset('局域网', 'http://192.168.1.100:8001/'),
-  ];
-
+  static const String defaultTcpUrl = 'http://2.tcp.cpolar.cn:12691/';
+  static const String defaultHttpUrl = 'https://tybbackend.cpolar.cn/';
   static const String defaultApiBaseUrl = 'http://2.tcp.cpolar.cn:12691/';
 
   /// Standard EnvFields ///

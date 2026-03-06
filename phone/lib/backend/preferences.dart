@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -608,10 +608,15 @@ class SharedPreferencesUtil {
   bool get testFlightUseStagingApi => testFlightApiEnvironment == 'staging';
 
   //------------------------ LifeTrace Server URL ------------------------------//
-  // Runtime override for self-hosted LifeTrace backend URL.
-  String get lifetraceApiBaseUrl => getString('lifetraceApiBaseUrl');
 
+  String get lifetraceApiBaseUrl => getString('lifetraceApiBaseUrl');
   set lifetraceApiBaseUrl(String value) => saveString('lifetraceApiBaseUrl', value);
+
+  String get lifetraceTcpUrl => getString('lifetraceTcpUrl');
+  set lifetraceTcpUrl(String value) => saveString('lifetraceTcpUrl', value);
+
+  String get lifetraceHttpUrl => getString('lifetraceHttpUrl');
+  set lifetraceHttpUrl(String value) => saveString('lifetraceHttpUrl', value);
 
   //--------------------------- Announcements ---------------------------------//
 

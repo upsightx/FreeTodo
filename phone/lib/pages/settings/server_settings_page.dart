@@ -1,9 +1,13 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import 'package:freeu/backend/http/shared.dart';
 import 'package:freeu/backend/preferences.dart';
 import 'package:freeu/env/env.dart';
 import 'package:freeu/env/lifetrace_env.dart';
+import 'package:freeu/pages/settings/center_node_test_page.dart';
+import 'package:freeu/providers/capture_provider.dart';
 
 class ServerSettingsPage extends StatefulWidget {
   const ServerSettingsPage({super.key});
@@ -13,56 +17,153 @@ class ServerSettingsPage extends StatefulWidget {
 }
 
 class _ServerSettingsPageState extends State<ServerSettingsPage> {
-  final _customUrlController = TextEditingController();
-  String _activeUrl = '';
-  bool _isCustom = false;
+  final _tcpController = TextEditingController();
+  final _httpController = TextEditingController();
+
+  bool _pinging = false;
+  bool? _pingOk;
+  String _pingResult = '';
 
   @override
   void initState() {
     super.initState();
-    _activeUrl = Env.apiBaseUrl ?? LifeTraceEnv.defaultApiBaseUrl;
-    _isCustom = !LifeTraceEnv.serverPresets.any((p) => p.url == _activeUrl);
-    if (_isCustom) {
-      _customUrlController.text = _activeUrl;
-    }
+    final prefs = SharedPreferencesUtil();
+    final savedTcp = prefs.lifetraceTcpUrl.trim();
+    final savedHttp = prefs.lifetraceHttpUrl.trim();
+
+    _tcpController.text = savedTcp.isNotEmpty ? savedTcp : LifeTraceEnv.defaultTcpUrl;
+    _httpController.text = savedHttp.isNotEmpty ? savedHttp : LifeTraceEnv.defaultHttpUrl;
   }
 
   @override
   void dispose() {
-    _customUrlController.dispose();
+    _tcpController.dispose();
+    _httpController.dispose();
     super.dispose();
   }
 
-  void _selectPreset(LifeTraceServerPreset preset) {
-    _applyUrl(preset.url);
-    setState(() {
-      _isCustom = false;
-      _customUrlController.clear();
-    });
-  }
-
-  void _applyCustomUrl() {
-    var url = _customUrlController.text.trim();
-    if (url.isEmpty) return;
+  String _normalize(String input, {bool preferHttps = false}) {
+    var url = input.trim();
+    if (url.isEmpty) return '';
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'http://$url';
+      url = preferHttps ? 'https://$url' : 'http://$url';
     }
     if (!url.endsWith('/')) url = '$url/';
-    _applyUrl(url);
-    setState(() => _isCustom = true);
+    return url;
   }
 
-  void _applyUrl(String url) {
-    Env.overrideApiBaseUrl(url);
-    SharedPreferencesUtil().lifetraceApiBaseUrl = url;
-    setState(() => _activeUrl = url);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('服务器已切换到 $url\n重新连接后生效'),
-        backgroundColor: const Color(0xFF22C55E),
-        duration: const Duration(seconds: 3),
-      ),
+  Future<void> _save() async {
+    final tcpUrl = _normalize(_tcpController.text);
+    final httpUrl = _normalize(_httpController.text, preferHttps: true);
+
+    if (tcpUrl.isEmpty && httpUrl.isEmpty) return;
+
+    final prefs = SharedPreferencesUtil();
+    prefs.lifetraceTcpUrl = tcpUrl;
+    prefs.lifetraceHttpUrl = httpUrl;
+
+    // HTTP tunnel → REST API calls
+    if (httpUrl.isNotEmpty) {
+      Env.overrideApiBaseUrl(httpUrl);
+    }
+    // TCP tunnel → WebSocket audio streams
+    if (tcpUrl.isNotEmpty) {
+      Env.overrideWsBaseUrl(tcpUrl);
+    }
+
+    // Also update legacy key for backward compat
+    prefs.lifetraceApiBaseUrl = httpUrl.isNotEmpty ? httpUrl : tcpUrl;
+
+    _tcpController.text = tcpUrl;
+    _httpController.text = httpUrl;
+
+    if (mounted) {
+      await context.read<CaptureProvider>().onTranscriptionSettingsChanged();
+    }
+
+    if (mounted) {
+      setState(() {
+        _pingOk = null;
+        _pingResult = '';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('已保存并应用'),
+          backgroundColor: Color(0xFF22C55E),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _resetToDefault() async {
+    _tcpController.text = LifeTraceEnv.defaultTcpUrl;
+    _httpController.text = LifeTraceEnv.defaultHttpUrl;
+    setState(() {
+      _pingOk = null;
+      _pingResult = '';
+    });
+
+    final prefs = SharedPreferencesUtil();
+    prefs.lifetraceTcpUrl = '';
+    prefs.lifetraceHttpUrl = '';
+    prefs.lifetraceApiBaseUrl = '';
+
+    Env.overrideApiBaseUrl(LifeTraceEnv.defaultHttpUrl);
+    Env.overrideWsBaseUrl(LifeTraceEnv.defaultTcpUrl);
+
+    if (mounted) {
+      await context.read<CaptureProvider>().onTranscriptionSettingsChanged();
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('已恢复默认地址'),
+          backgroundColor: Color(0xFF22C55E),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _pingServer() async {
+    if (_pinging) return;
+    final httpUrl = _normalize(_httpController.text, preferHttps: true);
+    if (httpUrl.isEmpty) return;
+
+    setState(() {
+      _pinging = true;
+      _pingResult = '';
+      _pingOk = null;
+    });
+
+    final sw = Stopwatch()..start();
+    final response = await makeApiCall(
+      url: '${httpUrl}v1/users/me',
+      headers: {'Authorization': 'Bearer ${LifeTraceEnv.lifetraceToken}'},
+      method: 'GET',
+      body: '',
+      timeout: const Duration(seconds: 10),
+      retries: 0,
     );
+    sw.stop();
+    final elapsed = sw.elapsedMilliseconds;
+    if (!mounted) return;
+
+    setState(() {
+      _pinging = false;
+      if (response == null) {
+        _pingOk = false;
+        _pingResult = '连接失败：无响应（${elapsed}ms）';
+      } else {
+        final ok = response.statusCode == 200;
+        _pingOk = ok;
+        _pingResult = ok
+            ? '连接成功：HTTP 200（${elapsed}ms）'
+            : '连接失败：HTTP ${response.statusCode}（${elapsed}ms）';
+      }
+    });
   }
 
   @override
@@ -74,182 +175,193 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
         title: const Text('服务器设置', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildUrlField(
+              label: 'TCP 隧道',
+              description: '用于 WebSocket 音频流传输',
+              controller: _tcpController,
+              hint: LifeTraceEnv.defaultTcpUrl,
+            ),
+            const SizedBox(height: 16),
+            _buildUrlField(
+              label: 'HTTP 隧道',
+              description: '用于 REST API 请求',
+              controller: _httpController,
+              hint: LifeTraceEnv.defaultHttpUrl,
+            ),
+            const SizedBox(height: 24),
+            _buildSaveButton(),
+            const SizedBox(height: 16),
+            _buildActions(),
+            if (_pingResult.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildPingResult(),
+            ],
+            const SizedBox(height: 24),
+            _buildHint(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUrlField({
+    required String label,
+    required String description,
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Current server
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '当前服务器',
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(color: Color(0xFF22C55E), shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _activeUrl,
-                        style: const TextStyle(color: Colors.white, fontSize: 14, fontFamily: 'monospace'),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: _activeUrl));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('已复制'), duration: Duration(seconds: 1)),
-                        );
-                      },
-                      child: Icon(Icons.copy, size: 16, color: Colors.grey.shade500),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Presets
           Text(
-            '预设服务器',
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.w600),
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 8),
-          ...LifeTraceEnv.serverPresets.map((preset) {
-            final isActive = !_isCustom && preset.url == _activeUrl;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: GestureDetector(
-                onTap: () => _selectPreset(preset),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1C1C1E),
-                    borderRadius: BorderRadius.circular(12),
-                    border: isActive ? Border.all(color: const Color(0xFF22C55E), width: 1.5) : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isActive ? Icons.radio_button_checked : Icons.radio_button_off,
-                        color: isActive ? const Color(0xFF22C55E) : Colors.grey.shade600,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              preset.name,
-                              style: TextStyle(
-                                color: isActive ? Colors.white : Colors.grey.shade300,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              preset.url,
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontSize: 12,
-                                fontFamily: 'monospace',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          const SizedBox(height: 4),
+          Text(description, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+          const SizedBox(height: 12),
+          TextField(
+            controller: controller,
+            style: const TextStyle(color: Colors.white, fontSize: 14, fontFamily: 'monospace'),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey.shade700),
+              filled: true,
+              fillColor: const Color(0xFF2C2C2E),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
               ),
-            );
-          }),
-          const SizedBox(height: 24),
-
-          // Custom URL
-          Text(
-            '自定义地址',
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.w600),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.copy, size: 16, color: Colors.grey.shade600),
+                onPressed: () {
+                  final text = controller.text.trim();
+                  if (text.isEmpty) return;
+                  Clipboard.setData(ClipboardData(text: text));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('已复制'), duration: Duration(seconds: 1)),
+                  );
+                },
+              ),
+            ),
+            keyboardType: TextInputType.url,
           ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E),
-              borderRadius: BorderRadius.circular(16),
-              border: _isCustom ? Border.all(color: const Color(0xFF22C55E), width: 1.5) : null,
-            ),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _customUrlController,
-                  style: const TextStyle(color: Colors.white, fontSize: 14, fontFamily: 'monospace'),
-                  decoration: InputDecoration(
-                    hintText: 'http://192.168.1.100:8001/',
-                    hintStyle: TextStyle(color: Colors.grey.shade700),
-                    filled: true,
-                    fillColor: const Color(0xFF2C2C2E),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  ),
-                  keyboardType: TextInputType.url,
-                  onSubmitted: (_) => _applyCustomUrl(),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _applyCustomUrl,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2C2C2E),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: const Text('应用自定义地址'),
-                  ),
-                ),
-              ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _save,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF22C55E),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: const Text('保存并应用', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+
+  Widget _buildActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: _pinging ? null : _pingServer,
+            icon: _pinging
+                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.speed, size: 16),
+            label: const Text('Ping 测试'),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFF3A3A3C)),
+              foregroundColor: Colors.white70,
+              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Hint
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.orange.shade900.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(12),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CenterNodeTestPage()),
+              );
+            },
+            icon: const Icon(Icons.checklist, size: 16),
+            label: const Text('连接测试'),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFF3A3A3C)),
+              foregroundColor: Colors.white70,
+              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.orange.shade300, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '切换服务器后，当前录音会话需要重新连接才能生效。建议先断开设备再切换。',
-                    style: TextStyle(color: Colors.orange.shade300, fontSize: 12),
-                  ),
-                ),
-              ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        OutlinedButton.icon(
+          onPressed: _resetToDefault,
+          icon: const Icon(Icons.restore, size: 16),
+          label: const Text('默认'),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Color(0xFF3A3A3C)),
+            foregroundColor: Colors.white70,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPingResult() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: (_pingOk == true ? const Color(0xFF22C55E) : Colors.redAccent).withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        _pingResult,
+        style: TextStyle(
+          color: _pingOk == true ? const Color(0xFF79E5A0) : Colors.orangeAccent,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHint() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade900.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: Colors.orange.shade300, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'TCP 隧道用于音频流（WebSocket），HTTP 隧道用于 API 请求。\n两个地址同时生效，保存后自动重连。',
+              style: TextStyle(color: Colors.orange.shade300, fontSize: 12),
             ),
           ),
         ],

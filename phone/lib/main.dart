@@ -166,11 +166,29 @@ Future _init() async {
   await SharedPreferencesUtil.init();
 
   // Load optional runtime API override for LifeTrace self-hosted mode.
+  // HTTP tunnel → apiBaseUrl (for REST API calls)
+  // TCP  tunnel → wsBaseUrl  (for WebSocket audio streams)
   if (_kLifeTraceMode) {
-    final customApi = SharedPreferencesUtil().lifetraceApiBaseUrl.trim();
-    if (customApi.isNotEmpty) {
-      Env.overrideApiBaseUrl(customApi);
-      debugPrint('LifeTrace mode: using custom API override -> $customApi');
+    final prefs = SharedPreferencesUtil();
+    final httpUrl = prefs.lifetraceHttpUrl.trim();
+    final tcpUrl = prefs.lifetraceTcpUrl.trim();
+
+    if (httpUrl.isNotEmpty) {
+      Env.overrideApiBaseUrl(httpUrl);
+      debugPrint('LifeTrace mode: HTTP API → $httpUrl');
+    }
+    if (tcpUrl.isNotEmpty) {
+      Env.overrideWsBaseUrl(tcpUrl);
+      debugPrint('LifeTrace mode: WebSocket → $tcpUrl');
+    }
+
+    // Legacy fallback: single-URL key from older versions
+    if (httpUrl.isEmpty && tcpUrl.isEmpty) {
+      final legacyUrl = prefs.lifetraceApiBaseUrl.trim();
+      if (legacyUrl.isNotEmpty) {
+        Env.overrideApiBaseUrl(legacyUrl);
+        debugPrint('LifeTrace mode: legacy API override -> $legacyUrl');
+      }
     }
   }
 

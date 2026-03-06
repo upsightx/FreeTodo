@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -114,8 +114,9 @@ class TranscriptSegmentSocketService implements IPureSocketListener {
       params += '&token=${Uri.encodeComponent(LifeTraceEnv.lifetraceToken)}';
     }
 
+    final wsBase = Env.wsBaseUrl ?? Env.apiBaseUrl!;
     String url =
-        Env.apiBaseUrl!.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://') + 'v4/listen$params';
+        wsBase.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://') + 'v4/listen$params';
 
     _socket = PureSocket(url);
     _socket.setListener(this);
