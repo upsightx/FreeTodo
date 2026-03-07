@@ -11,7 +11,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, Response, UploadFile
 from fastapi.responses import FileResponse
 
-from lifetrace.core.dependencies import get_todo_service
+from lifetrace.core.dependencies import get_db_session, get_todo_service
 from lifetrace.schemas.todo import (
     TodoAttachmentResponse,
     TodoCreate,
@@ -24,10 +24,22 @@ from lifetrace.services.icalendar_service import ICalendarService
 from lifetrace.util.path_utils import get_attachments_dir
 
 if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
     from lifetrace.services.todo_service import TodoService
 
 router = APIRouter(prefix="/api/todos", tags=["todos"])
+tags_router = APIRouter(prefix="/api/tags", tags=["tags"])
 MAX_ATTACHMENT_SIZE = 50 * 1024 * 1024  # 50MB
+
+
+@tags_router.get("")
+async def list_tags(db: "Session" = Depends(get_db_session)):
+    """获取所有标签"""
+    from lifetrace.storage.models import Tag  # noqa: PLC0415
+
+    tags = db.query(Tag).filter(Tag.deleted_at.is_(None)).order_by(Tag.tag_name).all()
+    return {"tags": [{"id": t.id, "name": t.tag_name} for t in tags]}
 
 
 def _sanitize_filename(name: str) -> str:
