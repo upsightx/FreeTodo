@@ -82,6 +82,7 @@ class VectorDatabase:
                 if SentenceTransformer is None:
                     raise RuntimeError("SentenceTransformer not available")
                 self.logger.info(f"Loading embedding model: {self.embedding_model_name}")
+                self.logger.info("正在加载 embedding 模型，这可能需要几分钟...")
                 self.embedding_model = SentenceTransformer(self.embedding_model_name)
             else:
                 self.logger.info("Skipping embedding model initialization (multimodal mode)")
