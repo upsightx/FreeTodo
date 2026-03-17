@@ -33,6 +33,10 @@ dependencies = [
     # "funasr>=1.0.0",  # 注释掉，作为可选依赖
     # Data processing
     "pyyaml>=6.0",
+    "sentence-transformers>=2.2.0", # 文本嵌入模型
+    "chromadb>=1.4.1",              # 向量数据库
+    "scipy>=1.9.0",                 # 科学计算（用于余弦距离）
+    "hdbscan>=0.8.0",               # 文本聚类算法
     # Scheduler
     "apscheduler>=3.10.0",
     # Utils
@@ -68,18 +72,6 @@ dependencies = [
 ]
 
 [dependency-groups]
-# Optional ML/AI dependencies - install manually for vector database support
-# Install with: uv sync --group ml
-ml = [
-    "sentence-transformers>=2.2.0",  # Text embedding models (depends on torch CPU)
-    "chromadb>=1.4.1",               # Vector database
-    "scipy>=1.9.0",                  # Scientific computing (cosine distance)
-    "hdbscan>=0.8.0",                # Text clustering algorithm
-    # Note: torch is auto-installed as sentence-transformers dependency
-    # For GPU acceleration, install manually:
-    # pip install torch --index-url https://download.pytorch.org/whl/cu124
-]
-
 # 开发工具
 dev = [
     "bandit>=1.9.3",
@@ -177,5 +169,7 @@ max-public-methods = 20
 
 [tool.uv]
 index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-extra-index-url = ["https://pypi.org/simple", "https://download.pytorch.org/whl/cpu"]
-no-build-isolation = true
+extra-index-url = ["https://pypi.org/simple"]
+
+[tool.uv.extra-build-dependencies]
+hdbscan = ["setuptools", "cython<3", "numpy"]
